@@ -134,6 +134,22 @@ def load_all_data(password):
                 item_year[rid] = m.group(1)
     print(f'  {len(item_year)} items with dates')
 
+    print('Loading temporal intervals (for Gantt)...')
+    temporal = {}  # item_id -> (start_date, end_date)
+    for row in query_mysql("""
+        SELECT v.resource_id, v.value
+        FROM value v
+        JOIN property p ON v.property_id = p.id
+        JOIN vocabulary vo ON p.vocabulary_id = vo.id
+        WHERE CONCAT(vo.prefix, ':', p.local_name) = 'dcterms:temporal'
+        AND v.value IS NOT NULL AND v.value LIKE '%%/%%'
+    """, password):
+        rid = int(row[0])
+        parts = row[1].split('/')
+        if len(parts) == 2:
+            temporal[rid] = (parts[0].strip(), parts[1].strip())
+    print(f'  {len(temporal)} items with temporal intervals')
+
     print('Loading geo coordinates...')
     geo = {}
     for row in query_mysql("""
@@ -167,7 +183,7 @@ def load_all_data(password):
         item_sets.setdefault(isid, []).append(iid)
     print(f'  {len(item_sets)} item sets')
 
-    return items, links, reverse_links, children_of, item_year, geo, item_sets
+    return items, links, reverse_links, children_of, item_year, temporal, geo, item_sets
 
 
 # ── Shared aggregation ────────────────────────────────────────────────
@@ -230,6 +246,93 @@ def aggregate_items(item_ids, items, links, item_year, geo):
     }
 
 
+def build_heatmap(item_ids, links, items):
+    """Build resource type x language heatmap data."""
+    # For each item, get its type(s) and language(s), count co-occurrences.
+    cross = {}  # (type_title, lang_title) -> count
+    type_set = set()
+    lang_set = set()
+
+    for iid in item_ids:
+        item_types = []
+        item_langs = []
+        for term, label, vrid in links.get(iid, []):
+            title = items.get(vrid, {}).get('title', '')
+            if not title:
+                continue
+            if term == 'dcterms:type':
+                item_types.append(title)
+                type_set.add(title)
+            elif term == 'dcterms:language':
+                item_langs.append(title)
+                lang_set.add(title)
+
+        for t in item_types:
+            for l in item_langs:
+                cross[(t, l)] = cross.get((t, l), 0) + 1
+
+    if not cross:
+        return None
+
+    rows = sorted(type_set)
+    cols = sorted(lang_set)
+    row_idx = {r: i for i, r in enumerate(rows)}
+    col_idx = {c: i for i, c in enumerate(cols)}
+    values = [[col_idx[c], row_idx[r], v] for (r, c), v in cross.items()]
+
+    return {'rows': rows, 'cols': cols, 'values': values}
+
+
+def build_chord(item_ids, links, items, term_filter='dcterms:subject', max_nodes=20, min_cooccurrence=2):
+    """Build a co-occurrence chord diagram for a given property."""
+    from collections import Counter
+
+    # For each item, collect values for the given term.
+    item_values = {}  # item_id -> [vrid, ...]
+    value_titles = {}  # vrid -> title
+
+    for iid in item_ids:
+        vals = []
+        for term, label, vrid in links.get(iid, []):
+            if term == term_filter:
+                title = items.get(vrid, {}).get('title', '')
+                if title:
+                    vals.append(vrid)
+                    value_titles[vrid] = title
+        if len(vals) >= 2:
+            item_values[iid] = vals
+
+    # Count co-occurrences.
+    pair_counts = Counter()
+    node_counts = Counter()
+    for vals in item_values.values():
+        for v in vals:
+            node_counts[v] += 1
+        for i in range(len(vals)):
+            for j in range(i + 1, len(vals)):
+                pair = tuple(sorted([vals[i], vals[j]]))
+                pair_counts[pair] += 1
+
+    # Keep top nodes by frequency.
+    top_nodes = [vrid for vrid, _ in node_counts.most_common(max_nodes)]
+    top_set = set(top_nodes)
+
+    # Filter links.
+    chord_links = []
+    for (a, b), count in pair_counts.items():
+        if count >= min_cooccurrence and a in top_set and b in top_set:
+            chord_links.append({
+                'source': value_titles[a], 'target': value_titles[b], 'value': count,
+            })
+
+    if not chord_links:
+        return None
+
+    chord_nodes = [{'name': value_titles[v], 'value': node_counts[v], 'itemId': v} for v in top_nodes if v in value_titles]
+
+    return {'nodes': chord_nodes, 'links': chord_links}
+
+
 def save_json(item_id, data):
     path = os.path.join(OUTPUT_DIR, f'{item_id}.json')
     with open(path, 'w', encoding='utf-8') as f:
@@ -247,7 +350,7 @@ def find_items_linking_to(entity_id, reverse_links, terms):
 
 # ── Entity generators ─────────────────────────────────────────────────
 
-def generate_sections(items, links, reverse_links, children_of, item_year, geo):
+def generate_sections(items, links, reverse_links, children_of, item_year, temporal, geo):
     sections = [(iid, info) for iid, info in items.items()
                 if info['class_term'] == 'frapo:ResearchGroup']
     print(f'\n=== Research Sections ({len(sections)}) ===')
@@ -256,19 +359,30 @@ def generate_sections(items, links, reverse_links, children_of, item_year, geo):
         project_ids = children_of.get(sid, [])
         item_ids = []
         projects_breakdown = []
+        gantt_data = []
         for pid in project_ids:
             proj_items = children_of.get(pid, [])
             item_ids.extend(proj_items)
+            ptitle = items.get(pid, {}).get('title', f'Project {pid}')
             if proj_items:
-                projects_breakdown.append({
-                    'name': items.get(pid, {}).get('title', f'Project {pid}'),
-                    'value': len(proj_items), 'itemId': pid,
-                })
+                projects_breakdown.append({'name': ptitle, 'value': len(proj_items), 'itemId': pid})
+            if pid in temporal:
+                start, end = temporal[pid]
+                gantt_data.append({'name': ptitle, 'start': start, 'end': end, 'itemId': pid})
         if not item_ids:
             continue
         dashboard = aggregate_items(item_ids, items, links, item_year, geo)
         projects_breakdown.sort(key=lambda x: -x['value'])
         dashboard['projects'] = projects_breakdown
+        if gantt_data:
+            gantt_data.sort(key=lambda x: x['start'])
+            dashboard['gantt'] = gantt_data
+        heatmap = build_heatmap(item_ids, links, items)
+        if heatmap:
+            dashboard['heatmap'] = heatmap
+        chord = build_chord(item_ids, links, items)
+        if chord:
+            dashboard['chord'] = chord
         save_json(sid, dashboard)
         print(f'  {sinfo["title"]}: {len(item_ids)} items')
 
@@ -283,6 +397,12 @@ def generate_projects(items, links, reverse_links, children_of, item_year, geo):
         if not item_ids:
             continue
         dashboard = aggregate_items(item_ids, items, links, item_year, geo)
+        heatmap = build_heatmap(item_ids, links, items)
+        if heatmap:
+            dashboard['heatmap'] = heatmap
+        chord = build_chord(item_ids, links, items)
+        if chord:
+            dashboard['chord'] = chord
         save_json(pid, dashboard)
         count += 1
     print(f'  {count} dashboards generated')
@@ -415,12 +535,12 @@ def main():
     os.chdir(OMEKA_DIR)
 
     data = load_all_data(password)
-    items, links, reverse_links, children_of, item_year, geo, item_sets = data
+    items, links, reverse_links, children_of, item_year, temporal, geo, item_sets = data
 
     # Clean output directory.
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    generate_sections(items, links, reverse_links, children_of, item_year, geo)
+    generate_sections(items, links, reverse_links, children_of, item_year, temporal, geo)
     generate_projects(items, links, reverse_links, children_of, item_year, geo)
     generate_people(items, links, reverse_links, children_of, item_year, geo)
     generate_institutions(items, links, reverse_links, children_of, item_year, geo)

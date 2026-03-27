@@ -384,6 +384,156 @@
     /*  Chart config                                                       */
     /* ------------------------------------------------------------------ */
 
+    /* ------------------------------------------------------------------ */
+    /*  Phase 2 charts: Gantt, Heatmap, Chord                             */
+    /* ------------------------------------------------------------------ */
+
+    function buildGantt(el, data, siteBase) {
+        if (!data || !data.length) return;
+        var chart = echarts.init(el);
+        var projects = data.slice().reverse();
+        var names = projects.map(function (p) { return p.name; });
+        var minYear = 9999, maxYear = 0;
+
+        var barData = projects.map(function (p, i) {
+            var start = new Date(p.start).getTime();
+            var end = new Date(p.end).getTime();
+            var sy = new Date(p.start).getFullYear();
+            var ey = new Date(p.end).getFullYear();
+            if (sy < minYear) minYear = sy;
+            if (ey > maxYear) maxYear = ey;
+            return {
+                name: p.name, value: [i, start, end, p.itemId],
+                itemStyle: { color: COLORS[i % COLORS.length], borderRadius: 3 }
+            };
+        });
+
+        chart.setOption({
+            tooltip: {
+                confine: true,
+                formatter: function (params) {
+                    var v = params.value;
+                    var s = new Date(v[1]).toLocaleDateString('en', { year: 'numeric', month: 'short' });
+                    var e = new Date(v[2]).toLocaleDateString('en', { year: 'numeric', month: 'short' });
+                    return '<strong>' + echarts.format.encodeHTML(params.name) + '</strong><br/>' + s + ' \u2192 ' + e;
+                }
+            },
+            grid: { left: 220, right: 30, top: 10, bottom: 30 },
+            xAxis: {
+                type: 'time',
+                min: new Date(minYear, 0, 1).getTime(),
+                max: new Date(maxYear + 1, 0, 1).getTime(),
+                axisLabel: { fontSize: 11 }
+            },
+            yAxis: {
+                type: 'category', data: names,
+                axisLabel: {
+                    fontSize: 11, width: 200, overflow: 'truncate',
+                    formatter: function (v) { return v.length > 28 ? v.substring(0, 28) + '\u2026' : v; }
+                }
+            },
+            series: [{
+                type: 'custom',
+                renderItem: function (params, api) {
+                    var catIdx = api.value(0);
+                    var start = api.coord([api.value(1), catIdx]);
+                    var end = api.coord([api.value(2), catIdx]);
+                    var height = api.size([0, 1])[1] * 0.6;
+                    return {
+                        type: 'rect', shape: { x: start[0], y: start[1] - height / 2, width: end[0] - start[0], height: height },
+                        style: api.style()
+                    };
+                },
+                encode: { x: [1, 2], y: 0 },
+                data: barData
+            }]
+        });
+
+        chart.on('click', function (p) {
+            if (p.value && p.value[3] && siteBase) window.location.href = siteBase + '/item/' + p.value[3];
+        });
+        return chart;
+    }
+
+    function buildHeatmap(el, data) {
+        if (!data || !data.rows || !data.cols || !data.values) return;
+        var chart = echarts.init(el);
+        var maxVal = 0;
+        data.values.forEach(function (v) { if (v[2] > maxVal) maxVal = v[2]; });
+
+        chart.setOption({
+            tooltip: {
+                confine: true,
+                formatter: function (p) {
+                    return echarts.format.encodeHTML(data.rows[p.value[1]]) + ' \u00d7 '
+                        + echarts.format.encodeHTML(data.cols[p.value[0]]) + ': ' + p.value[2];
+                }
+            },
+            grid: { left: 120, right: 60, top: 10, bottom: 80 },
+            xAxis: {
+                type: 'category', data: data.cols, splitArea: { show: true },
+                axisLabel: { rotate: 35, fontSize: 11, formatter: function (v) { return v.length > 15 ? v.substring(0, 15) + '\u2026' : v; } }
+            },
+            yAxis: {
+                type: 'category', data: data.rows, splitArea: { show: true },
+                axisLabel: { fontSize: 11, formatter: function (v) { return v.length > 15 ? v.substring(0, 15) + '\u2026' : v; } }
+            },
+            visualMap: {
+                min: 0, max: maxVal || 1, calculable: true, orient: 'vertical', right: 0, top: 'center',
+                inRange: { color: ['#f0f9e8', '#bae4bc', '#7bccc4', '#43a2ca', '#0868ac'] }
+            },
+            series: [{
+                type: 'heatmap', data: data.values,
+                label: { show: true, fontSize: 10 },
+                emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.3)' } }
+            }]
+        });
+        return chart;
+    }
+
+    function buildChord(el, data, siteBase) {
+        if (!data || !data.nodes || !data.links || data.nodes.length < 2) return;
+        var chart = echarts.init(el);
+
+        chart.setOption({
+            tooltip: {
+                confine: true,
+                formatter: function (p) {
+                    if (p.dataType === 'node') return '<strong>' + echarts.format.encodeHTML(p.name) + '</strong>';
+                    if (p.dataType === 'edge') {
+                        return echarts.format.encodeHTML(p.data.source) + ' \u2194 '
+                            + echarts.format.encodeHTML(p.data.target) + ': ' + p.data.value;
+                    }
+                    return '';
+                }
+            },
+            series: [{
+                type: 'graph', layout: 'circular', circular: { rotateLabel: true },
+                data: data.nodes.map(function (n, i) {
+                    return {
+                        name: n.name, symbolSize: Math.max(10, Math.min(40, n.value * 2)),
+                        itemStyle: { color: COLORS[i % COLORS.length] },
+                        itemId: n.itemId,
+                        label: { fontSize: 10, formatter: function (p) { var s = p.name; return s.length > 20 ? s.substring(0, 20) + '\u2026' : s; } }
+                    };
+                }),
+                links: data.links.map(function (l) {
+                    return {
+                        source: l.source, target: l.target, value: l.value,
+                        lineStyle: { width: Math.max(1, Math.min(6, l.value)), curveness: 0.3, opacity: 0.5 }
+                    };
+                }),
+                roam: true, label: { show: true, position: 'right' },
+                emphasis: { focus: 'adjacency', lineStyle: { width: 4, opacity: 0.9 } }
+            }]
+        });
+
+        chart.on('click', function (p) {
+            if (p.dataType === 'node' && p.data.itemId && siteBase) window.location.href = siteBase + '/item/' + p.data.itemId;
+        });
+        return chart;
+    }
+
     function buildMiniMap(el, data, siteBase) {
         if (!data || !data.lat || typeof maplibregl === 'undefined') return null;
         el.style.borderRadius = '6px';
@@ -405,10 +555,13 @@
     var CHART_MAP = {
         'selfLocation': buildMiniMap,
         'timeline': buildTimeline,
+        'gantt': buildGantt,
         'types': buildPieChart,
+        'heatmap': buildHeatmap,
         'locations': buildMap,
         'languages': buildBarChart,
         'subjects': buildWordCloud,
+        'chord': buildChord,
         'contributors': buildBarChart,
         'coAuthors': buildBarChart,
         'coSubjects': buildBarChart,
@@ -418,9 +571,12 @@
     var CHART_LABELS = {
         'selfLocation': 'Location',
         'timeline': 'Timeline',
+        'gantt': 'Project Timelines',
         'types': 'Resource Types',
+        'heatmap': 'Resource Type \u00d7 Language',
         'languages': 'Languages',
         'subjects': 'Subjects',
+        'chord': 'Subject Co-occurrence',
         'contributors': 'Top Associated Persons',
         'locations': 'Geographic Origins',
         'coAuthors': 'Co-authors',
@@ -434,7 +590,10 @@
         'languages': 'Languages represented across all research items.',
         'subjects': 'Most frequent subject keywords across all items.',
         'selfLocation': '',
+        'gantt': 'Duration of each project within this research section.',
+        'heatmap': 'Cross-tabulation showing item counts for each type-language combination.',
         'locations': 'Geographic origins of research items, sized by number of items.',
+        'chord': 'Subjects that frequently appear together across research items.',
         'contributors': 'Persons most frequently associated with research items.',
         'coAuthors': 'Persons who most frequently appear alongside this person.',
         'coSubjects': 'Subjects that most frequently appear alongside this one.',
@@ -452,13 +611,13 @@
             + '</div>'
             + '<div class="dashboard-charts">';
 
-        var chartKeys = ['selfLocation', 'timeline', 'types', 'locations', 'languages', 'subjects', 'contributors', 'coAuthors', 'coSubjects', 'projects'];
+        var chartKeys = ['selfLocation', 'timeline', 'gantt', 'types', 'heatmap', 'locations', 'languages', 'subjects', 'chord', 'contributors', 'coAuthors', 'coSubjects', 'projects'];
         chartKeys.forEach(function (key) {
             var d = data[key];
             var hasData = Array.isArray(d) ? d.length > 0 : (d && Object.keys(d).length > 0);
             if (!hasData) return;
-            var wideKeys = ['selfLocation', 'subjects', 'locations', 'projects', 'coSubjects'];
-            var tallKeys = ['selfLocation', 'subjects', 'locations'];
+            var wideKeys = ['selfLocation', 'gantt', 'heatmap', 'subjects', 'locations', 'chord', 'projects', 'coSubjects'];
+            var tallKeys = ['selfLocation', 'gantt', 'heatmap', 'subjects', 'locations', 'chord'];
             var wide = wideKeys.indexOf(key) >= 0 ? ' chart-panel-wide' : '';
             var tall = tallKeys.indexOf(key) >= 0 ? ' chart-container-tall' : '';
             var desc = CHART_DESCRIPTIONS[key] || '';

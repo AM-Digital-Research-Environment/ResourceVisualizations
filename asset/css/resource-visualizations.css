@@ -230,6 +230,15 @@
 /*  Map popups                                                         */
 /* ------------------------------------------------------------------ */
 
+.rv-map-popup {
+    max-width: 320px !important;
+}
+
+.rv-map-popup .maplibregl-popup-content {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
 .rv-map-popup .maplibregl-popup-close-button {
     font-size: 16px;
     width: 24px;
