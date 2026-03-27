@@ -121,6 +121,14 @@ def load_data(password):
     return items, links, reverse
 
 
+MAX_DIRECT_NODES = 150
+MAX_REVERSE_NODES = 25
+MAX_SHARED_NODES = 30
+
+# Priority order for direct relationships when capping.
+CAT_PRIORITY = ['Person', 'Contributor', 'Subject', 'Project', 'Location', 'Institution', 'Genre', 'Related Item']
+
+
 def build_graph(item_id, items, links, reverse):
     if item_id not in items:
         return None
@@ -143,23 +151,36 @@ def build_graph(item_id, items, links, reverse):
     nodes.append({'id': f'item_{item_id}', 'name': item['title'], 'category': 0,
                   'symbolSize': 45, 'isCenter': True, 'itemId': item_id})
 
+    # Collect and prioritize direct relationships.
+    direct_rels = []  # (priority, term, label, vrid, cat)
     for term, label, vrid in links.get(item_id, []):
         cat = get_category(term)
         if not cat:
             continue
+        pri = CAT_PRIORITY.index(cat) if cat in CAT_PRIORITY else len(CAT_PRIORITY)
+        direct_rels.append((pri, term, label, vrid, cat))
+
+    direct_rels.sort(key=lambda x: x[0])
+
+    direct_count = 0
+    for pri, term, label, vrid, cat in direct_rels:
         nid = f'resource_{vrid}'
         if nid not in seen:
+            if direct_count >= MAX_DIRECT_NODES:
+                continue
             seen.add(nid)
             nodes.append({'id': nid, 'name': items.get(vrid, {}).get('title', f'Resource {vrid}'),
                           'category': ensure_cat(cat), 'symbolSize': 22, 'itemId': vrid})
+            direct_count += 1
         edges.append({'source': f'item_{item_id}', 'target': nid, 'name': label})
         if term in SHAREABLE or term.startswith('marcrel:'):
             center_linked[vrid] = nid
 
-    # Reverse lookups.
+    # Reverse lookups (items linking TO this one).
     is_section = item['class_term'] == 'frapo:ResearchGroup'
+    reverse_count = 0
     for rid, rels in links.items():
-        if rid == item_id:
+        if rid == item_id or reverse_count >= MAX_REVERSE_NODES:
             continue
         for term, label, vrid in rels:
             if term == 'dcterms:isPartOf' and vrid == item_id:
@@ -169,16 +190,17 @@ def build_graph(item_id, items, links, reverse):
                     nodes.append({'id': rnid, 'name': items.get(rid, {}).get('title', f'Item {rid}'),
                                   'category': ensure_cat('Project' if is_section else 'Linked Item'),
                                   'symbolSize': 22, 'itemId': rid})
+                    reverse_count += 1
                 edges.append({'source': rnid, 'target': f'item_{item_id}', 'name': 'Is Part Of'})
 
-    # Shared items.
+    # Shared items — other items sharing the same resources.
     shared_count = 0
     si_cat = None
     for vrid, nid in center_linked.items():
-        if shared_count >= 30:
+        if shared_count >= MAX_SHARED_NODES:
             break
         for sid in reverse.get(vrid, set()):
-            if sid == item_id or shared_count >= 30:
+            if sid == item_id or shared_count >= MAX_SHARED_NODES:
                 continue
             snid = f'item_{sid}'
             matched = []

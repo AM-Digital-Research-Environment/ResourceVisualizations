@@ -14,7 +14,7 @@ A force-directed network showing the item's relationships — linked persons, su
 
 ### Visualizations Dashboard (Item Pages)
 
-For items using the **Research Sections** or **Projects** resource templates, displays:
+For items using any recognized resource template (Research Sections, Projects, Persons, Locations, Subjects, Languages, Genres, Resource Types, Institutions), displays contextual charts:
 
 - **Timeline** — items collected per year
 - **Resource Types** — pie chart distribution
@@ -23,8 +23,13 @@ For items using the **Research Sections** or **Projects** resource templates, di
 - **Subjects** — word cloud
 - **Top Associated Persons** — bar chart
 - **Items per Project** — bar chart (sections only)
+- **Co-authors** — bar chart (people only)
+- **Co-occurring Subjects** — bar chart (subjects only)
+- **Self-location MiniMap** — single marker (locations only)
 
 All chart elements are clickable, linking to the corresponding Omeka S item page.
+
+Dashboards are generated for: Research Sections (6), Projects (36), People (877), Institutions (232), Locations (161), Subjects (1076), Resource Types (11), Languages (28), Genres (124).
 
 ## Installation
 
@@ -104,8 +109,7 @@ ResourceVisualizations/
 │   │   └── resource-visualizations.css # Styles with CSS custom properties
 │   └── data/
 │       ├── knowledge-graphs/           # Pre-computed graph JSON (per item)
-│       ├── section-dashboards/         # Pre-computed section JSON (6 files)
-│       └── project-dashboards/         # Pre-computed project JSON (~36 files)
+│       └── item-dashboards/            # Pre-computed dashboard JSON (all entity types)
 └── scripts/
     ├── precompute-graphs.py            # Generate knowledge graph JSON
     └── precompute-dashboards.py        # Generate section + project JSON

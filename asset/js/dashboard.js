@@ -384,23 +384,47 @@
     /*  Chart config                                                       */
     /* ------------------------------------------------------------------ */
 
+    function buildMiniMap(el, data, siteBase) {
+        if (!data || !data.lat || typeof maplibregl === 'undefined') return null;
+        el.style.borderRadius = '6px';
+        var map = new maplibregl.Map({
+            container: el,
+            style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+            center: [data.lon, data.lat],
+            zoom: 4,
+            attributionControl: false,
+        });
+        map.addControl(new maplibregl.NavigationControl(), 'top-right');
+        new maplibregl.Marker({ color: '#22817b' })
+            .setLngLat([data.lon, data.lat])
+            .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML('<strong>' + (data.name || '') + '</strong>'))
+            .addTo(map);
+        return { resize: function () { map.resize(); } };
+    }
+
     var CHART_MAP = {
+        'selfLocation': buildMiniMap,
         'timeline': buildTimeline,
         'types': buildPieChart,
         'locations': buildMap,
         'languages': buildBarChart,
         'subjects': buildWordCloud,
         'contributors': buildBarChart,
+        'coAuthors': buildBarChart,
+        'coSubjects': buildBarChart,
         'projects': buildBarChart
     };
 
     var CHART_LABELS = {
+        'selfLocation': 'Location',
         'timeline': 'Timeline',
         'types': 'Resource Types',
         'languages': 'Languages',
         'subjects': 'Subjects',
         'contributors': 'Top Associated Persons',
         'locations': 'Geographic Origins',
+        'coAuthors': 'Co-authors',
+        'coSubjects': 'Co-occurring Subjects',
         'projects': 'Items per Project'
     };
 
@@ -409,8 +433,11 @@
         'types': 'Distribution of items by resource type (audio, text, image, etc.).',
         'languages': 'Languages represented across all research items.',
         'subjects': 'Most frequent subject keywords across all items.',
+        'selfLocation': '',
         'locations': 'Geographic origins of research items, sized by number of items.',
         'contributors': 'Persons most frequently associated with research items.',
+        'coAuthors': 'Persons who most frequently appear alongside this person.',
+        'coSubjects': 'Subjects that most frequently appear alongside this one.',
         'projects': 'Number of research items collected per project in this section.'
     };
 
@@ -425,13 +452,15 @@
             + '</div>'
             + '<div class="dashboard-charts">';
 
-        var chartKeys = ['timeline', 'types', 'locations', 'languages', 'subjects', 'contributors', 'projects'];
+        var chartKeys = ['selfLocation', 'timeline', 'types', 'locations', 'languages', 'subjects', 'contributors', 'coAuthors', 'coSubjects', 'projects'];
         chartKeys.forEach(function (key) {
             var d = data[key];
             var hasData = Array.isArray(d) ? d.length > 0 : (d && Object.keys(d).length > 0);
             if (!hasData) return;
-            var wide = (key === 'subjects' || key === 'locations' || key === 'projects') ? ' chart-panel-wide' : '';
-            var tall = (key === 'subjects' || key === 'locations') ? ' chart-container-tall' : '';
+            var wideKeys = ['selfLocation', 'subjects', 'locations', 'projects', 'coSubjects'];
+            var tallKeys = ['selfLocation', 'subjects', 'locations'];
+            var wide = wideKeys.indexOf(key) >= 0 ? ' chart-panel-wide' : '';
+            var tall = tallKeys.indexOf(key) >= 0 ? ' chart-container-tall' : '';
             var desc = CHART_DESCRIPTIONS[key] || '';
             html += '<div class="chart-panel' + wide + '">'
                 + '<h4>' + (CHART_LABELS[key] || key) + '</h4>'
@@ -467,26 +496,16 @@
         var basePath = container.dataset.basePath || '';
         var siteBase = container.dataset.siteBase || '';
         var moduleBase = basePath + '/modules/ResourceVisualizations/asset/data/';
+        var url = moduleBase + 'item-dashboards/' + itemId + '.json';
 
-        // Try section dashboard, then project dashboard.
-        var paths = [
-            moduleBase + 'section-dashboards/' + itemId + '.json',
-            moduleBase + 'project-dashboards/' + itemId + '.json',
-        ];
-
-        function tryNext(index) {
-            if (index >= paths.length) { container.innerHTML = ''; return; }
-            fetch(paths[index]).then(function (r) {
-                if (!r.ok) throw new Error('not found');
-                return r.json();
-            }).then(function (data) {
-                if (!data || !data.totalItems) { container.innerHTML = ''; return; }
-                container.innerHTML = '';
-                renderDashboard(container, data, siteBase);
-            }).catch(function () { tryNext(index + 1); });
-        }
-
-        tryNext(0);
+        fetch(url).then(function (r) {
+            if (!r.ok) throw new Error('not found');
+            return r.json();
+        }).then(function (data) {
+            if (!data || !data.totalItems) { container.innerHTML = ''; return; }
+            container.innerHTML = '';
+            renderDashboard(container, data, siteBase);
+        }).catch(function () { container.innerHTML = ''; });
     }
 
     /* ------------------------------------------------------------------ */
