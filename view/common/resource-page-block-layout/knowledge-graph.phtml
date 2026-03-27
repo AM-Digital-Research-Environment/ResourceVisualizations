@@ -2,10 +2,9 @@
 /**
  * Knowledge Graph resource page block.
  *
- * Builds a force-directed graph from the item's linked resource values,
- * then discovers other research items sharing the same subjects, contributors,
- * project, or location. Shared items are connected to ALL matching resources,
- * creating a richly interconnected network.
+ * Renders a lightweight container. All data fetching and graph building
+ * happens asynchronously in JavaScript via the Omeka S REST API,
+ * so the page loads instantly.
  *
  * @var \Laminas\View\Renderer\PhpRenderer $this
  * @var \Omeka\Api\Representation\ItemRepresentation $resource
@@ -13,298 +12,8 @@
 
 $this->headScript()->appendFile($this->assetUrl('js/knowledge-graph.js', 'ResourceVisualizations'));
 
-// Property-to-category mapping for graph node grouping.
-// Properties mapped to null are excluded from the graph entirely.
-$propertyCategoryMap = [
-    'dcterms:creator'      => 'Person',
-    'dcterms:contributor'  => 'Person',
-    'foaf:member'          => 'Person',
-    'dcterms:subject'      => 'Subject',
-    'dcterms:spatial'      => 'Location',
-    'dcterms:provenance'   => 'Location',
-    'dcterms:isPartOf'     => 'Project',
-    'dcterms:format'       => 'Genre',
-    'dcterms:relation'     => 'Related Item',
-    'dcterms:hasPart'      => 'Related Item',
-    'dcterms:replaces'     => 'Related Item',
-    'dcterms:isReplacedBy' => 'Related Item',
-    'dcterms:hasVersion'   => 'Related Item',
-    'dcterms:isVersionOf'  => 'Related Item',
-    'dcterms:hasFormat'    => 'Related Item',
-    'frapo:isFundedBy'     => 'Institution',
-    // Excluded: not meaningful for graph relationships.
-    'dcterms:language'     => null,
-    'dcterms:type'         => null,
-    'dcterms:audience'     => null,
-    'dcterms:license'      => null,
-    'dcterms:accessRights' => null,
-    'dre:wisskiUrl'        => null,
-    'dre:mongoId'          => null,
-    'dre:id'               => null,
-    'dre:bitstream'        => null,
-    'dre:security'         => null,
-    'dre:rdspaceHandle'    => null,
-];
-
-// Properties worth discovering shared items for.
-$shareableTerms = [
-    'dcterms:subject',
-    'dcterms:isPartOf',
-    'dcterms:spatial',
-    'dcterms:creator',
-    'dcterms:contributor',
-];
-
-$itemId = $resource->id();
-$itemTitle = $resource->displayTitle();
-$resourceClass = $resource->resourceClass();
-$resourceClassName = $resourceClass ? $resourceClass->label() : 'Item';
 $siteSlug = $this->currentSite()->slug();
-
-// Helper to get site URL for a resource.
-$getSiteUrl = function ($res) use ($siteSlug) {
-    try {
-        return $res->siteUrl($siteSlug);
-    } catch (\Exception $e) {
-        return null;
-    }
-};
-
-// Center node.
-$nodes = [];
-$edges = [];
-$categories = [['name' => $resourceClassName]];
-$categoryMap = [$resourceClassName => 0];
-$seenNodes = [];
-$propertyLabels = [];
-
-// Map of center item's linked resource IDs to their node IDs (for shared-item matching).
-$centerLinkedResources = []; // resourceId => nodeId
-
-$nodes[] = [
-    'id'         => 'item_' . $itemId,
-    'name'       => $itemTitle,
-    'category'   => 0,
-    'symbolSize' => 45,
-    'isCenter'   => true,
-    'url'        => $getSiteUrl($resource),
-];
-
-// ------------------------------------------------------------------
-// Pass 1: direct relationships from this item's values.
-// ------------------------------------------------------------------
-// Collect shareable property filters for the single OR query in Pass 2.
-$propertyFilters = [];
-
-foreach ($resource->values() as $term => $propertyData) {
-    if (array_key_exists($term, $propertyCategoryMap)) {
-        $categoryName = $propertyCategoryMap[$term];
-    } elseif (strpos($term, 'marcrel:') === 0) {
-        $categoryName = 'Contributor';
-    } else {
-        continue;
-    }
-
-    if ($categoryName === null) {
-        continue;
-    }
-
-    $propertyLabel = $propertyData['property']->label();
-    $propertyLabels[$term] = $propertyLabel;
-
-    foreach ($propertyData['values'] as $value) {
-        $vr = $value->valueResource();
-        if (!$vr) {
-            continue;
-        }
-
-        $linkedId = $vr->id();
-        $nodeId = 'resource_' . $linkedId;
-
-        if (!isset($categoryMap[$categoryName])) {
-            $categoryMap[$categoryName] = count($categories);
-            $categories[] = ['name' => $categoryName];
-        }
-
-        if (!isset($seenNodes[$nodeId])) {
-            $seenNodes[$nodeId] = true;
-            $nodes[] = [
-                'id'         => $nodeId,
-                'name'       => $vr->displayTitle(),
-                'category'   => $categoryMap[$categoryName],
-                'symbolSize' => 22,
-                'url'        => $getSiteUrl($vr),
-            ];
-        }
-
-        $edges[] = [
-            'source' => 'item_' . $itemId,
-            'target' => $nodeId,
-            'name'   => $propertyLabel,
-        ];
-
-        // Record shareable resources for Pass 2.
-        $isShareable = in_array($term, $shareableTerms) || strpos($term, 'marcrel:') === 0;
-        if ($isShareable) {
-            $centerLinkedResources[$linkedId] = $nodeId;
-            $propertyFilters[] = [
-                'property' => $term,
-                'type'     => 'res',
-                'text'     => (string) $linkedId,
-                'joiner'   => 'or',
-            ];
-        }
-    }
-}
-
-// ------------------------------------------------------------------
-// Pass 1.5: reverse lookups — items that link TO this resource.
-// ------------------------------------------------------------------
-$reverseProperties = [
-    'dcterms:isPartOf'    => 'Project',
-    'dcterms:creator'     => 'Shared Item',
-    'dcterms:contributor' => 'Shared Item',
-    'foaf:member'         => 'Shared Item',
-];
-
-foreach ($reverseProperties as $reverseTerm => $reverseCatName) {
-    try {
-        $response = $this->api()->search('items', [
-            'property' => [
-                [
-                    'property' => $reverseTerm,
-                    'type'     => 'res',
-                    'text'     => (string) $itemId,
-                ],
-            ],
-            'per_page' => 25,
-        ]);
-    } catch (\Exception $e) {
-        continue;
-    }
-
-    $reverseItems = $response->getContent();
-    if (empty($reverseItems)) {
-        continue;
-    }
-
-    if (!isset($categoryMap[$reverseCatName])) {
-        $categoryMap[$reverseCatName] = count($categories);
-        $categories[] = ['name' => $reverseCatName];
-    }
-    $reverseCatIdx = $categoryMap[$reverseCatName];
-
-    foreach ($reverseItems as $reverseItem) {
-        $rid = $reverseItem->id();
-        $reverseNodeId = 'item_' . $rid;
-
-        if (!isset($seenNodes[$reverseNodeId])) {
-            $seenNodes[$reverseNodeId] = true;
-            $nodes[] = [
-                'id'         => $reverseNodeId,
-                'name'       => $reverseItem->displayTitle(),
-                'category'   => $reverseCatIdx,
-                'symbolSize' => 22,
-                'url'        => $getSiteUrl($reverseItem),
-            ];
-        }
-
-        $edges[] = [
-            'source' => $reverseNodeId,
-            'target' => 'item_' . $itemId,
-            'name'   => $reverseTerm,
-        ];
-    }
-}
-
-// ------------------------------------------------------------------
-// Pass 2: discover items sharing the same linked resources.
-//
-// A single OR query finds all candidate items. Then each candidate's
-// values are checked against the center item's linked resources so that
-// shared items connect to EVERY matching property node.
-// ------------------------------------------------------------------
-if (!empty($propertyFilters)) {
-    if (!isset($categoryMap['Shared Item'])) {
-        $categoryMap['Shared Item'] = count($categories);
-        $categories[] = ['name' => 'Shared Item'];
-    }
-    $sharedCatIdx = $categoryMap['Shared Item'];
-
-    try {
-        $response = $this->api()->search('items', [
-            'property' => $propertyFilters,
-            'per_page' => 40,
-        ]);
-        $candidates = $response->getContent();
-    } catch (\Exception $e) {
-        $candidates = [];
-    }
-
-    foreach ($candidates as $candidate) {
-        $cid = $candidate->id();
-        if ($cid === $itemId) {
-            continue;
-        }
-
-        $candidateNodeId = 'item_' . $cid;
-
-        // Check ALL of this candidate's values against center item's resources.
-        $matchedEdges = [];
-        foreach ($candidate->values() as $term => $propData) {
-            $label = $propData['property']->label();
-            foreach ($propData['values'] as $val) {
-                $vr = $val->valueResource();
-                if (!$vr) {
-                    continue;
-                }
-                $vrId = $vr->id();
-                if (isset($centerLinkedResources[$vrId])) {
-                    $edgeKey = $candidateNodeId . '>' . $centerLinkedResources[$vrId];
-                    if (!isset($matchedEdges[$edgeKey])) {
-                        $matchedEdges[$edgeKey] = [
-                            'source'   => $candidateNodeId,
-                            'target'   => $centerLinkedResources[$vrId],
-                            'name'     => $label,
-                            'isShared' => true,
-                        ];
-                    }
-                }
-            }
-        }
-
-        if (empty($matchedEdges)) {
-            continue;
-        }
-
-        // Add node if not already present (may exist from Pass 1.5).
-        if (!isset($seenNodes[$candidateNodeId])) {
-            $seenNodes[$candidateNodeId] = true;
-            $nodes[] = [
-                'id'         => $candidateNodeId,
-                'name'       => $candidate->displayTitle(),
-                'category'   => $sharedCatIdx,
-                'symbolSize' => 16,
-                'url'        => $getSiteUrl($candidate),
-            ];
-        }
-
-        foreach ($matchedEdges as $edge) {
-            $edges[] = $edge;
-        }
-    }
-}
-
-// Only render when there are relationships to show.
-if (count($nodes) <= 1) {
-    return;
-}
-
-$graphData = json_encode([
-    'nodes'      => $nodes,
-    'edges'      => $edges,
-    'categories' => $categories,
-], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+$resourceClass = $resource->resourceClass();
 ?>
 
 <div class="resource-vis-block knowledge-graph-block">
@@ -315,6 +24,13 @@ $graphData = json_encode([
         </button>
     </div>
     <div class="knowledge-graph-container"
-         data-graph="<?= $this->escapeHtmlAttr($graphData) ?>">
+         data-item-id="<?= $resource->id() ?>"
+         data-api-base="<?= $this->escapeHtmlAttr($this->basePath() . '/api') ?>"
+         data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>"
+         data-resource-class="<?= $this->escapeHtmlAttr($resourceClass ? $resourceClass->term() : '') ?>">
+        <div class="rv-loading">
+            <div class="rv-spinner"></div>
+            <span><?= $this->translate('Loading knowledge graph…') ?></span>
+        </div>
     </div>
 </div>

@@ -159,6 +159,45 @@
 }
 
 /* ------------------------------------------------------------------ */
+/*  Loading / error states                                             */
+/* ------------------------------------------------------------------ */
+
+.rv-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 0.75rem;
+    color: var(--rv-text-color);
+    font-size: 0.9rem;
+}
+
+.rv-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--rv-border);
+    border-top-color: var(--rv-accent);
+    border-radius: 50%;
+    animation: rv-spin 0.8s linear infinite;
+}
+
+@keyframes rv-spin {
+    to { transform: rotate(360deg); }
+}
+
+.rv-no-data,
+.rv-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--rv-text-color);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* ------------------------------------------------------------------ */
 /*  Responsive                                                         */
 /* ------------------------------------------------------------------ */
 
