@@ -6,30 +6,40 @@ An [Omeka S](https://omeka.org/s/) module that adds interactive visualizations t
 
 ### Knowledge Graph (Item Pages)
 
-A force-directed network showing the item's relationships — linked persons, subjects, locations, projects — plus other items sharing the same properties. Pre-computed for instant loading.
+A force-directed network showing the item's relationships. For items with rich outgoing links (research items, projects, people), shows linked persons, subjects, locations, and other items sharing the same properties. For items that are primarily linked TO (subjects, languages, locations, genres), shows the research items that reference them.
 
+- Pre-computed JSON for instant loading (6,146 graphs)
 - Click any node to navigate to its Omeka S page
 - Fullscreen mode (Escape to exit)
 - Adjacency highlighting on hover
+- Node cap (150 direct + 30 shared) prevents overload on highly-connected entities
 
 ### Visualizations Dashboard (Item Pages)
 
-For items using any recognized resource template (Research Sections, Projects, Persons, Locations, Subjects, Languages, Genres, Resource Types, Institutions), displays contextual charts:
+Contextual charts adapted per entity type. All chart elements are clickable, linking to the corresponding Omeka S item page. 2,551 dashboards pre-computed across all entity types.
 
-- **Timeline** — items collected per year
-- **Resource Types** — pie chart distribution
-- **Geographic Origins** — MapLibre GL map with clustered markers
-- **Languages** — horizontal bar chart
-- **Subjects** — word cloud
-- **Top Associated Persons** — bar chart
-- **Items per Project** — bar chart (sections only)
-- **Co-authors** — bar chart (people only)
-- **Co-occurring Subjects** — bar chart (subjects only)
-- **Self-location MiniMap** — single marker (locations only)
+#### Charts by Entity Type
 
-All chart elements are clickable, linking to the corresponding Omeka S item page.
+| Chart | Sections | Projects | People | Institutions | Locations | Subjects | Languages | Types | Genres |
+|---|---|---|---|---|---|---|---|---|---|
+| Stacked Timeline | x | x | | | | | | | |
+| Timeline | x | x | x | x | x | x | x | x | x |
+| Gantt (project timelines) | x | | | | | | | | |
+| Resource Types (pie) | x | x | x | x | x | x | x | | x |
+| Heatmap (type x language) | x | x | | | | | | | |
+| Sankey (contributor > project > type) | x | x | | | | | | | |
+| Sunburst (type > language > subject) | x | x | | | | | | | |
+| Geographic Origins (map) | x | x | x | x | | | x | x | |
+| Self-location MiniMap | | | | | x | | | | |
+| Languages | x | x | x | x | x | x | | x | x |
+| Subjects (word cloud) | x | x | x | x | x | | x | x | |
+| Subject Co-occurrence (chord) | x | x | | | | | | | |
+| Top Associated Persons | x | x | | x | x | x | x | x | x |
+| Co-authors | | | x | | | | | | |
+| Co-occurring Subjects | | | | | | x | | | |
+| Items per Project | x | | | | | | | | |
 
-Dashboards are generated for: Research Sections (6), Projects (36), People (877), Institutions (232), Locations (161), Subjects (1076), Resource Types (11), Languages (28), Genres (124).
+Maps include fullscreen mode, clustered markers sized by item count, and paginated popups listing associated items with links.
 
 ## Installation
 
@@ -60,15 +70,15 @@ Visualizations load from pre-computed JSON files stored in the module's `asset/d
 
 ### Knowledge Graphs
 
-Generates one JSON file per item (~4000 files):
+Generates one JSON file per item (~6,000 files):
 
 ```bash
 python3 scripts/precompute-graphs.py
 ```
 
-### Section & Project Dashboards
+### Dashboards (all entity types)
 
-Generates dashboard JSON for research sections and projects:
+Generates dashboard JSON for sections, projects, people, institutions, locations, subjects, languages, resource types, and genres (~2,500 files):
 
 ```bash
 python3 scripts/precompute-dashboards.py
@@ -100,19 +110,21 @@ ResourceVisualizations/
 │   ├── knowledge-graph.phtml           # Lightweight async container
 │   ├── linked-items-dashboard.phtml    # Lightweight async container
 │   ├── item-set-dashboard.phtml        # Server-side rendered
-│   └── partials/dashboard-charts.phtml # Shared chart rendering
+│   └── partials/dashboard-charts.phtml # Shared chart rendering (inline mode)
 ├── asset/
 │   ├── js/
-│   │   ├── knowledge-graph.js          # Graph loading + ECharts rendering
-│   │   └── dashboard.js                # Dashboard loading + charts + map
+│   │   ├── knowledge-graph.js          # Graph: precomputed JSON + API fallback
+│   │   └── dashboard.js                # All chart builders + async loading
 │   ├── css/
 │   │   └── resource-visualizations.css # Styles with CSS custom properties
 │   └── data/
-│       ├── knowledge-graphs/           # Pre-computed graph JSON (per item)
-│       └── item-dashboards/            # Pre-computed dashboard JSON (all entity types)
-└── scripts/
-    ├── precompute-graphs.py            # Generate knowledge graph JSON
-    └── precompute-dashboards.py        # Generate section + project JSON
+│       ├── knowledge-graphs/           # Pre-computed graph JSON (~6,000 files)
+│       └── item-dashboards/            # Pre-computed dashboard JSON (~2,500 files)
+├── scripts/
+│   ├── precompute-graphs.py            # Generate knowledge graph JSON
+│   └── precompute-dashboards.py        # Generate dashboard JSON (all entities)
+├── ROADMAP.md                          # Full visualization roadmap
+└── README.md
 ```
 
 ## Theming
