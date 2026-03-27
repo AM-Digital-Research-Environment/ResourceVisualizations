@@ -25,9 +25,9 @@ $resourceClass = $resource->resourceClass();
     </div>
     <div class="knowledge-graph-container"
          data-item-id="<?= $resource->id() ?>"
+         data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
          data-api-base="<?= $this->escapeHtmlAttr($this->basePath() . '/api') ?>"
-         data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>"
-         data-resource-class="<?= $this->escapeHtmlAttr($resourceClass ? $resourceClass->term() : '') ?>">
+         data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">
         <div class="rv-loading">
             <div class="rv-spinner"></div>
             <span><?= $this->translate('Loading knowledge graph…') ?></span>
