@@ -139,8 +139,12 @@
                     return {
                         id: nd.id, name: nd.name, category: nd.category, url: nd.url || null,
                         symbolSize: nd.symbolSize,
-                        label: { show: !!nd.isCenter, fontSize: nd.isCenter ? 14 : 11, fontWeight: nd.isCenter ? 'bold' : 'normal' },
-                        emphasis: { label: { show: true, fontSize: 12, fontWeight: 'bold' } },
+                        label: {
+                            show: !!nd.isCenter, fontSize: nd.isCenter ? 14 : 11,
+                            fontWeight: nd.isCenter ? 'bold' : 'normal',
+                            width: 150, overflow: 'break'
+                        },
+                        emphasis: { label: { show: true, fontSize: 12, fontWeight: 'bold', width: 180, overflow: 'break' } },
                         itemStyle: nd.isCenter
                             ? { borderColor: '#333', borderWidth: 3, shadowBlur: 8, shadowColor: 'rgba(0,0,0,0.2)' }
                             : sh ? { opacity: 0.85 } : { borderColor: '#fff', borderWidth: 1 }

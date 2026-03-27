@@ -123,6 +123,21 @@
     font-weight: 600;
     color: var(--rv-heading-color);
     margin: 0 0 0.5rem;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.dashboard-header h3,
+.resource-vis-block h3 {
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.chart-description {
+    font-size: 0.82rem;
+    color: var(--rv-text-color);
+    margin: 0 0 0.5rem;
+    line-height: 1.4;
 }
 
 .chart-container {

@@ -11,12 +11,14 @@
  */
 
 $this->headScript()->appendFile($this->assetUrl('js/dashboard.js', 'ResourceVisualizations'));
+$siteSlug = $this->currentSite()->slug();
 ?>
 
 <div class="resource-vis-block dashboard-block">
     <div class="dashboard-async-container"
          data-item-id="<?= $resource->id() ?>"
-         data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>">
+         data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
+         data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">
         <div class="rv-loading">
             <div class="rv-spinner"></div>
             <span><?= $this->translate('Loading dashboard…') ?></span>

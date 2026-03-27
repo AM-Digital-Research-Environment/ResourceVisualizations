@@ -62,6 +62,7 @@ def query_mysql(sql, password):
     cmd = [
         'docker', 'compose', 'exec', '-T', 'db',
         'mysql', f'-u{DB_USER}', f'-p{password}', DB_NAME,
+        '--default-character-set=utf8mb4',
         '--batch', '--skip-column-names', '-e', sql,
     ]
     result = subprocess.run(cmd, capture_output=True, cwd=OMEKA_DIR)

@@ -48,6 +48,7 @@ def query_mysql(sql):
     cmd = [
         'docker', 'compose', 'exec', '-T', 'db',
         'mysql', f'-u{DB_USER}', f'-p{password}', DB_NAME,
+        '--default-character-set=utf8mb4',
         '--batch', '--skip-column-names', '-e', sql,
     ]
     result = subprocess.run(cmd, capture_output=True, cwd=OMEKA_DIR)
@@ -155,61 +156,67 @@ def main():
 
         # Find research items in those projects.
         item_ids = []
-        items_per_project = {}
+        items_per_project = []
         for pid in project_ids:
             proj_items = children_of.get(pid, [])
             item_ids.extend(proj_items)
             proj_title = titles.get(pid, f'Project {pid}')
             if proj_items:
-                items_per_project[proj_title] = len(proj_items)
+                items_per_project.append({'name': proj_title, 'value': len(proj_items), 'itemId': pid})
 
         print(f'  {len(item_ids)} research items')
 
         if not item_ids:
             continue
 
-        # Aggregate data.
+        # Aggregate data — track both count and item ID for click-to-navigate.
         timeline = {}
-        types = {}
+        types = {}       # vrid -> {name, count}
         languages = {}
         subjects = {}
         contributors = {}
 
         for iid in item_ids:
-            # Timeline
             year = item_year.get(iid)
             if year:
                 timeline[year] = timeline.get(year, 0) + 1
 
-            # Properties
             for term, label, vrid in links_by_resource.get(iid, []):
                 vr_title = titles.get(vrid, '')
                 if not vr_title:
                     continue
 
                 if term == 'dcterms:type':
-                    types[vr_title] = types.get(vr_title, 0) + 1
+                    if vrid not in types:
+                        types[vrid] = {'name': vr_title, 'value': 0, 'itemId': vrid}
+                    types[vrid]['value'] += 1
                 elif term == 'dcterms:language':
-                    languages[vr_title] = languages.get(vr_title, 0) + 1
+                    if vrid not in languages:
+                        languages[vrid] = {'name': vr_title, 'value': 0, 'itemId': vrid}
+                    languages[vrid]['value'] += 1
                 elif term == 'dcterms:subject':
-                    subjects[vr_title] = subjects.get(vr_title, 0) + 1
+                    if vrid not in subjects:
+                        subjects[vrid] = {'name': vr_title, 'value': 0, 'itemId': vrid}
+                    subjects[vrid]['value'] += 1
                 elif term in ('dcterms:creator', 'dcterms:contributor') or term.startswith('marcrel:'):
-                    contributors[vr_title] = contributors.get(vr_title, 0) + 1
+                    if vrid not in contributors:
+                        contributors[vrid] = {'name': vr_title, 'value': 0, 'itemId': vrid}
+                    contributors[vrid]['value'] += 1
 
-        # Sort and trim.
+        # Sort and trim — output as arrays of {name, value, itemId}.
         timeline = dict(sorted(timeline.items()))
-        types = dict(sorted(types.items(), key=lambda x: -x[1]))
-        languages = dict(sorted(languages.items(), key=lambda x: -x[1]))
-        subjects = dict(sorted(subjects.items(), key=lambda x: -x[1])[:60])
-        contributors = dict(sorted(contributors.items(), key=lambda x: -x[1])[:30])
-        items_per_project = dict(sorted(items_per_project.items(), key=lambda x: -x[1]))
+        types_list = sorted(types.values(), key=lambda x: -x['value'])
+        languages_list = sorted(languages.values(), key=lambda x: -x['value'])
+        subjects_list = sorted(subjects.values(), key=lambda x: -x['value'])[:60]
+        contributors_list = sorted(contributors.values(), key=lambda x: -x['value'])[:30]
+        items_per_project.sort(key=lambda x: -x['value'])
 
         dashboard = {
             'timeline': timeline,
-            'types': types,
-            'languages': languages,
-            'subjects': subjects,
-            'contributors': contributors,
+            'types': types_list,
+            'languages': languages_list,
+            'subjects': subjects_list,
+            'contributors': contributors_list,
             'projects': items_per_project,
             'totalItems': len(item_ids),
         }
