@@ -220,7 +220,7 @@
             attributionControl: false,
         });
         map.addControl(new maplibregl.NavigationControl(), 'top-right');
-        map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+        map.addControl(new maplibregl.AttributionControl({ compact: true, collapsed: true }), 'bottom-right');
 
         map.on('load', function () {
             var features = data.map(function (loc) {
@@ -309,24 +309,32 @@
             });
 
             // Popups on point click — show paginated item list.
+            var activePopup = null;
             map.on('click', 'points', function (e) {
+                if (activePopup) activePopup.remove();
                 var props = e.features[0].properties;
                 var locItems = locationItems[props.name] || [];
                 var perPage = 8;
-                var html = buildMapPopup(props, locItems, 0, perPage, siteBase);
 
-                var popup = new maplibregl.Popup({ offset: 12, maxWidth: '320px', className: 'rv-map-popup' })
+                activePopup = new maplibregl.Popup({ offset: 12, maxWidth: '320px', className: 'rv-map-popup' })
                     .setLngLat(e.lngLat)
-                    .setHTML(html)
+                    .setHTML(buildMapPopup(props, locItems, 0, perPage, siteBase))
                     .addTo(map);
 
-                // Pagination click handler.
-                popup.getElement().addEventListener('click', function (evt) {
-                    var btn = evt.target.closest('[data-page]');
-                    if (!btn) return;
-                    var page = parseInt(btn.dataset.page, 10);
-                    popup.setHTML(buildMapPopup(props, locItems, page, perPage, siteBase));
-                });
+                function attachPageHandlers() {
+                    var el = activePopup.getElement();
+                    if (!el) return;
+                    var buttons = el.querySelectorAll('[data-page]');
+                    buttons.forEach(function (btn) {
+                        btn.addEventListener('click', function (evt) {
+                            evt.stopPropagation();
+                            var page = parseInt(btn.dataset.page, 10);
+                            activePopup.setHTML(buildMapPopup(props, locItems, page, perPage, siteBase));
+                            attachPageHandlers();
+                        });
+                    });
+                }
+                attachPageHandlers();
             });
 
             // Zoom into cluster on click.

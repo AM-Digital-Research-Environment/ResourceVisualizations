@@ -213,6 +213,20 @@
 }
 
 /* ------------------------------------------------------------------ */
+/*  Map attribution                                                    */
+/* ------------------------------------------------------------------ */
+
+.chart-panel .maplibregl-ctrl-attrib:not(.maplibregl-compact-show) {
+    background: none;
+    padding: 0;
+}
+
+.chart-panel .maplibregl-ctrl-attrib:not(.maplibregl-compact-show) a,
+.chart-panel .maplibregl-ctrl-attrib:not(.maplibregl-compact-show) span {
+    display: none;
+}
+
+/* ------------------------------------------------------------------ */
 /*  Map popups                                                         */
 /* ------------------------------------------------------------------ */
 
