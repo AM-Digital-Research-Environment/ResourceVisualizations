@@ -220,6 +220,7 @@
             attributionControl: false,
         });
         map.addControl(new maplibregl.NavigationControl(), 'top-right');
+        map.addControl(new maplibregl.FullscreenControl(), 'top-right');
         map.addControl(new maplibregl.AttributionControl({ compact: true, collapsed: true }), 'bottom-right');
 
         map.on('load', function () {
@@ -624,6 +625,7 @@
             attributionControl: false,
         });
         map.addControl(new maplibregl.NavigationControl(), 'top-right');
+        map.addControl(new maplibregl.FullscreenControl(), 'top-right');
         new maplibregl.Marker({ color: '#22817b' })
             .setLngLat([data.lon, data.lat])
             .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML('<strong>' + (data.name || '') + '</strong>'))
