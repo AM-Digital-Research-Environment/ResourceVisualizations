@@ -201,7 +201,7 @@
         'types': 'Resource Types',
         'languages': 'Languages',
         'subjects': 'Subjects',
-        'contributors': 'Top Contributors',
+        'contributors': 'Top Associated Persons',
         'projects': 'Items per Project'
     };
 
@@ -210,7 +210,7 @@
         'types': 'Distribution of items by resource type (audio, text, image, etc.).',
         'languages': 'Languages represented across all research items.',
         'subjects': 'Most frequent subject keywords across all items.',
-        'contributors': 'Researchers and contributors with the most associated items.',
+        'contributors': 'Persons most frequently associated with research items.',
         'projects': 'Number of research items collected per project in this section.'
     };
 
@@ -266,16 +266,27 @@
         var itemId = container.dataset.itemId;
         var basePath = container.dataset.basePath || '';
         var siteBase = container.dataset.siteBase || '';
-        var url = basePath + '/modules/ResourceVisualizations/asset/data/section-dashboards/' + itemId + '.json';
+        var moduleBase = basePath + '/modules/ResourceVisualizations/asset/data/';
 
-        fetch(url).then(function (r) {
-            if (!r.ok) throw new Error('not found');
-            return r.json();
-        }).then(function (data) {
-            if (!data || !data.totalItems) { container.innerHTML = ''; return; }
-            container.innerHTML = '';
-            renderDashboard(container, data, siteBase);
-        }).catch(function () { container.innerHTML = ''; });
+        // Try section dashboard, then project dashboard.
+        var paths = [
+            moduleBase + 'section-dashboards/' + itemId + '.json',
+            moduleBase + 'project-dashboards/' + itemId + '.json',
+        ];
+
+        function tryNext(index) {
+            if (index >= paths.length) { container.innerHTML = ''; return; }
+            fetch(paths[index]).then(function (r) {
+                if (!r.ok) throw new Error('not found');
+                return r.json();
+            }).then(function (data) {
+                if (!data || !data.totalItems) { container.innerHTML = ''; return; }
+                container.innerHTML = '';
+                renderDashboard(container, data, siteBase);
+            }).catch(function () { tryNext(index + 1); });
+        }
+
+        tryNext(0);
     }
 
     /* ------------------------------------------------------------------ */
