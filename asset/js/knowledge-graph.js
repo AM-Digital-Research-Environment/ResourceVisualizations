@@ -1,8 +1,8 @@
 /**
  * Knowledge Graph visualization using ECharts force-directed graph.
  *
- * Reads graph data from the container's data-graph attribute and renders
- * an interactive force-directed network.
+ * Renders an interactive network with the current item at the center,
+ * its direct linked resources, and other items sharing those resources.
  */
 (function () {
     'use strict';
@@ -27,11 +27,16 @@
         if (!data.nodes || data.nodes.length < 2) return;
 
         var chart = echarts.init(container);
+        var nodeCount = data.nodes.length;
 
         // Assign colors to categories.
         data.categories.forEach(function (cat, i) {
             cat.itemStyle = { color: COLORS[i % COLORS.length] };
         });
+
+        // Scale force parameters based on node count.
+        var repulsion = nodeCount > 50 ? 500 : nodeCount > 20 ? 400 : 300;
+        var edgeLengthRange = nodeCount > 50 ? [80, 280] : [60, 200];
 
         var option = {
             tooltip: {
@@ -81,14 +86,20 @@
                         source: e.source,
                         target: e.target,
                         name: e.name,
-                        lineStyle: { color: '#aaa', curveness: 0.1 }
+                        lineStyle: {
+                            color: e.isShared ? '#d0d0d0' : '#aaa',
+                            type: e.isShared ? 'dashed' : 'solid',
+                            width: e.isShared ? 1 : 1.5,
+                            curveness: 0.1,
+                            opacity: e.isShared ? 0.4 : 0.6
+                        }
                     };
                 }),
                 categories: data.categories,
                 force: {
-                    repulsion: 300,
+                    repulsion: repulsion,
                     gravity: 0.08,
-                    edgeLength: [60, 200],
+                    edgeLength: edgeLengthRange,
                     friction: 0.6
                 },
                 roam: true,
@@ -109,7 +120,7 @@
                     width: 1.5
                 },
                 scaleLimit: {
-                    min: 0.3,
+                    min: 0.2,
                     max: 5
                 }
             }]
