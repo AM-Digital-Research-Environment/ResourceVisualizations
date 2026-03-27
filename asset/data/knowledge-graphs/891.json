@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_891","name":"Cole, Archie","category":0,"symbolSize":45,"isCenter":true,"itemId":891},{"id":"item_8138","name":"Christofest","category":1,"symbolSize":16,"itemId":8138}],"edges":[{"source":"item_8138","target":"item_891","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

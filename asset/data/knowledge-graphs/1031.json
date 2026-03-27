@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1031","name":"Kugmeh, Patrick E.","category":0,"symbolSize":45,"isCenter":true,"itemId":1031},{"id":"item_8226","name":"LFA Today","category":1,"symbolSize":16,"itemId":8226}],"edges":[{"source":"item_8226","target":"item_1031","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

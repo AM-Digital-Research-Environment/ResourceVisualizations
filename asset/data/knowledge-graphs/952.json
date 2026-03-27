@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_952","name":"George, P. Amos Jr.","category":0,"symbolSize":45,"isCenter":true,"itemId":952},{"id":"item_8030","name":"Election 85","category":1,"symbolSize":16,"itemId":8030}],"edges":[{"source":"item_8030","target":"item_952","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

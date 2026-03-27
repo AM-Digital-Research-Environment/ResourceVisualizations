@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1104","name":"Rancy, John G.","category":0,"symbolSize":45,"isCenter":true,"itemId":1104},{"id":"item_8377","name":"Untitled","category":1,"symbolSize":16,"itemId":8377}],"edges":[{"source":"item_8377","target":"item_1104","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

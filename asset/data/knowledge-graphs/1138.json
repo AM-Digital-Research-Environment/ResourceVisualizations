@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1138","name":"Shannon, Eugene H.","category":0,"symbolSize":45,"isCenter":true,"itemId":1138},{"id":"item_8351","name":"Special Feature","category":1,"symbolSize":16,"itemId":8351}],"edges":[{"source":"item_8351","target":"item_1138","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

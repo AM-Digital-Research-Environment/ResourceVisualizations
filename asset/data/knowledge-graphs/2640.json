@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2640","name":"Economic Updates","category":0,"symbolSize":45,"isCenter":true,"itemId":2640},{"id":"item_8187","name":"Untitled","category":1,"symbolSize":16,"itemId":8187}],"edges":[{"source":"item_8187","target":"item_2640","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

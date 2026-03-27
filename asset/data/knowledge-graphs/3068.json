@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_3068","name":"Silberschmied","category":0,"symbolSize":45,"isCenter":true,"itemId":3068},{"id":"item_9802","name":"Ohne Titel","category":1,"symbolSize":16,"itemId":9802}],"edges":[{"source":"item_9802","target":"item_3068","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

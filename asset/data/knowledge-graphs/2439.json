@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2439","name":"Accessioning (Works of Art)","category":0,"symbolSize":45,"isCenter":true,"itemId":2439},{"id":"item_7573","name":"Diakästen im Haus in Lissabon","category":1,"symbolSize":16,"itemId":7573}],"edges":[{"source":"item_7573","target":"item_2439","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

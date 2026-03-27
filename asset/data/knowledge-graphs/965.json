@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_965","name":"Grey, Enid","category":0,"symbolSize":45,"isCenter":true,"itemId":965},{"id":"item_8067","name":"Ministry of Hope","category":1,"symbolSize":16,"itemId":8067}],"edges":[{"source":"item_8067","target":"item_965","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

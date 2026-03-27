@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2504","name":"Baronga","category":0,"symbolSize":45,"isCenter":true,"itemId":2504},{"id":"item_9340","name":"The Wonder-Worker of the Plains","category":1,"symbolSize":16,"itemId":9340}],"edges":[{"source":"item_9340","target":"item_2504","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

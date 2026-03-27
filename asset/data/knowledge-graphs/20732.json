@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_20732","name":"Health Cooperation","category":0,"symbolSize":45,"isCenter":true,"itemId":20732},{"id":"item_9983","name":"Mémoire sur le PADS","category":1,"symbolSize":16,"itemId":9983}],"edges":[{"source":"item_9983","target":"item_20732","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

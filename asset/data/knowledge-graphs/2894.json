@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2894","name":"Mask Collection","category":0,"symbolSize":45,"isCenter":true,"itemId":2894},{"id":"item_7576","name":"Maskensammlung im Haus in Lissabon","category":1,"symbolSize":16,"itemId":7576}],"edges":[{"source":"item_7576","target":"item_2894","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

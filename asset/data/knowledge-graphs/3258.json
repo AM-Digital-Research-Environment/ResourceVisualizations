@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_3258","name":"filmography","category":0,"symbolSize":45,"isCenter":true,"itemId":3258},{"id":"item_9981","name":"Vidéo d'un panel d'échange","category":1,"symbolSize":16,"itemId":9981}],"edges":[{"source":"item_9981","target":"item_3258","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1569","name":"Dembo Film Service","category":0,"symbolSize":45,"isCenter":true,"itemId":1569},{"id":"item_8145","name":"Inside LEC's power supply source","category":1,"symbolSize":16,"itemId":8145}],"edges":[{"source":"item_8145","target":"item_1569","name":"references"}],"categories":[{"name":"Organization"},{"name":"Research Item"}]}

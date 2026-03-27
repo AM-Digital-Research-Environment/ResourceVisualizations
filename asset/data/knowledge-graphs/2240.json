@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2240","name":"Love","category":0,"symbolSize":45,"isCenter":true,"itemId":2240},{"id":"item_8021","name":"Dowry or Love, part 1","category":1,"symbolSize":16,"itemId":8021}],"edges":[{"source":"item_8021","target":"item_2240","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

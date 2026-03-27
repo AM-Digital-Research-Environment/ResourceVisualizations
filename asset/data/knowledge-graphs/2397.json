@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2397","name":"Cattle dogs","category":0,"symbolSize":45,"isCenter":true,"itemId":2397},{"id":"item_8658","name":"Farm visit W Germany","category":1,"symbolSize":16,"itemId":8658}],"edges":[{"source":"item_8658","target":"item_2397","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

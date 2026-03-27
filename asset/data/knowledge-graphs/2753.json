@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2753","name":"Harmonisation","category":0,"symbolSize":45,"isCenter":true,"itemId":2753},{"id":"item_9978","name":"Draft sur la cedeao et la santé globale","category":1,"symbolSize":16,"itemId":9978}],"edges":[{"source":"item_9978","target":"item_2753","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_974","name":"Hershay, Keith","category":0,"symbolSize":45,"isCenter":true,"itemId":974},{"id":"item_8219","name":"Celebration of Victory","category":1,"symbolSize":16,"itemId":8219}],"edges":[{"source":"item_8219","target":"item_974","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1260","name":"Swakara Board of Namibia","category":0,"symbolSize":45,"isCenter":true,"itemId":1260},{"id":"item_8700","name":"Documents from Swakara Board Archive in Windhoek","category":1,"symbolSize":16,"itemId":8700}],"edges":[{"source":"item_8700","target":"item_1260","name":"references"}],"categories":[{"name":"Organization"},{"name":"Research Item"}]}

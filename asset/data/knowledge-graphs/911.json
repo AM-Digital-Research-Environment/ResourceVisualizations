@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_911","name":"Doe, Jackson","category":0,"symbolSize":45,"isCenter":true,"itemId":911},{"id":"item_8370","name":"Spotlight on Social Security","category":1,"symbolSize":16,"itemId":8370}],"edges":[{"source":"item_8370","target":"item_911","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

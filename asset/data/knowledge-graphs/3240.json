@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_3240","name":"Documentary/Sport","category":0,"symbolSize":45,"isCenter":true,"itemId":3240},{"id":"item_8434","name":"Untitled","category":1,"symbolSize":16,"itemId":8434}],"edges":[{"source":"item_8434","target":"item_3240","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

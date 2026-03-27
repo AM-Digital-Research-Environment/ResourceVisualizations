@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2179","name":"Foreign news","category":0,"symbolSize":45,"isCenter":true,"itemId":2179},{"id":"item_8183","name":"ELTV Channel 6 News","category":1,"symbolSize":16,"itemId":8183}],"edges":[{"source":"item_8183","target":"item_2179","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

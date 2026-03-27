@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2601","name":"Cultural Program","category":0,"symbolSize":45,"isCenter":true,"itemId":2601},{"id":"item_8213","name":"Arts and Artists","category":1,"symbolSize":16,"itemId":8213}],"edges":[{"source":"item_8213","target":"item_2601","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

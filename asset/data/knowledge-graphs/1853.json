@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1853","name":"Acholi","category":0,"symbolSize":45,"isCenter":true,"itemId":1853},{"id":"item_7976","name":"Di Cwynyi","category":1,"symbolSize":16,"itemId":7976}],"edges":[{"source":"item_7976","target":"item_1853","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_897","name":"Cooper, Janice","category":0,"symbolSize":45,"isCenter":true,"itemId":897},{"id":"item_8286","name":"ELTV Week-in-Review","category":1,"symbolSize":16,"itemId":8286}],"edges":[{"source":"item_8286","target":"item_897","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

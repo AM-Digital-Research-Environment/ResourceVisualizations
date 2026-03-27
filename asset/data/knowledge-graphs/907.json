@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_907","name":"Dibango, Manu","category":0,"symbolSize":45,"isCenter":true,"itemId":907},{"id":"item_8175","name":"Heritage Productions","category":1,"symbolSize":16,"itemId":8175}],"edges":[{"source":"item_8175","target":"item_907","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

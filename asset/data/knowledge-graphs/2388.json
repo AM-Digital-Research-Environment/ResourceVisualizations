@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2388","name":"Work environment","category":0,"symbolSize":45,"isCenter":true,"itemId":2388},{"id":"item_8315","name":"The return of Bendu Sudan","category":1,"symbolSize":16,"itemId":8315}],"edges":[{"source":"item_8315","target":"item_2388","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1055","name":"M'Baye, A. B.","category":0,"symbolSize":45,"isCenter":true,"itemId":1055},{"id":"item_8054","name":"Roadways to Health","category":1,"symbolSize":16,"itemId":8054}],"edges":[{"source":"item_8054","target":"item_1055","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

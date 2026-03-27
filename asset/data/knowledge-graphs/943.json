@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_943","name":"Gargard, S. J. M.","category":0,"symbolSize":45,"isCenter":true,"itemId":943},{"id":"item_8156","name":"Patu Special","category":1,"symbolSize":16,"itemId":8156}],"edges":[{"source":"item_8156","target":"item_943","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

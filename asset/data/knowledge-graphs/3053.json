@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_3053","name":"Schmuckherstellung","category":0,"symbolSize":45,"isCenter":true,"itemId":3053},{"id":"item_9820","name":"Ohne Titel","category":1,"symbolSize":16,"itemId":9820}],"edges":[{"source":"item_9820","target":"item_3053","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

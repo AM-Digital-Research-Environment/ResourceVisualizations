@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2690","name":"Film","category":0,"symbolSize":45,"isCenter":true,"itemId":2690},{"id":"item_8169","name":"Untitled","category":1,"symbolSize":16,"itemId":8169}],"edges":[{"source":"item_8169","target":"item_2690","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

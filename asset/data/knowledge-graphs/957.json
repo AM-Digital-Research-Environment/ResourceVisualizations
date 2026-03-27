@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_957","name":"Giddens, James A.","category":0,"symbolSize":45,"isCenter":true,"itemId":957},{"id":"item_8152","name":"Special Feature","category":1,"symbolSize":16,"itemId":8152}],"edges":[{"source":"item_8152","target":"item_957","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

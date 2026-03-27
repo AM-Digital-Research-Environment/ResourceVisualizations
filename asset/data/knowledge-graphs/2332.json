@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2332","name":"Sheep","category":0,"symbolSize":45,"isCenter":true,"itemId":2332},{"id":"item_8662","name":"Farm visit U Germany","category":1,"symbolSize":16,"itemId":8662}],"edges":[{"source":"item_8662","target":"item_2332","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

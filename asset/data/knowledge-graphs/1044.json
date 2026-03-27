@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1044","name":"Lenthe, Hans-Rudolf","category":0,"symbolSize":45,"isCenter":true,"itemId":1044},{"id":"item_8486","name":"Agriculture","category":1,"symbolSize":16,"itemId":8486}],"edges":[{"source":"item_8486","target":"item_1044","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

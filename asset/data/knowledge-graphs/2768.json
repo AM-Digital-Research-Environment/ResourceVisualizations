@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2768","name":"Honoring Ceremony","category":0,"symbolSize":45,"isCenter":true,"itemId":2768},{"id":"item_8287","name":"Untitled","category":1,"symbolSize":16,"itemId":8287}],"edges":[{"source":"item_8287","target":"item_2768","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

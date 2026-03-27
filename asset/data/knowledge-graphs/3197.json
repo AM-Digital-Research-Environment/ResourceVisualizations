@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_3197","name":"Box of slides","category":0,"symbolSize":45,"isCenter":true,"itemId":3197},{"id":"item_7410","name":"Holzkasten mit Diapositiven","category":1,"symbolSize":16,"itemId":7410}],"edges":[{"source":"item_7410","target":"item_3197","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

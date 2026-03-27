@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_3302","name":"Playground","category":0,"symbolSize":45,"isCenter":true,"itemId":3302},{"id":"item_7496","name":"Kinderspielzeug von Georgina Beier entworfen","category":1,"symbolSize":16,"itemId":7496}],"edges":[{"source":"item_7496","target":"item_3302","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

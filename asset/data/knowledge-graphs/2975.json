@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2975","name":"Pentax Camera","category":0,"symbolSize":45,"isCenter":true,"itemId":2975},{"id":"item_7523","name":"Email von Georgina Beier","category":1,"symbolSize":16,"itemId":7523}],"edges":[{"source":"item_7523","target":"item_2975","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

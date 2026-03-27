@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2733","name":"Global North","category":0,"symbolSize":45,"isCenter":true,"itemId":2733},{"id":"item_8134","name":"ELTV Channel 6 News","category":1,"symbolSize":16,"itemId":8134}],"edges":[{"source":"item_8134","target":"item_2733","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

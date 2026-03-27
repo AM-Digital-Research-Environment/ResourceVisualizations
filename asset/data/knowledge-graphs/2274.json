@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2274","name":"Nuer (African people)","category":0,"symbolSize":45,"isCenter":true,"itemId":2274},{"id":"item_9316","name":"The Man and the Snake","category":1,"symbolSize":16,"itemId":9316}],"edges":[{"source":"item_9316","target":"item_2274","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

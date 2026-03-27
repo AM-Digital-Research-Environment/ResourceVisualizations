@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1757","name":"Tuesday Cottage Band Choir","category":0,"symbolSize":45,"isCenter":true,"itemId":1757},{"id":"item_8160","name":"The Gospel Time","category":1,"symbolSize":16,"itemId":8160}],"edges":[{"source":"item_8160","target":"item_1757","name":"references"}],"categories":[{"name":"Organization"},{"name":"Research Item"}]}

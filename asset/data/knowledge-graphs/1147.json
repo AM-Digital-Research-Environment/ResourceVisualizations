@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1147","name":"Smallwood, Ephram","category":0,"symbolSize":45,"isCenter":true,"itemId":1147},{"id":"item_8418","name":"Special Feature","category":1,"symbolSize":16,"itemId":8418}],"edges":[{"source":"item_8418","target":"item_1147","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

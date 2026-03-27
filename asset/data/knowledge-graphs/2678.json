@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2678","name":"Familienfotografie","category":0,"symbolSize":45,"isCenter":true,"itemId":2678},{"id":"item_9826","name":"Ohne Titel","category":1,"symbolSize":16,"itemId":9826}],"edges":[{"source":"item_9826","target":"item_2678","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

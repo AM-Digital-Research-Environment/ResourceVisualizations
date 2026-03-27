@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1108","name":"Reffell, Victoria","category":0,"symbolSize":45,"isCenter":true,"itemId":1108},{"id":"item_8030","name":"Election 85","category":1,"symbolSize":16,"itemId":8030}],"edges":[{"source":"item_8030","target":"item_1108","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

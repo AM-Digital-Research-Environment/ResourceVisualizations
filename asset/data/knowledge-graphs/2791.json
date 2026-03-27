@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2791","name":"India","category":0,"symbolSize":45,"isCenter":true,"itemId":2791},{"id":"item_9075","name":"Every (immune) person counts, especially in developing countries","category":1,"symbolSize":16,"itemId":9075}],"edges":[{"source":"item_9075","target":"item_2791","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

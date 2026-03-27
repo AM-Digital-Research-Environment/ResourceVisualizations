@@ -104,7 +104,8 @@ def load_data(password):
 
     print('  Loading relationships...')
     links = {}
-    reverse = {}
+    reverse = {}       # for shared-item discovery (shareable terms only)
+    all_reverse = {}   # ALL reverse links: target_id -> set of source_ids
     for row in query_mysql("""
         SELECT v.resource_id, CONCAT(vo.prefix, ':', p.local_name), p.label, v.value_resource_id
         FROM value v
@@ -114,11 +115,12 @@ def load_data(password):
     """, password):
         rid, term, label, vrid = int(row[0]), row[1], row[2], int(row[3])
         links.setdefault(rid, []).append((term, label, vrid))
+        all_reverse.setdefault(vrid, set()).add(rid)
         if term in SHAREABLE or term.startswith('marcrel:'):
             reverse.setdefault(vrid, set()).add(rid)
-    print(f'    {sum(len(v) for v in links.values())} links, {len(reverse)} shared entries')
+    print(f'    {sum(len(v) for v in links.values())} links, {len(all_reverse)} reverse entries')
 
-    return items, links, reverse
+    return items, links, reverse, all_reverse
 
 
 MAX_DIRECT_NODES = 150
@@ -129,7 +131,10 @@ MAX_SHARED_NODES = 30
 CAT_PRIORITY = ['Person', 'Contributor', 'Subject', 'Project', 'Location', 'Institution', 'Genre', 'Related Item']
 
 
-def build_graph(item_id, items, links, reverse):
+MAX_REVERSE_ITEMS = 40  # For entities like subjects/languages: max items shown linking to them
+
+
+def build_graph(item_id, items, links, reverse, all_reverse=None):
     if item_id not in items:
         return None
 
@@ -193,6 +198,25 @@ def build_graph(item_id, items, links, reverse):
                     reverse_count += 1
                 edges.append({'source': rnid, 'target': f'item_{item_id}', 'name': 'Is Part Of'})
 
+    # For items with very few direct relationships (subjects, languages, locations, etc.),
+    # build graph from ALL items that reference this entity.
+    if all_reverse and direct_count < 5:
+        referencing_ids = all_reverse.get(item_id, set())
+        ref_cat_idx = ensure_cat('Research Item')
+        ref_count = 0
+        for rid in referencing_ids:
+            if ref_count >= MAX_REVERSE_ITEMS:
+                break
+            rnid = f'item_{rid}'
+            if rnid in seen:
+                continue
+            seen.add(rnid)
+            ref_title = items.get(rid, {}).get('title', f'Item {rid}')
+            nodes.append({'id': rnid, 'name': ref_title, 'category': ref_cat_idx,
+                          'symbolSize': 16, 'itemId': rid})
+            edges.append({'source': rnid, 'target': f'item_{item_id}', 'name': 'references'})
+            ref_count += 1
+
     # Shared items — other items sharing the same resources.
     shared_count = 0
     si_cat = None
@@ -228,14 +252,14 @@ def build_graph(item_id, items, links, reverse):
 def main():
     password = get_password()
     print(f'Loading data via docker compose exec...')
-    items, links, reverse = load_data(password)
+    items, links, reverse, all_reverse = load_data(password)
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     print(f'Generating graphs to {OUTPUT_DIR}/')
 
     generated = skipped = 0
     for item_id in items:
-        graph = build_graph(item_id, items, links, reverse)
+        graph = build_graph(item_id, items, links, reverse, all_reverse)
         if not graph:
             skipped += 1
             continue

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_10377","name":"Zoanni, Tyler","category":0,"symbolSize":45,"isCenter":true,"itemId":10377},{"id":"item_1674","name":"Moralities","category":1,"symbolSize":16,"itemId":1674}],"edges":[{"source":"item_1674","target":"item_10377","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_892","name":"Coleman, Albert B.","category":0,"symbolSize":45,"isCenter":true,"itemId":892},{"id":"item_8157","name":"Special Feature","category":1,"symbolSize":16,"itemId":8157}],"edges":[{"source":"item_8157","target":"item_892","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

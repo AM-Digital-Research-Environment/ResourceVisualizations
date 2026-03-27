@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1102","name":"Princess Fatu Gayflor","category":0,"symbolSize":45,"isCenter":true,"itemId":1102},{"id":"item_8174","name":"Heritage Productions  - Artists' Spotlight","category":1,"symbolSize":16,"itemId":8174}],"edges":[{"source":"item_8174","target":"item_1102","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2611","name":"Debate","category":0,"symbolSize":45,"isCenter":true,"itemId":2611},{"id":"item_9236","name":"Drama at Sea: A New Look at Shakespeare on the Dragon, 1607-08","category":1,"symbolSize":16,"itemId":9236}],"edges":[{"source":"item_9236","target":"item_2611","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

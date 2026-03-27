@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_33","name":"Kiko, Bwana","category":0,"symbolSize":45,"isCenter":true,"itemId":33},{"id":"item_7978","name":"‘Ee Maria","category":1,"symbolSize":16,"itemId":7978}],"edges":[{"source":"item_7978","target":"item_33","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1585","name":"Jagatjit Industries Ltd.","category":0,"symbolSize":45,"isCenter":true,"itemId":1585},{"id":"item_8500","name":"Untitled","category":1,"symbolSize":16,"itemId":8500}],"edges":[{"source":"item_8500","target":"item_1585","name":"references"}],"categories":[{"name":"Organization"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2467","name":"Ambundu","category":0,"symbolSize":45,"isCenter":true,"itemId":2467},{"id":"item_9287","name":"The Son of Kimanaueze and the Daughter of Sun and Moon","category":1,"symbolSize":16,"itemId":9287}],"edges":[{"source":"item_9287","target":"item_2467","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

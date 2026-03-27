@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_10348","name":"Shayo, Daniel","category":0,"symbolSize":45,"isCenter":true,"itemId":10348},{"id":"item_1669","name":"Affiliations","category":1,"symbolSize":16,"itemId":1669}],"edges":[{"source":"item_1669","target":"item_10348","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

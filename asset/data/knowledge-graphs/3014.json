@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_3014","name":"Provenience","category":0,"symbolSize":45,"isCenter":true,"itemId":3014},{"id":"item_9235","name":"Tracing the Cure of Ham: A history of difference","category":1,"symbolSize":16,"itemId":9235}],"edges":[{"source":"item_9235","target":"item_3014","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

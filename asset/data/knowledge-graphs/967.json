@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_967","name":"Guliao, Lydia Cooper","category":0,"symbolSize":45,"isCenter":true,"itemId":967},{"id":"item_8308","name":"Special Feature","category":1,"symbolSize":16,"itemId":8308}],"edges":[{"source":"item_8308","target":"item_967","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

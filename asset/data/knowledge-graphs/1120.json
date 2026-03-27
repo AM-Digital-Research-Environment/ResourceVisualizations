@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1120","name":"Sahn, jonathan","category":0,"symbolSize":45,"isCenter":true,"itemId":1120},{"id":"item_8392","name":"ELTV Channel 6 News","category":1,"symbolSize":16,"itemId":8392}],"edges":[{"source":"item_8392","target":"item_1120","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

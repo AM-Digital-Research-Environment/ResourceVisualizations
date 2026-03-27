@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_10373","name":"Yaméogo, Lassané","category":0,"symbolSize":45,"isCenter":true,"itemId":10373},{"id":"item_1673","name":"Mobilities","category":1,"symbolSize":16,"itemId":1673}],"edges":[{"source":"item_1673","target":"item_10373","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

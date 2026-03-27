@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1023","name":"Kont, Qwane","category":0,"symbolSize":45,"isCenter":true,"itemId":1023},{"id":"item_8325","name":"Untitled","category":1,"symbolSize":16,"itemId":8325}],"edges":[{"source":"item_8325","target":"item_1023","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1084","name":"Newkirk, Donald","category":0,"symbolSize":45,"isCenter":true,"itemId":1084},{"id":"item_8500","name":"Untitled","category":1,"symbolSize":16,"itemId":8500}],"edges":[{"source":"item_8500","target":"item_1084","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

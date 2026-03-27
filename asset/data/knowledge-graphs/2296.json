@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2296","name":"Prayer","category":0,"symbolSize":45,"isCenter":true,"itemId":2296},{"id":"item_8291","name":"Muslims Celebrate Ramadan","category":1,"symbolSize":16,"itemId":8291}],"edges":[{"source":"item_8291","target":"item_2296","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

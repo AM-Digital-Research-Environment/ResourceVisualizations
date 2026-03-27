@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2910","name":"Mitteilung","category":0,"symbolSize":45,"isCenter":true,"itemId":2910},{"id":"item_9772","name":"Ohne Titel","category":1,"symbolSize":16,"itemId":9772}],"edges":[{"source":"item_9772","target":"item_2910","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2509","name":"Bavenda","category":0,"symbolSize":45,"isCenter":true,"itemId":2509},{"id":"item_9351","name":"The Beautiful Girl Who Had No Teeth","category":1,"symbolSize":16,"itemId":9351}],"edges":[{"source":"item_9351","target":"item_2509","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

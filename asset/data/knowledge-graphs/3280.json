@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_3280","name":"Maps","category":0,"symbolSize":45,"isCenter":true,"itemId":3280},{"id":"item_7425","name":"Lageplan zur Eröffnung des Mbari Artists and Writers Club 1961","category":1,"symbolSize":16,"itemId":7425}],"edges":[{"source":"item_7425","target":"item_3280","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

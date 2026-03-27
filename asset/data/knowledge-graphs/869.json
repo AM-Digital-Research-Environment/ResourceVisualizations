@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_869","name":"Bulot, Chuck","category":0,"symbolSize":45,"isCenter":true,"itemId":869},{"id":"item_8383","name":"Knots Landing","category":1,"symbolSize":16,"itemId":8383}],"edges":[{"source":"item_8383","target":"item_869","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

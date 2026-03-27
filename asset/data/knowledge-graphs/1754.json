@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1754","name":"St. James Community Church Choir Barnersville","category":0,"symbolSize":45,"isCenter":true,"itemId":1754},{"id":"item_8243","name":"Gospel Time","category":1,"symbolSize":16,"itemId":8243}],"edges":[{"source":"item_8243","target":"item_1754","name":"references"}],"categories":[{"name":"Organization"},{"name":"Research Item"}]}

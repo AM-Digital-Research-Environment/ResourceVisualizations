@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1139","name":"Sheldon, Les","category":0,"symbolSize":45,"isCenter":true,"itemId":1139},{"id":"item_8447","name":"Untitled","category":1,"symbolSize":16,"itemId":8447}],"edges":[{"source":"item_8447","target":"item_1139","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

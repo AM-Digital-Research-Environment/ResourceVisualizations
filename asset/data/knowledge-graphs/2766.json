@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2766","name":"Hohao (Spirit Board)","category":0,"symbolSize":45,"isCenter":true,"itemId":2766},{"id":"item_7459","name":"Aufnahme eines Hohao","category":1,"symbolSize":16,"itemId":7459}],"edges":[{"source":"item_7459","target":"item_2766","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

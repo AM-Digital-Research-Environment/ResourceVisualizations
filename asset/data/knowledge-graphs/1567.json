@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1567","name":"D. Twe Memorial High School","category":0,"symbolSize":45,"isCenter":true,"itemId":1567},{"id":"item_8232","name":"Meet the Challenge","category":1,"symbolSize":16,"itemId":8232}],"edges":[{"source":"item_8232","target":"item_1567","name":"references"}],"categories":[{"name":"Organization"},{"name":"Research Item"}]}

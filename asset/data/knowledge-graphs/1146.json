@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1146","name":"Sirleaf, Varney A.","category":0,"symbolSize":45,"isCenter":true,"itemId":1146},{"id":"item_8148","name":"Islam and You","category":1,"symbolSize":16,"itemId":8148}],"edges":[{"source":"item_8148","target":"item_1146","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

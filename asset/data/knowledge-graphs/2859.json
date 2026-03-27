@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2859","name":"Leo Africanus","category":0,"symbolSize":45,"isCenter":true,"itemId":2859},{"id":"item_9229","name":"Reading Leo Africanus","category":1,"symbolSize":16,"itemId":9229}],"edges":[{"source":"item_9229","target":"item_2859","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

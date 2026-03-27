@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_10357","name":"Tarrant, Duncan Ian","category":0,"symbolSize":45,"isCenter":true,"itemId":10357},{"id":"item_1670","name":"Arts & Aesthetics","category":1,"symbolSize":16,"itemId":1670}],"edges":[{"source":"item_1670","target":"item_10357","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_10368","name":"Malgoubri, Pierre","category":0,"symbolSize":45,"isCenter":true,"itemId":10368},{"id":"item_1672","name":"Learning","category":1,"symbolSize":16,"itemId":1672}],"edges":[{"source":"item_1672","target":"item_10368","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

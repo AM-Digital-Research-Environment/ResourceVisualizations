@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_3029","name":"Religiöses Fest","category":0,"symbolSize":45,"isCenter":true,"itemId":3029},{"id":"item_9833","name":"Ohne Titel","category":1,"symbolSize":16,"itemId":9833}],"edges":[{"source":"item_9833","target":"item_3029","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

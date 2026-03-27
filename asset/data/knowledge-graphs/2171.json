@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2171","name":"Filmstrips","category":0,"symbolSize":45,"isCenter":true,"itemId":2171},{"id":"item_7478","name":"Diapositive mit der Beschriftung Zimbabwe","category":1,"symbolSize":16,"itemId":7478}],"edges":[{"source":"item_7478","target":"item_2171","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

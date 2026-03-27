@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1589","name":"KG Mobility Corporation","category":0,"symbolSize":45,"isCenter":true,"itemId":1589},{"id":"item_8037","name":"Ads for Sponsors","category":1,"symbolSize":16,"itemId":8037}],"edges":[{"source":"item_8037","target":"item_1589","name":"references"}],"categories":[{"name":"Organization"},{"name":"Research Item"}]}

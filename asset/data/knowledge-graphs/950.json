@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_950","name":"Gemayel, Amine","category":0,"symbolSize":45,"isCenter":true,"itemId":950},{"id":"item_8399","name":"Untitled","category":1,"symbolSize":16,"itemId":8399}],"edges":[{"source":"item_8399","target":"item_950","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

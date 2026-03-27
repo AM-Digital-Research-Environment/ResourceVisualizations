@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_285","name":"de Castro, Uilliam","category":0,"symbolSize":45,"isCenter":true,"itemId":285},{"id":"item_1845","name":"Museu Afro-Digital","category":1,"symbolSize":16,"itemId":1845}],"edges":[{"source":"item_1845","target":"item_285","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

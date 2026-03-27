@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_970","name":"Hansen","category":0,"symbolSize":45,"isCenter":true,"itemId":970},{"id":"item_8337","name":"Untitled","category":1,"symbolSize":16,"itemId":8337}],"edges":[{"source":"item_8337","target":"item_970","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

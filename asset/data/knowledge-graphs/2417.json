@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2417","name":"Herding dogs","category":0,"symbolSize":45,"isCenter":true,"itemId":2417},{"id":"item_8658","name":"Farm visit W Germany","category":1,"symbolSize":16,"itemId":8658}],"edges":[{"source":"item_8658","target":"item_2417","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

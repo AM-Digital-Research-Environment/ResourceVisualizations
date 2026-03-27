@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1087","name":"Obe, Octavius","category":0,"symbolSize":45,"isCenter":true,"itemId":1087},{"id":"item_8173","name":"Heritage Productions","category":1,"symbolSize":16,"itemId":8173}],"edges":[{"source":"item_8173","target":"item_1087","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2382","name":"War","category":0,"symbolSize":45,"isCenter":true,"itemId":2382},{"id":"item_8147","name":"Film","category":1,"symbolSize":16,"itemId":8147}],"edges":[{"source":"item_8147","target":"item_2382","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

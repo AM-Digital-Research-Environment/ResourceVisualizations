@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1564","name":"Colgate-Palmolive Company","category":0,"symbolSize":45,"isCenter":true,"itemId":1564},{"id":"item_8164","name":"Untitled","category":1,"symbolSize":16,"itemId":8164}],"edges":[{"source":"item_8164","target":"item_1564","name":"references"}],"categories":[{"name":"Organization"},{"name":"Research Item"}]}

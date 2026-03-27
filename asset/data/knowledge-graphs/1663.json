@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1663","name":"W. V. S. Tubman High School","category":0,"symbolSize":45,"isCenter":true,"itemId":1663},{"id":"item_8231","name":"Meet the Challenge","category":1,"symbolSize":16,"itemId":8231}],"edges":[{"source":"item_8231","target":"item_1663","name":"references"}],"categories":[{"name":"Organization"},{"name":"Research Item"}]}

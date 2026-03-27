@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_3149","name":"Wettbewerb","category":0,"symbolSize":45,"isCenter":true,"itemId":3149},{"id":"item_9791","name":"Ohne Titel","category":1,"symbolSize":16,"itemId":9791}],"edges":[{"source":"item_9791","target":"item_3149","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

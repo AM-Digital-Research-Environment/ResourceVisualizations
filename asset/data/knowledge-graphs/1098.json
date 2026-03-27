@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1098","name":"Piwang, Evang. George","category":0,"symbolSize":45,"isCenter":true,"itemId":1098},{"id":"item_8067","name":"Ministry of Hope","category":1,"symbolSize":16,"itemId":8067}],"edges":[{"source":"item_8067","target":"item_1098","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_983","name":"Iglesias, Julio","category":0,"symbolSize":45,"isCenter":true,"itemId":983},{"id":"item_8480","name":"Show Express","category":1,"symbolSize":16,"itemId":8480}],"edges":[{"source":"item_8480","target":"item_983","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_939","name":"Fraenkel, Peter","category":0,"symbolSize":45,"isCenter":true,"itemId":939},{"id":"item_8439","name":"AIDS: South African Chamber of Mines Educational Video","category":1,"symbolSize":16,"itemId":8439}],"edges":[{"source":"item_8439","target":"item_939","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

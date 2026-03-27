@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1201","name":"Waters, Martha","category":0,"symbolSize":45,"isCenter":true,"itemId":1201},{"id":"item_8229","name":"Untitled","category":1,"symbolSize":16,"itemId":8229}],"edges":[{"source":"item_8229","target":"item_1201","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

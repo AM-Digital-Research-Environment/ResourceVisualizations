@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1641","name":"Sam Ford Dennis High School","category":0,"symbolSize":45,"isCenter":true,"itemId":1641},{"id":"item_8234","name":"Meet the Challenge","category":1,"symbolSize":16,"itemId":8234}],"edges":[{"source":"item_8234","target":"item_1641","name":"references"}],"categories":[{"name":"Organization"},{"name":"Research Item"}]}

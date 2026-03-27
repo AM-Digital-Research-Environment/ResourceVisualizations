@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_826","name":"Almillig, Abdul Aal Ali","category":0,"symbolSize":45,"isCenter":true,"itemId":826},{"id":"item_8441","name":"Islam and You","category":1,"symbolSize":16,"itemId":8441}],"edges":[{"source":"item_8441","target":"item_826","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

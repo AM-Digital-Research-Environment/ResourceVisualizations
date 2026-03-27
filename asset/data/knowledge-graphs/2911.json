@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2911","name":"Mobile Money","category":0,"symbolSize":45,"isCenter":true,"itemId":2911},{"id":"item_9103","name":"Interview notes on mobile money usage in Ghana","category":1,"symbolSize":16,"itemId":9103}],"edges":[{"source":"item_9103","target":"item_2911","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

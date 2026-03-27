@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2696","name":"Flechtarbeit","category":0,"symbolSize":45,"isCenter":true,"itemId":2696},{"id":"item_9782","name":"Ohne Titel","category":1,"symbolSize":16,"itemId":9782}],"edges":[{"source":"item_9782","target":"item_2696","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

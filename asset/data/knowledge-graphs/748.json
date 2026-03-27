@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_748","name":"Aiyegbusi, Tayo","category":0,"symbolSize":45,"isCenter":true,"itemId":748},{"id":"item_7483","name":"Ausschnitt einer Wandmalerei von Georgina Beier in Lagos","category":1,"symbolSize":16,"itemId":7483}],"edges":[{"source":"item_7483","target":"item_748","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

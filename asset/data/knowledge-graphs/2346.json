@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2346","name":"Speech","category":0,"symbolSize":45,"isCenter":true,"itemId":2346},{"id":"item_8293","name":"Untitled","category":1,"symbolSize":16,"itemId":8293}],"edges":[{"source":"item_8293","target":"item_2346","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_3073","name":"Sir Thomas Browne","category":0,"symbolSize":45,"isCenter":true,"itemId":3073},{"id":"item_9233","name":"Sir Thomas Browne: Pseudodoxia Epidemica (1646)","category":1,"symbolSize":16,"itemId":9233}],"edges":[{"source":"item_9233","target":"item_3073","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

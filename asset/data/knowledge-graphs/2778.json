@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2778","name":"Ibori","category":0,"symbolSize":45,"isCenter":true,"itemId":2778},{"id":"item_7472","name":"Drei Ibori","category":1,"symbolSize":16,"itemId":7472}],"edges":[{"source":"item_7472","target":"item_2778","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

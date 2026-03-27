@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_858","name":"Borkai, Anthony","category":0,"symbolSize":45,"isCenter":true,"itemId":858},{"id":"item_8079","name":"ELTV Channel 6 News","category":1,"symbolSize":16,"itemId":8079}],"edges":[{"source":"item_8079","target":"item_858","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

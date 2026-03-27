@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2094","name":"Camps","category":0,"symbolSize":45,"isCenter":true,"itemId":2094},{"id":"item_8642","name":"Chapter Six: Camps de réfugiés. Refugee Studies","category":1,"symbolSize":16,"itemId":8642}],"edges":[{"source":"item_8642","target":"item_2094","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

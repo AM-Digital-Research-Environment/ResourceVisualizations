@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2933","name":"Nation Building","category":0,"symbolSize":45,"isCenter":true,"itemId":2933},{"id":"item_8149","name":"ELTV Channel 6 News","category":1,"symbolSize":16,"itemId":8149}],"edges":[{"source":"item_8149","target":"item_2933","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

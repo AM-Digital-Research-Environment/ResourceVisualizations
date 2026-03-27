@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_868","name":"Bryant, Rev. Cecilia","category":0,"symbolSize":45,"isCenter":true,"itemId":868},{"id":"item_8457","name":"Today's Woman","category":1,"symbolSize":16,"itemId":8457}],"edges":[{"source":"item_8457","target":"item_868","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

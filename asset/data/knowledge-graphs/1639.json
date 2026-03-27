@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1639","name":"Rock Investment Inc.","category":0,"symbolSize":45,"isCenter":true,"itemId":1639},{"id":"item_8164","name":"Untitled","category":1,"symbolSize":16,"itemId":8164}],"edges":[{"source":"item_8164","target":"item_1639","name":"references"}],"categories":[{"name":"Organization"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1597","name":"Liberia Telecommunications Corporation","category":0,"symbolSize":45,"isCenter":true,"itemId":1597},{"id":"item_8299","name":"ELTV Week-in-Review","category":1,"symbolSize":16,"itemId":8299}],"edges":[{"source":"item_8299","target":"item_1597","name":"references"}],"categories":[{"name":"Organization"},{"name":"Research Item"}]}

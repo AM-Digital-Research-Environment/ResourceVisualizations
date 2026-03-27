@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1213","name":"Zanga, Larry","category":0,"symbolSize":45,"isCenter":true,"itemId":1213},{"id":"item_8132","name":"Heritage Productions  - Music Variety Show","category":1,"symbolSize":16,"itemId":8132}],"edges":[{"source":"item_8132","target":"item_1213","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

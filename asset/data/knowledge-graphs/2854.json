@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2854","name":"Legal committee","category":0,"symbolSize":45,"isCenter":true,"itemId":2854},{"id":"item_10010","name":"A1","category":1,"symbolSize":16,"itemId":10010}],"edges":[{"source":"item_10010","target":"item_2854","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

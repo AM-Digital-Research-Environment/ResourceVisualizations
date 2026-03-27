@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2084","name":"Bible","category":0,"symbolSize":45,"isCenter":true,"itemId":2084},{"id":"item_7694","name":"Juliana Agyei-Mensah's transcript, Ghana, February 22, 2021","category":1,"symbolSize":16,"itemId":7694}],"edges":[{"source":"item_7694","target":"item_2084","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

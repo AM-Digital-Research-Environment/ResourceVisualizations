@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2100","name":"Chaga (African people)","category":0,"symbolSize":45,"isCenter":true,"itemId":2100},{"id":"item_9342","name":"The Adventures of Mrile","category":1,"symbolSize":16,"itemId":9342}],"edges":[{"source":"item_9342","target":"item_2100","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_3183","name":"art reproduction","category":0,"symbolSize":45,"isCenter":true,"itemId":3183},{"id":"item_9877","name":"Lagos: Ownership and Identities Exhibition","category":1,"symbolSize":16,"itemId":9877}],"edges":[{"source":"item_9877","target":"item_3183","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

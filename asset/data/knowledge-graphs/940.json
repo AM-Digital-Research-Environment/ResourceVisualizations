@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_940","name":"Frank, Bill","category":0,"symbolSize":45,"isCenter":true,"itemId":940},{"id":"item_8026","name":"Food From the Soil","category":1,"symbolSize":16,"itemId":8026}],"edges":[{"source":"item_8026","target":"item_940","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

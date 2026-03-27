@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1868","name":"Latin","category":0,"symbolSize":45,"isCenter":true,"itemId":1868},{"id":"item_7542","name":"Innenaufnahme des Hauses in Osogbo, 2. Stock","category":1,"symbolSize":16,"itemId":7542}],"edges":[{"source":"item_7542","target":"item_1868","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

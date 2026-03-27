@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_3054","name":"Schneider","category":0,"symbolSize":45,"isCenter":true,"itemId":3054},{"id":"item_9828","name":"Ohne Titel","category":1,"symbolSize":16,"itemId":9828}],"edges":[{"source":"item_9828","target":"item_3054","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

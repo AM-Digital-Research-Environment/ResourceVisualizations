@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1193","name":"Walker, Florence K.","category":0,"symbolSize":45,"isCenter":true,"itemId":1193},{"id":"item_8167","name":"Spotlight","category":1,"symbolSize":16,"itemId":8167}],"edges":[{"source":"item_8167","target":"item_1193","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

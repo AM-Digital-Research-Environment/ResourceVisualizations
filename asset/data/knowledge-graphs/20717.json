@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_20717","name":"Education Development","category":0,"symbolSize":45,"isCenter":true,"itemId":20717},{"id":"item_8157","name":"Special Feature","category":1,"symbolSize":16,"itemId":8157}],"edges":[{"source":"item_8157","target":"item_20717","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2765","name":"Hochzeit","category":0,"symbolSize":45,"isCenter":true,"itemId":2765},{"id":"item_9815","name":"Ohne Titel","category":1,"symbolSize":16,"itemId":9815}],"edges":[{"source":"item_9815","target":"item_2765","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1083","name":"Neo, Chris","category":0,"symbolSize":45,"isCenter":true,"itemId":1083},{"id":"item_8143","name":"News Update","category":1,"symbolSize":16,"itemId":8143}],"edges":[{"source":"item_8143","target":"item_1083","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

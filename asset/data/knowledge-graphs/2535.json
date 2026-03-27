@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2535","name":"Cash","category":0,"symbolSize":45,"isCenter":true,"itemId":2535},{"id":"item_7718","name":"Primus Nurudong's report on Ghana","category":1,"symbolSize":16,"itemId":7718}],"edges":[{"source":"item_7718","target":"item_2535","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

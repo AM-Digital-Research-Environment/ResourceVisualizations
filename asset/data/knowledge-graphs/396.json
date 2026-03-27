@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_396","name":"Schweizer, Paul","category":0,"symbolSize":45,"isCenter":true,"itemId":396},{"id":"item_1819","name":"Politics of the Unknown: Conspiracism and Conflict","category":1,"symbolSize":16,"itemId":1819}],"edges":[{"source":"item_1819","target":"item_396","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

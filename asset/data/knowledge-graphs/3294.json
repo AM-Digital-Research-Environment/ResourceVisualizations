@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_3294","name":"Paintings","category":0,"symbolSize":45,"isCenter":true,"itemId":3294},{"id":"item_7545","name":"Innenansicht des Eingangs des Hauses der Beiers in Sydney","category":1,"symbolSize":16,"itemId":7545}],"edges":[{"source":"item_7545","target":"item_3294","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

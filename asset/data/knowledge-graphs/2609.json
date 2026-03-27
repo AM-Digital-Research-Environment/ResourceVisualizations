@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2609","name":"Data","category":0,"symbolSize":45,"isCenter":true,"itemId":2609},{"id":"item_8646","name":"Chapter Ten: Statistiques. Critical Data Studies","category":1,"symbolSize":16,"itemId":8646}],"edges":[{"source":"item_8646","target":"item_2609","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

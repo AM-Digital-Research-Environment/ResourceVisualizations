@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2322","name":"Sambas","category":0,"symbolSize":45,"isCenter":true,"itemId":2322},{"id":"item_7898","name":"Wo Sene Wo Yonko A Stan Wo","category":1,"symbolSize":16,"itemId":7898}],"edges":[{"source":"item_7898","target":"item_2322","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

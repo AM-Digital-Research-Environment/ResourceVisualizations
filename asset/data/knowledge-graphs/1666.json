@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1666","name":"Wells Hairston High School","category":0,"symbolSize":45,"isCenter":true,"itemId":1666},{"id":"item_8233","name":"Meet the Challenge","category":1,"symbolSize":16,"itemId":8233}],"edges":[{"source":"item_8233","target":"item_1666","name":"references"}],"categories":[{"name":"Organization"},{"name":"Research Item"}]}

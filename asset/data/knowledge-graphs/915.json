@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_915","name":"Doumbia, Nahawa","category":0,"symbolSize":45,"isCenter":true,"itemId":915},{"id":"item_8463","name":"Untitled","category":1,"symbolSize":16,"itemId":8463}],"edges":[{"source":"item_8463","target":"item_915","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

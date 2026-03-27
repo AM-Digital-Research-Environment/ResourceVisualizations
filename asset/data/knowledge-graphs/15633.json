@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_15633","name":"Ghana Statistical Service","category":0,"symbolSize":45,"isCenter":true,"itemId":15633},{"id":"item_9110","name":"Sectoral Distribution of Bank Credit","category":1,"symbolSize":16,"itemId":9110}],"edges":[{"source":"item_9110","target":"item_15633","name":"references"}],"categories":[{"name":"Organization"},{"name":"Research Item"}]}

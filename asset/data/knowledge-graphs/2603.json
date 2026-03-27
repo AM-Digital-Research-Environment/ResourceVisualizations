@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2603","name":"Curriculum","category":0,"symbolSize":45,"isCenter":true,"itemId":2603},{"id":"item_9120","name":"Projekt Lern- und Ressourcenplattform Afrika (PLURA)","category":1,"symbolSize":16,"itemId":9120}],"edges":[{"source":"item_9120","target":"item_2603","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

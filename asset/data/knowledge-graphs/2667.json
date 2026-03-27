@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2667","name":"Environmental Sanitation","category":0,"symbolSize":45,"isCenter":true,"itemId":2667},{"id":"item_8059","name":"Roadways to Health","category":1,"symbolSize":16,"itemId":8059}],"edges":[{"source":"item_8059","target":"item_2667","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

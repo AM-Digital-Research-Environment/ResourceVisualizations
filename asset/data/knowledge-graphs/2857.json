@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2857","name":"Lehm","category":0,"symbolSize":45,"isCenter":true,"itemId":2857},{"id":"item_9807","name":"Ohne Titel","category":1,"symbolSize":16,"itemId":9807}],"edges":[{"source":"item_9807","target":"item_2857","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

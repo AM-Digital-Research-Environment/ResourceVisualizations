@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1122","name":"Sako, Marilyn","category":0,"symbolSize":45,"isCenter":true,"itemId":1122},{"id":"item_8020","name":"Everyday Woman","category":1,"symbolSize":16,"itemId":8020}],"edges":[{"source":"item_8020","target":"item_1122","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}]}

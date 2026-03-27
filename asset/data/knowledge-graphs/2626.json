@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2626","name":"Dry Stone Wall","category":0,"symbolSize":45,"isCenter":true,"itemId":2626},{"id":"item_9765","name":"Ohne Titel","category":1,"symbolSize":16,"itemId":9765}],"edges":[{"source":"item_9765","target":"item_2626","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

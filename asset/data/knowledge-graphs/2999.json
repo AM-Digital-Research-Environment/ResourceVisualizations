@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2999","name":"Power","category":0,"symbolSize":45,"isCenter":true,"itemId":2999},{"id":"item_8637","name":"Chapter One: Pouvoir. Une autre histoire de l'humanitaire","category":1,"symbolSize":16,"itemId":8637}],"edges":[{"source":"item_8637","target":"item_2999","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

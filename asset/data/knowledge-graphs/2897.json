@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2897","name":"Mbari Mayo Club","category":0,"symbolSize":45,"isCenter":true,"itemId":2897},{"id":"item_7531","name":"Email von Georgina Beier","category":1,"symbolSize":16,"itemId":7531}],"edges":[{"source":"item_7531","target":"item_2897","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

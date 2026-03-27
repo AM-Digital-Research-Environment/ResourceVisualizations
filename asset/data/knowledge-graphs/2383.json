@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_2383","name":"Wars","category":0,"symbolSize":45,"isCenter":true,"itemId":2383},{"id":"item_8639","name":"Chapter Three: Guerres. Sociologie des conflits","category":1,"symbolSize":16,"itemId":8639}],"edges":[{"source":"item_8639","target":"item_2383","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}
