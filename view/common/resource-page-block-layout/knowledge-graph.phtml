@@ -135,6 +135,73 @@ foreach ($resource->values() as $term => $propertyData) {
 }
 
 // ------------------------------------------------------------------
+// Pass 1.5: reverse lookups — items that link TO this resource.
+// For research sections: finds projects via dcterms:isPartOf.
+// For persons: finds items where this person is a contributor.
+// ------------------------------------------------------------------
+$reverseProperties = [
+    'dcterms:isPartOf'   => 'Project',
+    'dcterms:creator'    => 'Shared Item',
+    'dcterms:contributor'=> 'Shared Item',
+    'foaf:member'        => 'Shared Item',
+];
+
+foreach ($reverseProperties as $reverseTerm => $reverseCatName) {
+    try {
+        $response = $this->api()->search('items', [
+            'property' => [
+                [
+                    'property' => $reverseTerm,
+                    'type'     => 'res',
+                    'text'     => (string) $itemId,
+                ],
+            ],
+            'per_page' => 25,
+        ]);
+    } catch (\Exception $e) {
+        continue;
+    }
+
+    $reverseItems = $response->getContent();
+    if (empty($reverseItems)) {
+        continue;
+    }
+
+    if (!isset($categoryMap[$reverseCatName])) {
+        $categoryMap[$reverseCatName] = count($categories);
+        $categories[] = ['name' => $reverseCatName];
+    }
+    $reverseCatIdx = $categoryMap[$reverseCatName];
+
+    foreach ($reverseItems as $reverseItem) {
+        $rid = $reverseItem->id();
+        $reverseNodeId = 'item_' . $rid;
+
+        if (!isset($seenNodes[$reverseNodeId])) {
+            $seenNodes[$reverseNodeId] = true;
+            $nodes[] = [
+                'id'         => $reverseNodeId,
+                'name'       => $reverseItem->displayTitle(),
+                'category'   => $reverseCatIdx,
+                'symbolSize' => 25,
+            ];
+        }
+
+        $edges[] = [
+            'source' => $reverseNodeId,
+            'target' => 'item_' . $itemId,
+            'name'   => $reverseTerm,
+        ];
+
+        // Also add shareable links for these reverse items so Pass 2
+        // can discover further connections through them.
+        if (in_array($reverseTerm, $shareableTerms)) {
+            $linkedByTerm[$reverseTerm][$rid] = $reverseNodeId;
+        }
+    }
+}
+
+// ------------------------------------------------------------------
 // Pass 2: discover other items sharing the same linked resources.
 // ------------------------------------------------------------------
 $maxSharedItems = 30;
