@@ -37,5 +37,11 @@ class Module extends AbstractModule
         $view->headScript()->appendFile(
             'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2/dist/echarts-wordcloud.min.js'
         );
+        $view->headLink()->appendStylesheet(
+            'https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.css'
+        );
+        $view->headScript()->appendFile(
+            'https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js'
+        );
     }
 }

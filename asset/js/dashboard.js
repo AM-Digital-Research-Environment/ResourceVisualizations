@@ -168,6 +168,143 @@
         return chart;
     }
 
+    /* ------------------------------------------------------------------ */
+    /*  Map (MapLibre GL)                                                  */
+    /* ------------------------------------------------------------------ */
+
+    function buildMap(el, data, siteBase) {
+        if (!data || !data.length || typeof maplibregl === 'undefined') return null;
+
+        el.style.borderRadius = '6px';
+        var map = new maplibregl.Map({
+            container: el,
+            style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+            center: [0, 15],
+            zoom: 1.5,
+            attributionControl: false,
+        });
+        map.addControl(new maplibregl.NavigationControl(), 'top-right');
+        map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+
+        map.on('load', function () {
+            var features = data.map(function (loc) {
+                return {
+                    type: 'Feature',
+                    geometry: { type: 'Point', coordinates: [loc.lon, loc.lat] },
+                    properties: { name: loc.name, value: loc.value, itemId: loc.itemId }
+                };
+            });
+
+            map.addSource('locations', {
+                type: 'geojson',
+                data: { type: 'FeatureCollection', features: features },
+                cluster: true,
+                clusterMaxZoom: 8,
+                clusterRadius: 40,
+            });
+
+            // Cluster circles.
+            map.addLayer({
+                id: 'clusters',
+                type: 'circle',
+                source: 'locations',
+                filter: ['has', 'point_count'],
+                paint: {
+                    'circle-color': ['step', ['get', 'point_count'], '#22817b', 10, '#e07c3e', 30, '#c5504d'],
+                    'circle-radius': ['step', ['get', 'point_count'], 18, 10, 24, 30, 32],
+                    'circle-stroke-width': 2,
+                    'circle-stroke-color': '#fff',
+                }
+            });
+
+            // Cluster count labels.
+            map.addLayer({
+                id: 'cluster-count',
+                type: 'symbol',
+                source: 'locations',
+                filter: ['has', 'point_count'],
+                layout: {
+                    'text-field': '{point_count_abbreviated}',
+                    'text-size': 12,
+                },
+                paint: { 'text-color': '#fff' }
+            });
+
+            // Individual points — size by item count.
+            map.addLayer({
+                id: 'points',
+                type: 'circle',
+                source: 'locations',
+                filter: ['!', ['has', 'point_count']],
+                paint: {
+                    'circle-color': '#22817b',
+                    'circle-radius': ['interpolate', ['linear'], ['get', 'value'], 1, 7, 50, 18, 200, 28],
+                    'circle-stroke-width': 2,
+                    'circle-stroke-color': '#fff',
+                    'circle-opacity': 0.85,
+                }
+            });
+
+            // Point labels.
+            map.addLayer({
+                id: 'point-labels',
+                type: 'symbol',
+                source: 'locations',
+                filter: ['!', ['has', 'point_count']],
+                layout: {
+                    'text-field': '{name}',
+                    'text-size': 11,
+                    'text-offset': [0, 1.8],
+                    'text-anchor': 'top',
+                },
+                paint: {
+                    'text-color': '#333',
+                    'text-halo-color': '#fff',
+                    'text-halo-width': 1.5,
+                }
+            });
+
+            // Popups on point click.
+            map.on('click', 'points', function (e) {
+                var props = e.features[0].properties;
+                var html = '<strong>' + props.name + '</strong><br/>' + props.value + ' items';
+                if (props.itemId && siteBase) {
+                    html += '<br/><a href="' + siteBase + '/item/' + props.itemId + '">View location</a>';
+                }
+                new maplibregl.Popup({ offset: 12 })
+                    .setLngLat(e.lngLat)
+                    .setHTML(html)
+                    .addTo(map);
+            });
+
+            // Zoom into cluster on click.
+            map.on('click', 'clusters', function (e) {
+                var clusterId = e.features[0].properties.cluster_id;
+                map.getSource('locations').getClusterExpansionZoom(clusterId, function (err, zoom) {
+                    if (err) return;
+                    map.easeTo({ center: e.lngLat, zoom: zoom });
+                });
+            });
+
+            map.on('mouseenter', 'points', function () { map.getCanvas().style.cursor = 'pointer'; });
+            map.on('mouseleave', 'points', function () { map.getCanvas().style.cursor = ''; });
+            map.on('mouseenter', 'clusters', function () { map.getCanvas().style.cursor = 'pointer'; });
+            map.on('mouseleave', 'clusters', function () { map.getCanvas().style.cursor = ''; });
+
+            // Fit bounds to data.
+            if (features.length > 1) {
+                var bounds = new maplibregl.LngLatBounds();
+                features.forEach(function (f) { bounds.extend(f.geometry.coordinates); });
+                map.fitBounds(bounds, { padding: 40, maxZoom: 6 });
+            } else if (features.length === 1) {
+                map.setCenter(features[0].geometry.coordinates);
+                map.setZoom(4);
+            }
+        });
+
+        return { resize: function () { map.resize(); } };
+    }
+
     var _wordCloudOk = null;
     function isWordCloudAvailable() {
         if (_wordCloudOk !== null) return _wordCloudOk;
@@ -190,6 +327,7 @@
     var CHART_MAP = {
         'timeline': buildTimeline,
         'types': buildPieChart,
+        'locations': buildMap,
         'languages': buildBarChart,
         'subjects': buildWordCloud,
         'contributors': buildBarChart,
@@ -202,6 +340,7 @@
         'languages': 'Languages',
         'subjects': 'Subjects',
         'contributors': 'Top Associated Persons',
+        'locations': 'Geographic Origins',
         'projects': 'Items per Project'
     };
 
@@ -210,6 +349,7 @@
         'types': 'Distribution of items by resource type (audio, text, image, etc.).',
         'languages': 'Languages represented across all research items.',
         'subjects': 'Most frequent subject keywords across all items.',
+        'locations': 'Geographic origins of research items, sized by number of items.',
         'contributors': 'Persons most frequently associated with research items.',
         'projects': 'Number of research items collected per project in this section.'
     };
@@ -225,13 +365,13 @@
             + '</div>'
             + '<div class="dashboard-charts">';
 
-        var chartKeys = ['timeline', 'types', 'languages', 'subjects', 'contributors', 'projects'];
+        var chartKeys = ['timeline', 'types', 'locations', 'languages', 'subjects', 'contributors', 'projects'];
         chartKeys.forEach(function (key) {
             var d = data[key];
             var hasData = Array.isArray(d) ? d.length > 0 : (d && Object.keys(d).length > 0);
             if (!hasData) return;
-            var wide = (key === 'timeline' || key === 'subjects') ? ' chart-panel-wide' : '';
-            var tall = key === 'subjects' ? ' chart-container-tall' : '';
+            var wide = (key === 'timeline' || key === 'subjects' || key === 'locations') ? ' chart-panel-wide' : '';
+            var tall = (key === 'subjects' || key === 'locations') ? ' chart-container-tall' : '';
             var desc = CHART_DESCRIPTIONS[key] || '';
             html += '<div class="chart-panel' + wide + '">'
                 + '<h4>' + (CHART_LABELS[key] || key) + '</h4>'

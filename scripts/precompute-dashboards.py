@@ -112,18 +112,44 @@ def load_all_data(password):
                 item_year[rid] = m.group(1)
     print(f'  {len(item_year)} items with dates')
 
-    return items, links, children_of, item_year
+    print('Loading geo coordinates...')
+    geo = {}  # location_item_id -> {name, lat, lon}
+    for row in query_mysql("""
+        SELECT r.id, r.title,
+               MAX(CASE WHEN CONCAT(vo.prefix, ':', p.local_name) = 'geo:lat' THEN v.value END) AS lat,
+               MAX(CASE WHEN CONCAT(vo.prefix, ':', p.local_name) = 'geo:long' THEN v.value END) AS lon
+        FROM resource r
+        JOIN value v ON v.resource_id = r.id
+        JOIN property p ON v.property_id = p.id
+        JOIN vocabulary vo ON p.vocabulary_id = vo.id
+        WHERE CONCAT(vo.prefix, ':', p.local_name) IN ('geo:lat', 'geo:long')
+        GROUP BY r.id
+        HAVING lat IS NOT NULL AND lon IS NOT NULL
+    """, password):
+        try:
+            geo[int(row[0])] = {
+                'name': row[1] or f'Location {row[0]}',
+                'lat': float(row[2]),
+                'lon': float(row[3]),
+                'itemId': int(row[0]),
+            }
+        except (ValueError, TypeError):
+            pass
+    print(f'  {len(geo)} locations with coordinates')
+
+    return items, links, children_of, item_year, geo
 
 
 # ── Shared aggregation ────────────────────────────────────────────────
 
-def aggregate_items(item_ids, items, links, item_year):
+def aggregate_items(item_ids, items, links, item_year, geo):
     """Aggregate dashboard data from a list of item IDs."""
     timeline = {}
     types = {}
     languages = {}
     subjects = {}
     contributors = {}
+    locations = {}  # location_id -> {name, lat, lon, itemId, value}
 
     for iid in item_ids:
         year = item_year.get(iid)
@@ -151,6 +177,15 @@ def aggregate_items(item_ids, items, links, item_year):
                 if vrid not in contributors:
                     contributors[vrid] = {'name': title, 'value': 0, 'itemId': vrid}
                 contributors[vrid]['value'] += 1
+            elif term == 'dcterms:spatial':
+                if vrid in geo:
+                    if vrid not in locations:
+                        g = geo[vrid]
+                        locations[vrid] = {
+                            'name': g['name'], 'lat': g['lat'], 'lon': g['lon'],
+                            'itemId': g['itemId'], 'value': 0,
+                        }
+                    locations[vrid]['value'] += 1
 
     return {
         'timeline': dict(sorted(timeline.items())),
@@ -158,6 +193,7 @@ def aggregate_items(item_ids, items, links, item_year):
         'languages': sorted(languages.values(), key=lambda x: -x['value']),
         'subjects': sorted(subjects.values(), key=lambda x: -x['value'])[:60],
         'contributors': sorted(contributors.values(), key=lambda x: -x['value'])[:30],
+        'locations': sorted(locations.values(), key=lambda x: -x['value']),
         'totalItems': len(item_ids),
     }
 
@@ -171,7 +207,7 @@ def save_json(output_dir, item_id, data):
 
 # ── Section dashboards ────────────────────────────────────────────────
 
-def generate_section_dashboards(items, links, children_of, item_year):
+def generate_section_dashboards(items, links, children_of, item_year, geo):
     output_dir = os.path.join(OUTPUT_BASE, 'section-dashboards')
     sections = [(iid, info) for iid, info in items.items()
                 if info['class_term'] == 'frapo:ResearchGroup']
@@ -196,7 +232,7 @@ def generate_section_dashboards(items, links, children_of, item_year):
         if not item_ids:
             continue
 
-        dashboard = aggregate_items(item_ids, items, links, item_year)
+        dashboard = aggregate_items(item_ids, items, links, item_year, geo)
         projects_breakdown.sort(key=lambda x: -x['value'])
         dashboard['projects'] = projects_breakdown
 
@@ -208,7 +244,7 @@ def generate_section_dashboards(items, links, children_of, item_year):
 
 PROJECTS_TEMPLATE_ID = 5  # Resource template ID for "Projects"
 
-def generate_project_dashboards(items, links, children_of, item_year):
+def generate_project_dashboards(items, links, children_of, item_year, geo):
     output_dir = os.path.join(OUTPUT_BASE, 'project-dashboards')
     projects = [(iid, info) for iid, info in items.items()
                 if info['template_id'] == PROJECTS_TEMPLATE_ID]
@@ -221,7 +257,7 @@ def generate_project_dashboards(items, links, children_of, item_year):
         if not item_ids:
             continue
 
-        dashboard = aggregate_items(item_ids, items, links, item_year)
+        dashboard = aggregate_items(item_ids, items, links, item_year, geo)
         save_json(output_dir, project_id, dashboard)
         generated += 1
 
@@ -234,10 +270,10 @@ def main():
     password = get_password()
     os.chdir(OMEKA_DIR)
 
-    items, links, children_of, item_year = load_all_data(password)
+    items, links, children_of, item_year, geo = load_all_data(password)
 
-    generate_section_dashboards(items, links, children_of, item_year)
-    generate_project_dashboards(items, links, children_of, item_year)
+    generate_section_dashboards(items, links, children_of, item_year, geo)
+    generate_project_dashboards(items, links, children_of, item_year, geo)
 
     print('\nDone.')
 
