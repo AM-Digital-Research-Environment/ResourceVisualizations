@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1448","name":"South African Society for Research in Music","category":0,"symbolSize":45,"isCenter":true,"itemId":1448},{"id":"item_543","name":"Jorritsma, Marie","category":1,"symbolSize":22,"itemId":543}],"edges":[{"source":"item_543","target":"item_1448","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

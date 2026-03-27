@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1892","name":"Ghana","category":0,"symbolSize":45,"isCenter":true,"itemId":1892},{"id":"item_1971","name":"Nandom","category":1,"symbolSize":22,"itemId":1971}],"edges":[{"source":"item_1971","target":"item_1892","name":"Is Part Of"}],"categories":[{"name":"Location"},{"name":"Linked Item"}]}

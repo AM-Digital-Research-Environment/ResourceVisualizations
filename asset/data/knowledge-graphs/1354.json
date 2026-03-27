@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1354","name":"All-Africa Church Music Association","category":0,"symbolSize":45,"isCenter":true,"itemId":1354},{"id":"item_549","name":"Kauffman, Robert A.","category":1,"symbolSize":22,"itemId":549}],"edges":[{"source":"item_549","target":"item_1354","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

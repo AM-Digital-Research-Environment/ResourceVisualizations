@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_10312","name":"Bolivia","category":0,"symbolSize":45,"isCenter":true,"itemId":10312},{"id":"item_10326","name":"La Paz Department","category":1,"symbolSize":22,"itemId":10326}],"edges":[{"source":"item_10326","target":"item_10312","name":"Is Part Of"}],"categories":[{"name":"Location"},{"name":"Linked Item"}]}

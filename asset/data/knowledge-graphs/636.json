@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_636","name":"Nurse, George T.","category":0,"symbolSize":45,"isCenter":true,"itemId":636},{"id":"resource_1384","name":"Fort Malangcni, Malawi","category":1,"symbolSize":22,"itemId":1384}],"edges":[{"source":"item_636","target":"resource_1384","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

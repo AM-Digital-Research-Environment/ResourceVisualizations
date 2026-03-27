@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_706","name":"Topp Fargion, Janet","category":0,"symbolSize":45,"isCenter":true,"itemId":706},{"id":"resource_1363","name":"British Library Sound Archive","category":1,"symbolSize":22,"itemId":1363}],"edges":[{"source":"item_706","target":"resource_1363","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

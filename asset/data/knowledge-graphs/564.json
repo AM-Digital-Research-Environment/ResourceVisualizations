@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_564","name":"LaRue, Jennifer","category":0,"symbolSize":45,"isCenter":true,"itemId":564},{"id":"resource_1473","name":"University of Georgia","category":1,"symbolSize":22,"itemId":1473}],"edges":[{"source":"item_564","target":"resource_1473","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

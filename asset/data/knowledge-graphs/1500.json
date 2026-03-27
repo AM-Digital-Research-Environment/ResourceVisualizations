@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1500","name":"Université libre de Bruxelles","category":0,"symbolSize":45,"isCenter":true,"itemId":1500},{"id":"item_445","name":"Bastin, Marie-Louise","category":1,"symbolSize":22,"itemId":445}],"edges":[{"source":"item_445","target":"item_1500","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

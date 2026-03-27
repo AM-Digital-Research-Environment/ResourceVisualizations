@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_705","name":"Todd, C.","category":0,"symbolSize":45,"isCenter":true,"itemId":705},{"id":"resource_1413","name":"Makerere University College","category":1,"symbolSize":22,"itemId":1413}],"edges":[{"source":"item_705","target":"resource_1413","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

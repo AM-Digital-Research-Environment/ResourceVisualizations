@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1263","name":"Das Fernsehspiel-Archiv","category":0,"symbolSize":45,"isCenter":true,"itemId":1263},{"id":"item_180","name":"Zeutzschel, Günter","category":1,"symbolSize":22,"itemId":180}],"edges":[{"source":"item_180","target":"item_1263","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

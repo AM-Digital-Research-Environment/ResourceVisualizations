@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1432","name":"Our Lady of Victories Cathedral, Yaoundé, Cameroon","category":0,"symbolSize":45,"isCenter":true,"itemId":1432},{"id":"item_627","name":"Ngumu, Pie-Claude","category":1,"symbolSize":22,"itemId":627}],"edges":[{"source":"item_627","target":"item_1432","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1508","name":"York University","category":0,"symbolSize":45,"isCenter":true,"itemId":1508},{"id":"item_612","name":"Muehrer, Rachel","category":1,"symbolSize":22,"itemId":612}],"edges":[{"source":"item_612","target":"item_1508","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

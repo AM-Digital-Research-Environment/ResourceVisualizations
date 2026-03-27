@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1908","name":"South Africa","category":0,"symbolSize":45,"isCenter":true,"itemId":1908},{"id":"item_1962","name":"Makhanda","category":1,"symbolSize":22,"itemId":1962}],"edges":[{"source":"item_1962","target":"item_1908","name":"Is Part Of"}],"categories":[{"name":"Location"},{"name":"Linked Item"}]}

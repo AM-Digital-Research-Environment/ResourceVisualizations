@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1420","name":"Missionaries of Africa History Research Team","category":0,"symbolSize":45,"isCenter":true,"itemId":1420},{"id":"item_682","name":"Shorter, Aylward","category":1,"symbolSize":22,"itemId":682}],"edges":[{"source":"item_682","target":"item_1420","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

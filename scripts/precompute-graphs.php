@@ -11,7 +11,7 @@
 
 // Bootstrap Omeka S.
 require dirname(__DIR__, 3) . '/bootstrap.php';
-$application = \Laminas\Mvc\Application::init(require dirname(__DIR__, 3) . '/config/application.config.php');
+$application = \Laminas\Mvc\Application::init(require dirname(__DIR__, 3) . '/application/config/application.config.php');
 $services = $application->getServiceManager();
 $api = $services->get('Omeka\ApiManager');
 $connection = $services->get('Omeka\Connection');

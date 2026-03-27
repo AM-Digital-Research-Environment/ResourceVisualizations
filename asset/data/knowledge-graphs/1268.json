@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1268","name":"Klaus Stephan","category":0,"symbolSize":45,"isCenter":true,"itemId":1268},{"id":"item_152","name":"Fischer-Stephan, Nina","category":1,"symbolSize":22,"itemId":152}],"edges":[{"source":"item_152","target":"item_1268","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

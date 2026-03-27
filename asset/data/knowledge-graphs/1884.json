@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1884","name":"Canada","category":0,"symbolSize":45,"isCenter":true,"itemId":1884},{"id":"item_1938","name":"Hamilton","category":1,"symbolSize":22,"itemId":1938}],"edges":[{"source":"item_1938","target":"item_1884","name":"Is Part Of"}],"categories":[{"name":"Location"},{"name":"Linked Item"}]}

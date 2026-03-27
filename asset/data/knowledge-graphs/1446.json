@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1446","name":"Sigmund Freud Private University Vienna","category":0,"symbolSize":45,"isCenter":true,"itemId":1446},{"id":"item_561","name":"Kubik, Gerhard","category":1,"symbolSize":22,"itemId":561}],"edges":[{"source":"item_561","target":"item_1446","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_416","name":"Wahabe, Fatimetou Abdel","category":0,"symbolSize":45,"isCenter":true,"itemId":416},{"id":"resource_1516","name":"University of Nouakchott","category":1,"symbolSize":22,"itemId":1516}],"edges":[{"source":"item_416","target":"resource_1516","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

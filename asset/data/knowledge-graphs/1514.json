@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1514","name":"University of Freiburg","category":0,"symbolSize":45,"isCenter":true,"itemId":1514},{"id":"item_381","name":"Rebstock, Ulrich","category":1,"symbolSize":22,"itemId":381}],"edges":[{"source":"item_381","target":"item_1514","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

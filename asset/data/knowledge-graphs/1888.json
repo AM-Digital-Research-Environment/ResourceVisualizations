@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1888","name":"Eswatini","category":0,"symbolSize":45,"isCenter":true,"itemId":1888},{"id":"item_1958","name":"Lubombo Transfrontier Conservation and Resource Area","category":1,"symbolSize":22,"itemId":1958}],"edges":[{"source":"item_1958","target":"item_1888","name":"Is Part Of"}],"categories":[{"name":"Location"},{"name":"Linked Item"}]}

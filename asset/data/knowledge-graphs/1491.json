@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1491","name":"University of Tampere","category":0,"symbolSize":45,"isCenter":true,"itemId":1491},{"id":"item_680","name":"Seye, Elina","category":1,"symbolSize":22,"itemId":680}],"edges":[{"source":"item_680","target":"item_1491","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_434","name":"Aluede, Esther Omone","category":0,"symbolSize":45,"isCenter":true,"itemId":434},{"id":"resource_1424","name":"Nnamdi Azikiwe University","category":1,"symbolSize":22,"itemId":1424}],"edges":[{"source":"item_434","target":"resource_1424","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_696","name":"Sum, Maisie","category":0,"symbolSize":45,"isCenter":true,"itemId":696},{"id":"resource_1377","name":"Conrad Grebel University College","category":1,"symbolSize":22,"itemId":1377}],"edges":[{"source":"item_696","target":"resource_1377","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

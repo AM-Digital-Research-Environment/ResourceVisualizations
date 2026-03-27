@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_10314","name":"Uganda","category":0,"symbolSize":45,"isCenter":true,"itemId":10314},{"id":"item_10327","name":"Lwengo District","category":1,"symbolSize":22,"itemId":10327}],"edges":[{"source":"item_10327","target":"item_10314","name":"Is Part Of"}],"categories":[{"name":"Location"},{"name":"Linked Item"}]}

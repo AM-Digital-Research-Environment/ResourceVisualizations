@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_486","name":"De Oliveira Pinto, Tiago","category":0,"symbolSize":45,"isCenter":true,"itemId":486},{"id":"resource_1480","name":"University of Music Franz Liszt Weimar","category":1,"symbolSize":22,"itemId":1480}],"edges":[{"source":"item_486","target":"resource_1480","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

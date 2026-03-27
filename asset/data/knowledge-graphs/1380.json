@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1380","name":"Diocesan School for Girls","category":0,"symbolSize":45,"isCenter":true,"itemId":1380},{"id":"item_467","name":"Carver, Mandy","category":1,"symbolSize":22,"itemId":467}],"edges":[{"source":"item_467","target":"item_1380","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

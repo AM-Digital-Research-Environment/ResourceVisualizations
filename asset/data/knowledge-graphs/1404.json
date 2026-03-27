@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1404","name":"Jos Museum","category":0,"symbolSize":45,"isCenter":true,"itemId":1404},{"id":"item_506","name":"Fagg, Bernard","category":1,"symbolSize":22,"itemId":506}],"edges":[{"source":"item_506","target":"item_1404","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

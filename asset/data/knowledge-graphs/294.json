@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_294","name":"Fonyuy, Kelen Ernesta","category":0,"symbolSize":45,"isCenter":true,"itemId":294},{"id":"resource_1513","name":"University of Bamenda","category":1,"symbolSize":22,"itemId":1513}],"edges":[{"source":"item_294","target":"resource_1513","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

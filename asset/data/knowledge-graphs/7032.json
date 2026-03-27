@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_7032","name":"Universidade Federal da Bahia","category":0,"symbolSize":45,"isCenter":true,"itemId":7032},{"id":"item_388","name":"Sansone, Livio","category":1,"symbolSize":22,"itemId":388}],"edges":[{"source":"item_388","target":"item_7032","name":"Is Part Of"}],"categories":[{"name":"Item"},{"name":"Linked Item"}]}

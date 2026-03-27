@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_661","name":"Phafoli, Lehlohonolo","category":0,"symbolSize":45,"isCenter":true,"itemId":661},{"id":"resource_1472","name":"University of Free State","category":1,"symbolSize":22,"itemId":1472}],"edges":[{"source":"item_661","target":"resource_1472","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

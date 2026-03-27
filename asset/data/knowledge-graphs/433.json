@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_433","name":"Aluede, Charles Onomudo","category":0,"symbolSize":45,"isCenter":true,"itemId":433},{"id":"resource_1355","name":"Ambrose Alli University","category":1,"symbolSize":22,"itemId":1355}],"edges":[{"source":"item_433","target":"resource_1355","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

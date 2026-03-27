@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1356","name":"American Methodist Mission","category":0,"symbolSize":45,"isCenter":true,"itemId":1356},{"id":"item_549","name":"Kauffman, Robert A.","category":1,"symbolSize":22,"itemId":549}],"edges":[{"source":"item_549","target":"item_1356","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

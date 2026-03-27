@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1503","name":"Wesleyan University","category":0,"symbolSize":45,"isCenter":true,"itemId":1503},{"id":"item_498","name":"Eagleson, Ian","category":1,"symbolSize":22,"itemId":498}],"edges":[{"source":"item_498","target":"item_1503","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

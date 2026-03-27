@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1465","name":"University of Cologne","category":0,"symbolSize":45,"isCenter":true,"itemId":1465},{"id":"item_436","name":"Amoros, Luis Gimenez","category":1,"symbolSize":22,"itemId":436}],"edges":[{"source":"item_436","target":"item_1465","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

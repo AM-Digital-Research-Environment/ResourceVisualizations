@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1517","name":"University of Sousse","category":0,"symbolSize":45,"isCenter":true,"itemId":1517},{"id":"item_263","name":"Amara, Ramzi Ben","category":1,"symbolSize":22,"itemId":263}],"edges":[{"source":"item_263","target":"item_1517","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

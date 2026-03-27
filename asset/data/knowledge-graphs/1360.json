@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1360","name":"Boston University College of Fine Arts","category":0,"symbolSize":45,"isCenter":true,"itemId":1360},{"id":"item_695","name":"Stuffelbeam, Katharine","category":1,"symbolSize":22,"itemId":695}],"edges":[{"source":"item_695","target":"item_1360","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

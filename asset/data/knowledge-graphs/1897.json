@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1897","name":"Liberia","category":0,"symbolSize":45,"isCenter":true,"itemId":1897},{"id":"item_1966","name":"Monrovia","category":1,"symbolSize":22,"itemId":1966}],"edges":[{"source":"item_1966","target":"item_1897","name":"Is Part Of"}],"categories":[{"name":"Location"},{"name":"Linked Item"}]}

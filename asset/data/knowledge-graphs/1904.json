@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1904","name":"Papua New Guinea","category":0,"symbolSize":45,"isCenter":true,"itemId":1904},{"id":"item_1983","name":"Port Moresby","category":1,"symbolSize":22,"itemId":1983}],"edges":[{"source":"item_1983","target":"item_1904","name":"Is Part Of"}],"categories":[{"name":"Location"},{"name":"Linked Item"}]}

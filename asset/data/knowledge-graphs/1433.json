@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1433","name":"Our Lady of Victory Abbey, Kipkelion, Kenya","category":0,"symbolSize":45,"isCenter":true,"itemId":1433},{"id":"item_742","name":"van Thiel, Paul","category":1,"symbolSize":22,"itemId":742}],"edges":[{"source":"item_742","target":"item_1433","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

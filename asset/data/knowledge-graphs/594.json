@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_594","name":"Martin, Stephen H.","category":0,"symbolSize":45,"isCenter":true,"itemId":594},{"id":"resource_1458","name":"University of Alabama","category":1,"symbolSize":22,"itemId":1458}],"edges":[{"source":"item_594","target":"resource_1458","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

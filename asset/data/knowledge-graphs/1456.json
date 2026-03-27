@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1456","name":"UCLouvain","category":0,"symbolSize":45,"isCenter":true,"itemId":1456},{"id":"item_736","name":"de Troch, Daniel","category":1,"symbolSize":22,"itemId":736}],"edges":[{"source":"item_736","target":"item_1456","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

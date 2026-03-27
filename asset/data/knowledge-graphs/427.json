@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_427","name":"Agu, Daniel C. C.","category":0,"symbolSize":45,"isCenter":true,"itemId":427},{"id":"resource_1439","name":"Queen's University Belfast","category":1,"symbolSize":22,"itemId":1439}],"edges":[{"source":"item_427","target":"resource_1439","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

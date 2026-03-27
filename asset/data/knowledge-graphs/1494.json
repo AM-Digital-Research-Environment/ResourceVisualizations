@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1494","name":"University of Venda","category":0,"symbolSize":45,"isCenter":true,"itemId":1494},{"id":"item_560","name":"Kruger, Jaco","category":1,"symbolSize":22,"itemId":560}],"edges":[{"source":"item_560","target":"item_1494","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

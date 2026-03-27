@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_349","name":"Mraja, Mohamed","category":0,"symbolSize":45,"isCenter":true,"itemId":349},{"id":"resource_1515","name":"Bomet University College","category":1,"symbolSize":22,"itemId":1515}],"edges":[{"source":"item_349","target":"resource_1515","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

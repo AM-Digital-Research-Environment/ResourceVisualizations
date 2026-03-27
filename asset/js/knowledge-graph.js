@@ -38,7 +38,7 @@
         var itemId = container.dataset.itemId;
         var basePath = container.dataset.basePath || '';
         var apiBase = container.dataset.apiBase;
-        var precomputedUrl = basePath + '/files/resource-visualizations/' + itemId + '.json';
+        var precomputedUrl = basePath + '/modules/ResourceVisualizations/asset/data/knowledge-graphs/' + itemId + '.json';
 
         // Try precomputed file first.
         return fetch(precomputedUrl).then(function (resp) {

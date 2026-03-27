@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_816","name":"Söllner, Fritz","category":0,"symbolSize":45,"isCenter":true,"itemId":816},{"id":"resource_1533","name":"Technische Universität Ilmenau","category":1,"symbolSize":22,"itemId":1533}],"edges":[{"source":"item_816","target":"resource_1533","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

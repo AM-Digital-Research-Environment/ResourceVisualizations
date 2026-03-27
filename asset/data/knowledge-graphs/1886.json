@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1886","name":"Democratic Republic of the Congo","category":0,"symbolSize":45,"isCenter":true,"itemId":1886},{"id":"item_1937","name":"Geti","category":1,"symbolSize":22,"itemId":1937}],"edges":[{"source":"item_1937","target":"item_1886","name":"Is Part Of"}],"categories":[{"name":"Location"},{"name":"Linked Item"}]}

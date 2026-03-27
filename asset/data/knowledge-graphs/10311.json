@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_10311","name":"Benin","category":0,"symbolSize":45,"isCenter":true,"itemId":10311},{"id":"item_10319","name":"Borgou Department","category":1,"symbolSize":22,"itemId":10319}],"edges":[{"source":"item_10319","target":"item_10311","name":"Is Part Of"}],"categories":[{"name":"Location"},{"name":"Linked Item"}]}

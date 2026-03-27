@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_808","name":"Pickel, Christian","category":0,"symbolSize":45,"isCenter":true,"itemId":808},{"id":"resource_1527","name":"Bayreuther Land","category":1,"symbolSize":22,"itemId":1527}],"edges":[{"source":"item_808","target":"resource_1527","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

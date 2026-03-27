@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_469","name":"Chamisa, Vimbai","category":0,"symbolSize":45,"isCenter":true,"itemId":469},{"id":"resource_1418","name":"Midlands State University","category":1,"symbolSize":22,"itemId":1418}],"edges":[{"source":"item_469","target":"resource_1418","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

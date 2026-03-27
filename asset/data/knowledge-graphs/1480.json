@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1480","name":"University of Music Franz Liszt Weimar","category":0,"symbolSize":45,"isCenter":true,"itemId":1480},{"id":"item_486","name":"De Oliveira Pinto, Tiago","category":1,"symbolSize":22,"itemId":486}],"edges":[{"source":"item_486","target":"item_1480","name":"Is Part Of"}],"categories":[{"name":"Organization"},{"name":"Linked Item"}]}

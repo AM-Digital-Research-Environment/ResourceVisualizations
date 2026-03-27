@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_573","name":"Lenherr, Joseph","category":0,"symbolSize":45,"isCenter":true,"itemId":573},{"id":"resource_1367","name":"Catholic Missionary from Chilimanzi, Rhodesia","category":1,"symbolSize":22,"itemId":1367}],"edges":[{"source":"item_573","target":"resource_1367","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

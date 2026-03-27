@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_728","name":"Williamson, Leslie","category":0,"symbolSize":45,"isCenter":true,"itemId":728},{"id":"resource_1407","name":"Kwanongomo College, Bulawayo","category":1,"symbolSize":22,"itemId":1407}],"edges":[{"source":"item_728","target":"resource_1407","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_1909","name":"Spain","category":0,"symbolSize":45,"isCenter":true,"itemId":1909},{"id":"item_1960","name":"Madrid","category":1,"symbolSize":22,"itemId":1960}],"edges":[{"source":"item_1960","target":"item_1909","name":"Is Part Of"}],"categories":[{"name":"Location"},{"name":"Linked Item"}]}

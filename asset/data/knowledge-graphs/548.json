@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_548","name":"Kasule, Sam","category":0,"symbolSize":45,"isCenter":true,"itemId":548},{"id":"resource_1468","name":"University of Derby","category":1,"symbolSize":22,"itemId":1468}],"edges":[{"source":"item_548","target":"resource_1468","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

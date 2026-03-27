@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_272","name":"Bergermann, Ulrike","category":0,"symbolSize":45,"isCenter":true,"itemId":272},{"id":"resource_1509","name":"TU Braunschweig","category":1,"symbolSize":22,"itemId":1509}],"edges":[{"source":"item_272","target":"resource_1509","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}

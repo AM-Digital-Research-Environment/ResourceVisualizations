@@ -1,0 +1,1 @@
+{"nodes":[{"id":"item_717","name":"Vercelli, Michael B.","category":0,"symbolSize":45,"isCenter":true,"itemId":717},{"id":"resource_1504","name":"West Virginia University","category":1,"symbolSize":22,"itemId":1504}],"edges":[{"source":"item_717","target":"resource_1504","name":"Is Part Of"}],"categories":[{"name":"Person"},{"name":"Project"}]}
