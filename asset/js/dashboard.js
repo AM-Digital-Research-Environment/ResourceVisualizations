@@ -172,6 +172,42 @@
     /*  Map (MapLibre GL)                                                  */
     /* ------------------------------------------------------------------ */
 
+    function buildMapPopup(props, locItems, page, perPage, siteBase) {
+        var total = locItems.length;
+        var totalPages = Math.ceil(total / perPage);
+        var start = page * perPage;
+        var pageItems = locItems.slice(start, start + perPage);
+
+        var h = '<div class="rv-popup-content">';
+        h += '<strong>' + (props.name || '') + '</strong>';
+        h += ' <span class="rv-popup-count">' + props.value + ' items</span>';
+
+        if (pageItems.length) {
+            h += '<ul class="rv-popup-items">';
+            pageItems.forEach(function (it) {
+                var url = siteBase ? siteBase + '/item/' + it.id : '#';
+                var title = it.title.length > 55 ? it.title.substring(0, 55) + '\u2026' : it.title;
+                h += '<li><a href="' + url + '">' + title + '</a></li>';
+            });
+            h += '</ul>';
+        }
+
+        if (totalPages > 1) {
+            h += '<div class="rv-popup-pagination">';
+            if (page > 0) h += '<button type="button" data-page="' + (page - 1) + '">\u2190</button>';
+            h += '<span>' + (page + 1) + ' / ' + totalPages + '</span>';
+            if (page < totalPages - 1) h += '<button type="button" data-page="' + (page + 1) + '">\u2192</button>';
+            h += '</div>';
+        }
+
+        if (props.itemId && siteBase) {
+            h += '<a class="rv-popup-location-link" href="' + siteBase + '/item/' + props.itemId + '">View location page \u2192</a>';
+        }
+
+        h += '</div>';
+        return h;
+    }
+
     function buildMap(el, data, siteBase) {
         if (!data || !data.length || typeof maplibregl === 'undefined') return null;
 
@@ -264,17 +300,33 @@
                 }
             });
 
-            // Popups on point click.
+            // Build a lookup for location items from the raw data.
+            var locationItems = {};
+            data.forEach(function (loc) {
+                if (loc.items && loc.items.length) {
+                    locationItems[loc.name] = loc.items;
+                }
+            });
+
+            // Popups on point click — show paginated item list.
             map.on('click', 'points', function (e) {
                 var props = e.features[0].properties;
-                var html = '<strong>' + props.name + '</strong><br/>' + props.value + ' items';
-                if (props.itemId && siteBase) {
-                    html += '<br/><a href="' + siteBase + '/item/' + props.itemId + '">View location</a>';
-                }
-                new maplibregl.Popup({ offset: 12 })
+                var locItems = locationItems[props.name] || [];
+                var perPage = 8;
+                var html = buildMapPopup(props, locItems, 0, perPage, siteBase);
+
+                var popup = new maplibregl.Popup({ offset: 12, maxWidth: '320px', className: 'rv-map-popup' })
                     .setLngLat(e.lngLat)
                     .setHTML(html)
                     .addTo(map);
+
+                // Pagination click handler.
+                popup.getElement().addEventListener('click', function (evt) {
+                    var btn = evt.target.closest('[data-page]');
+                    if (!btn) return;
+                    var page = parseInt(btn.dataset.page, 10);
+                    popup.setHTML(buildMapPopup(props, locItems, page, perPage, siteBase));
+                });
             });
 
             // Zoom into cluster on click.

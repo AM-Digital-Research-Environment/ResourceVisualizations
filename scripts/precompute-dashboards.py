@@ -149,7 +149,7 @@ def aggregate_items(item_ids, items, links, item_year, geo):
     languages = {}
     subjects = {}
     contributors = {}
-    locations = {}  # location_id -> {name, lat, lon, itemId, value}
+    locations = {}  # location_id -> {name, lat, lon, itemId, value, items}
 
     for iid in item_ids:
         year = item_year.get(iid)
@@ -183,9 +183,11 @@ def aggregate_items(item_ids, items, links, item_year, geo):
                         g = geo[vrid]
                         locations[vrid] = {
                             'name': g['name'], 'lat': g['lat'], 'lon': g['lon'],
-                            'itemId': g['itemId'], 'value': 0,
+                            'itemId': g['itemId'], 'value': 0, 'items': [],
                         }
                     locations[vrid]['value'] += 1
+                    item_title = items.get(iid, {}).get('title', f'Item {iid}')
+                    locations[vrid]['items'].append({'id': iid, 'title': item_title})
 
     return {
         'timeline': dict(sorted(timeline.items())),
