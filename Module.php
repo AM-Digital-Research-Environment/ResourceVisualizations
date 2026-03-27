@@ -32,7 +32,7 @@ class Module extends AbstractModule
             $view->assetUrl('css/resource-visualizations.css', 'ResourceVisualizations')
         );
         $view->headScript()->appendFile(
-            'https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js'
+            'https://cdn.jsdelivr.net/npm/echarts@6/dist/echarts.min.js'
         );
         $view->headScript()->appendFile(
             'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2/dist/echarts-wordcloud.min.js'
