@@ -114,6 +114,7 @@
         var option = {
             tooltip: {
                 trigger: 'item',
+                confine: true,
                 formatter: function (p) {
                     if (p.dataType === 'node') {
                         var c = data.categories[p.data.category];
