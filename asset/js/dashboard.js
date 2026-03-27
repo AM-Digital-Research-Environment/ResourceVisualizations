@@ -534,6 +534,85 @@
         return chart;
     }
 
+    /* ------------------------------------------------------------------ */
+    /*  Phase 3 charts: Sankey, Sunburst, Stacked Timeline                 */
+    /* ------------------------------------------------------------------ */
+
+    function buildSankey(el, data) {
+        if (!data || !data.nodes || !data.links || data.links.length < 1) return;
+        var chart = echarts.init(el);
+
+        chart.setOption({
+            tooltip: { trigger: 'item', confine: true },
+            series: [{
+                type: 'sankey', layout: 'none',
+                emphasis: { focus: 'adjacency' },
+                nodeAlign: 'left', orient: 'horizontal',
+                nodeWidth: 20, nodeGap: 10,
+                lineStyle: { color: 'gradient', curveness: 0.5, opacity: 0.4 },
+                label: {
+                    fontSize: 11,
+                    formatter: function (p) { var s = p.name; return s.length > 25 ? s.substring(0, 25) + '\u2026' : s; }
+                },
+                data: data.nodes.map(function (n, i) {
+                    return { name: n.name, itemStyle: { color: COLORS[i % COLORS.length] } };
+                }),
+                links: data.links
+            }]
+        });
+        return chart;
+    }
+
+    function buildSunburst(el, data) {
+        if (!data || !data.length) return;
+        var chart = echarts.init(el);
+
+        chart.setOption({
+            tooltip: { confine: true },
+            series: [{
+                type: 'sunburst',
+                data: data,
+                radius: ['10%', '90%'],
+                sort: null,
+                emphasis: { focus: 'ancestor' },
+                levels: [
+                    {},
+                    { r0: '10%', r: '40%', label: { fontSize: 11, rotate: 'tangential' }, itemStyle: { borderWidth: 2 } },
+                    { r0: '40%', r: '65%', label: { fontSize: 10, rotate: 'tangential' }, itemStyle: { borderWidth: 1 } },
+                    { r0: '65%', r: '90%', label: { show: false }, itemStyle: { borderWidth: 0.5 } }
+                ]
+            }]
+        });
+        return chart;
+    }
+
+    function buildStackedTimeline(el, data) {
+        if (!data || !data.years || !data.series) return;
+        var chart = echarts.init(el);
+
+        var series = data.series.map(function (s, i) {
+            return {
+                name: s.name, type: 'bar', stack: 'total',
+                data: s.data,
+                itemStyle: { color: COLORS[i % COLORS.length] },
+                emphasis: { focus: 'series' }
+            };
+        });
+
+        chart.setOption({
+            tooltip: { trigger: 'axis', confine: true },
+            legend: { bottom: 10, textStyle: { fontSize: 11 }, type: 'scroll' },
+            grid: { left: 50, right: 20, top: 20, bottom: 50 },
+            xAxis: {
+                type: 'category', data: data.years,
+                axisLabel: { rotate: data.years.length > 15 ? 45 : 0, fontSize: 11 }
+            },
+            yAxis: { type: 'value', minInterval: 1 },
+            series: series
+        });
+        return chart;
+    }
+
     function buildMiniMap(el, data, siteBase) {
         if (!data || !data.lat || typeof maplibregl === 'undefined') return null;
         el.style.borderRadius = '6px';
@@ -554,10 +633,13 @@
 
     var CHART_MAP = {
         'selfLocation': buildMiniMap,
+        'stackedTimeline': buildStackedTimeline,
         'timeline': buildTimeline,
         'gantt': buildGantt,
         'types': buildPieChart,
         'heatmap': buildHeatmap,
+        'sankey': buildSankey,
+        'sunburst': buildSunburst,
         'locations': buildMap,
         'languages': buildBarChart,
         'subjects': buildWordCloud,
@@ -570,6 +652,7 @@
 
     var CHART_LABELS = {
         'selfLocation': 'Location',
+        'stackedTimeline': 'Items by Year and Type',
         'timeline': 'Timeline',
         'gantt': 'Project Timelines',
         'types': 'Resource Types',
@@ -578,6 +661,8 @@
         'subjects': 'Subjects',
         'chord': 'Subject Co-occurrence',
         'contributors': 'Top Associated Persons',
+        'sankey': 'Contributor \u2192 Project \u2192 Type',
+        'sunburst': 'Type \u2192 Language \u2192 Subject',
         'locations': 'Geographic Origins',
         'coAuthors': 'Co-authors',
         'coSubjects': 'Co-occurring Subjects',
@@ -590,8 +675,11 @@
         'languages': 'Languages represented across all research items.',
         'subjects': 'Most frequent subject keywords across all items.',
         'selfLocation': '',
+        'stackedTimeline': 'Items per year, broken down by resource type.',
         'gantt': 'Duration of each project within this research section.',
         'heatmap': 'Cross-tabulation showing item counts for each type-language combination.',
+        'sankey': 'Flow from contributors through projects to resource types.',
+        'sunburst': 'Hierarchical view: resource type, then language, then top subjects.',
         'locations': 'Geographic origins of research items, sized by number of items.',
         'chord': 'Subjects that frequently appear together across research items.',
         'contributors': 'Persons most frequently associated with research items.',
@@ -611,13 +699,13 @@
             + '</div>'
             + '<div class="dashboard-charts">';
 
-        var chartKeys = ['selfLocation', 'timeline', 'gantt', 'types', 'heatmap', 'locations', 'languages', 'subjects', 'chord', 'contributors', 'coAuthors', 'coSubjects', 'projects'];
+        var chartKeys = ['selfLocation', 'stackedTimeline', 'timeline', 'gantt', 'types', 'heatmap', 'sankey', 'sunburst', 'locations', 'languages', 'subjects', 'chord', 'contributors', 'coAuthors', 'coSubjects', 'projects'];
         chartKeys.forEach(function (key) {
             var d = data[key];
             var hasData = Array.isArray(d) ? d.length > 0 : (d && Object.keys(d).length > 0);
             if (!hasData) return;
-            var wideKeys = ['selfLocation', 'gantt', 'heatmap', 'subjects', 'locations', 'chord', 'projects', 'coSubjects'];
-            var tallKeys = ['selfLocation', 'gantt', 'heatmap', 'subjects', 'locations', 'chord'];
+            var wideKeys = ['selfLocation', 'stackedTimeline', 'gantt', 'heatmap', 'sankey', 'sunburst', 'subjects', 'locations', 'chord', 'projects', 'coSubjects'];
+            var tallKeys = ['selfLocation', 'gantt', 'heatmap', 'sankey', 'sunburst', 'subjects', 'locations', 'chord'];
             var wide = wideKeys.indexOf(key) >= 0 ? ' chart-panel-wide' : '';
             var tall = tallKeys.indexOf(key) >= 0 ? ' chart-container-tall' : '';
             var desc = CHART_DESCRIPTIONS[key] || '';

@@ -333,6 +333,159 @@ def build_chord(item_ids, links, items, term_filter='dcterms:subject', max_nodes
     return {'nodes': chord_nodes, 'links': chord_links}
 
 
+def build_sankey(item_ids, links, items):
+    """Build contributor → project → resource type Sankey flow."""
+    flows = {}  # (contributor, project, type) -> count
+    all_contributors = set()
+    all_projects = set()
+    all_types = set()
+
+    for iid in item_ids:
+        item_contributors = []
+        item_project = None
+        item_types = []
+        for term, label, vrid in links.get(iid, []):
+            title = items.get(vrid, {}).get('title', '')
+            if not title:
+                continue
+            if term.startswith('marcrel:') or term in ('dcterms:creator', 'dcterms:contributor'):
+                item_contributors.append(title)
+            elif term == 'dcterms:isPartOf':
+                item_project = title
+            elif term == 'dcterms:type':
+                item_types.append(title)
+
+        if not item_project or not item_contributors or not item_types:
+            continue
+
+        for c in item_contributors[:3]:  # Limit per item to avoid explosion
+            for t in item_types:
+                flows[(c, item_project, t)] = flows.get((c, item_project, t), 0) + 1
+                all_contributors.add(c)
+                all_projects.add(item_project)
+                all_types.add(t)
+
+    if not flows:
+        return None
+
+    # Keep top 10 contributors to avoid clutter.
+    contrib_counts = {}
+    for (c, p, t), v in flows.items():
+        contrib_counts[c] = contrib_counts.get(c, 0) + v
+    top_contribs = set(sorted(contrib_counts, key=lambda x: -contrib_counts[x])[:10])
+
+    node_names = set()
+    sankey_links = []
+    for (c, p, t), v in flows.items():
+        if c not in top_contribs:
+            continue
+        node_names.update([c, p, t])
+        sankey_links.append({'source': c, 'target': p, 'value': v})
+        sankey_links.append({'source': p, 'target': t, 'value': v})
+
+    # Deduplicate links.
+    link_map = {}
+    for l in sankey_links:
+        key = (l['source'], l['target'])
+        link_map[key] = link_map.get(key, 0) + l['value']
+
+    nodes = [{'name': n} for n in node_names]
+    deduped_links = [{'source': s, 'target': t, 'value': v} for (s, t), v in link_map.items()]
+
+    return {'nodes': nodes, 'links': deduped_links} if deduped_links else None
+
+
+def build_sunburst(item_ids, links, items):
+    """Build type → language → subject sunburst hierarchy."""
+    # Collect: type -> language -> subject -> count
+    tree = {}  # {type: {lang: {subject: count}}}
+
+    for iid in item_ids:
+        item_types = []
+        item_langs = []
+        item_subjects = []
+        for term, label, vrid in links.get(iid, []):
+            title = items.get(vrid, {}).get('title', '')
+            if not title:
+                continue
+            if term == 'dcterms:type':
+                item_types.append(title)
+            elif term == 'dcterms:language':
+                item_langs.append(title)
+            elif term == 'dcterms:subject':
+                item_subjects.append(title)
+
+        for t in item_types:
+            for l in item_langs:
+                if t not in tree:
+                    tree[t] = {}
+                if l not in tree[t]:
+                    tree[t][l] = {}
+                if item_subjects:
+                    for s in item_subjects[:5]:  # Limit subjects per item
+                        tree[t][l][s] = tree[t][l].get(s, 0) + 1
+                else:
+                    tree[t][l]['(no subject)'] = tree[t][l].get('(no subject)', 0) + 1
+
+    if not tree:
+        return None
+
+    # Convert to ECharts sunburst format.
+    result = []
+    for type_name, langs in tree.items():
+        type_node = {'name': type_name, 'children': []}
+        for lang_name, subjects in langs.items():
+            lang_node = {'name': lang_name, 'children': []}
+            # Top 8 subjects per language
+            top_subs = sorted(subjects.items(), key=lambda x: -x[1])[:8]
+            for sub_name, count in top_subs:
+                lang_node['children'].append({'name': sub_name, 'value': count})
+            type_node['children'].append(lang_node)
+        result.append(type_node)
+
+    return result if result else None
+
+
+def build_stacked_timeline(item_ids, links, items, item_year):
+    """Build stacked timeline: items by year, stacked by resource type."""
+    # Collect: year -> type -> count
+    year_type = {}
+    all_types = set()
+
+    for iid in item_ids:
+        year = item_year.get(iid)
+        if not year:
+            continue
+        item_types = []
+        for term, label, vrid in links.get(iid, []):
+            if term == 'dcterms:type':
+                title = items.get(vrid, {}).get('title', '')
+                if title:
+                    item_types.append(title)
+                    all_types.add(title)
+        if not item_types:
+            item_types = ['(no type)']
+            all_types.add('(no type)')
+        for t in item_types:
+            if year not in year_type:
+                year_type[year] = {}
+            year_type[year][t] = year_type[year].get(t, 0) + 1
+
+    if not year_type:
+        return None
+
+    years = sorted(year_type.keys())
+    type_list = sorted(all_types)
+    series = []
+    for t in type_list:
+        series.append({
+            'name': t,
+            'data': [year_type.get(y, {}).get(t, 0) for y in years],
+        })
+
+    return {'years': years, 'series': series}
+
+
 def save_json(item_id, data):
     path = os.path.join(OUTPUT_DIR, f'{item_id}.json')
     with open(path, 'w', encoding='utf-8') as f:
@@ -383,6 +536,15 @@ def generate_sections(items, links, reverse_links, children_of, item_year, tempo
         chord = build_chord(item_ids, links, items)
         if chord:
             dashboard['chord'] = chord
+        stacked = build_stacked_timeline(item_ids, links, items, item_year)
+        if stacked:
+            dashboard['stackedTimeline'] = stacked
+        sankey = build_sankey(item_ids, links, items)
+        if sankey:
+            dashboard['sankey'] = sankey
+        sunburst = build_sunburst(item_ids, links, items)
+        if sunburst:
+            dashboard['sunburst'] = sunburst
         save_json(sid, dashboard)
         print(f'  {sinfo["title"]}: {len(item_ids)} items')
 
@@ -403,6 +565,15 @@ def generate_projects(items, links, reverse_links, children_of, item_year, geo):
         chord = build_chord(item_ids, links, items)
         if chord:
             dashboard['chord'] = chord
+        stacked = build_stacked_timeline(item_ids, links, items, item_year)
+        if stacked:
+            dashboard['stackedTimeline'] = stacked
+        sankey = build_sankey(item_ids, links, items)
+        if sankey:
+            dashboard['sankey'] = sankey
+        sunburst = build_sunburst(item_ids, links, items)
+        if sunburst:
+            dashboard['sunburst'] = sunburst
         save_json(pid, dashboard)
         count += 1
     print(f'  {count} dashboards generated')
