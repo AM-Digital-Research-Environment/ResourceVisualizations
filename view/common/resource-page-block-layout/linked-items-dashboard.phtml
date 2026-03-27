@@ -1,0 +1,68 @@
+<?php
+/**
+ * Linked Items Dashboard resource page block.
+ *
+ * Finds items that link TO this resource and renders aggregated visualizations.
+ * For research sections (frapo:ResearchGroup): finds projects in this section,
+ * then finds research items in those projects (two-hop query).
+ * For other items: finds items that reference this resource via dcterms:isPartOf.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var \Omeka\Api\Representation\ItemRepresentation $resource
+ */
+
+$resourceId = $resource->id();
+$resourceClass = $resource->resourceClass();
+$isSection = $resourceClass && $resourceClass->term() === 'frapo:ResearchGroup';
+
+/**
+ * Search for items with a property value referencing the given resource ID.
+ */
+$searchLinkedItems = function (int $targetId, int $maxPages = 5) {
+    $allItems = [];
+    $page = 1;
+    do {
+        $response = $this->api()->search('items', [
+            'property' => [
+                [
+                    'property' => 'dcterms:isPartOf',
+                    'type'     => 'res',
+                    'text'     => (string) $targetId,
+                ],
+            ],
+            'per_page' => 100,
+            'page'     => $page,
+        ]);
+        $items = $response->getContent();
+        $allItems = array_merge($allItems, $items);
+        $page++;
+    } while (count($items) === 100 && $page <= $maxPages);
+    return $allItems;
+};
+
+if ($isSection) {
+    // Two-hop: section -> projects -> research items.
+    $projects = $searchLinkedItems($resourceId, 3);
+    $allItems = [];
+    foreach ($projects as $project) {
+        $projectItems = $searchLinkedItems($project->id(), 5);
+        foreach ($projectItems as $item) {
+            $allItems[$item->id()] = $item;
+        }
+    }
+    $allItems = array_values($allItems);
+} else {
+    // Single hop: find items linking to this resource.
+    $allItems = $searchLinkedItems($resourceId, 5);
+}
+
+if (empty($allItems)) {
+    return;
+}
+?>
+
+<div class="resource-vis-block dashboard-block">
+    <?= $this->partial('common/resource-page-block-layout/partials/dashboard-charts', [
+        'items' => $allItems,
+    ]) ?>
+</div>

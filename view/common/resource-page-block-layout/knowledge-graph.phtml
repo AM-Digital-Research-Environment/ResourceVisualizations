@@ -1,0 +1,135 @@
+<?php
+/**
+ * Knowledge Graph resource page block.
+ *
+ * Builds a force-directed graph from the item's linked resource values.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var \Omeka\Api\Representation\ItemRepresentation $resource
+ */
+
+$this->headScript()->appendFile($this->assetUrl('js/knowledge-graph.js', 'ResourceVisualizations'));
+
+// Property-to-category mapping for graph node grouping.
+$propertyCategoryMap = [
+    'dcterms:creator'    => 'Person',
+    'dcterms:contributor'=> 'Person',
+    'foaf:member'        => 'Person',
+    'dcterms:subject'    => 'Subject',
+    'dcterms:spatial'    => 'Location',
+    'dcterms:provenance' => 'Location',
+    'dcterms:language'   => 'Language',
+    'dcterms:isPartOf'   => 'Project',
+    'dcterms:type'       => 'Type',
+    'dcterms:format'     => 'Genre',
+    'dcterms:audience'   => 'Audience',
+    'dcterms:relation'   => 'Related Item',
+    'dcterms:hasPart'    => 'Related Item',
+    'dcterms:replaces'   => 'Related Item',
+    'dcterms:isReplacedBy' => 'Related Item',
+    'dcterms:hasVersion' => 'Related Item',
+    'dcterms:isVersionOf'=> 'Related Item',
+    'dcterms:hasFormat'  => 'Related Item',
+    'dcterms:license'    => 'License',
+    'dcterms:accessRights' => 'Access Rights',
+    'frapo:isFundedBy'   => 'Institution',
+    'dre:wisskiUrl'      => null,
+    'dre:mongoId'        => null,
+    'dre:id'             => null,
+    'dre:bitstream'      => null,
+    'dre:security'       => null,
+    'dre:rdspaceHandle'  => null,
+];
+
+$itemId = $resource->id();
+$itemTitle = $resource->displayTitle();
+$resourceClass = $resource->resourceClass();
+$resourceClassName = $resourceClass ? $resourceClass->label() : 'Item';
+
+// Center node.
+$nodes = [];
+$edges = [];
+$categories = [['name' => $resourceClassName]];
+$categoryMap = [$resourceClassName => 0];
+$seenNodes = [];
+
+$nodes[] = [
+    'id'         => 'item_' . $itemId,
+    'name'       => $itemTitle,
+    'category'   => 0,
+    'symbolSize' => 40,
+    'isCenter'   => true,
+];
+
+foreach ($resource->values() as $term => $propertyData) {
+    // Determine category: explicit map, or any marcrel:* property.
+    if (array_key_exists($term, $propertyCategoryMap)) {
+        $categoryName = $propertyCategoryMap[$term];
+    } elseif (strpos($term, 'marcrel:') === 0) {
+        $categoryName = 'Contributor';
+    } else {
+        continue;
+    }
+
+    // Skip explicitly excluded properties.
+    if ($categoryName === null) {
+        continue;
+    }
+
+    $propertyLabel = $propertyData['property']->label();
+
+    foreach ($propertyData['values'] as $value) {
+        $vr = $value->valueResource();
+        if (!$vr) {
+            continue;
+        }
+
+        $linkedId = $vr->id();
+        $nodeId = 'resource_' . $linkedId;
+
+        if (!isset($categoryMap[$categoryName])) {
+            $categoryMap[$categoryName] = count($categories);
+            $categories[] = ['name' => $categoryName];
+        }
+
+        if (!isset($seenNodes[$nodeId])) {
+            $seenNodes[$nodeId] = true;
+            $nodes[] = [
+                'id'         => $nodeId,
+                'name'       => $vr->displayTitle(),
+                'category'   => $categoryMap[$categoryName],
+                'symbolSize' => 25,
+            ];
+        }
+
+        $edges[] = [
+            'source' => 'item_' . $itemId,
+            'target' => $nodeId,
+            'name'   => $propertyLabel,
+        ];
+    }
+}
+
+// Only render when there are relationships to show.
+if (count($nodes) <= 1) {
+    return;
+}
+
+$graphData = json_encode([
+    'nodes'      => $nodes,
+    'edges'      => $edges,
+    'categories' => $categories,
+], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+?>
+
+<div class="resource-vis-block knowledge-graph-block">
+    <h3><?= $this->translate('Knowledge Graph') ?></h3>
+    <div class="knowledge-graph-toolbar">
+        <button type="button" class="rv-btn rv-fullscreen-toggle" aria-label="<?= $this->escapeHtmlAttr($this->translate('Toggle fullscreen')) ?>">
+            <span class="rv-icon-expand">&#x26F6;</span>
+        </button>
+    </div>
+    <div class="knowledge-graph-container"
+         data-graph="<?= $this->escapeHtmlAttr($graphData) ?>">
+    </div>
+</div>
