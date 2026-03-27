@@ -422,7 +422,7 @@
             var d = data[key];
             var hasData = Array.isArray(d) ? d.length > 0 : (d && Object.keys(d).length > 0);
             if (!hasData) return;
-            var wide = (key === 'timeline' || key === 'subjects' || key === 'locations') ? ' chart-panel-wide' : '';
+            var wide = (key === 'subjects' || key === 'locations' || key === 'projects') ? ' chart-panel-wide' : '';
             var tall = (key === 'subjects' || key === 'locations') ? ' chart-container-tall' : '';
             var desc = CHART_DESCRIPTIONS[key] || '';
             html += '<div class="chart-panel' + wide + '">'
