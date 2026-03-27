@@ -131,7 +131,8 @@
                 data: data.categories.map(function (c) { return c.name; }),
                 bottom: 10, textStyle: { fontSize: 11 }, type: 'scroll'
             },
-            animationDuration: 600,
+            animationDuration: 300,
+            animationEasingUpdate: 'cubicOut',
             series: [{
                 type: 'graph', layout: 'force',
                 data: data.nodes.map(function (nd) {
@@ -167,7 +168,8 @@
                     repulsion: n > 60 ? 600 : n > 30 ? 450 : 300,
                     gravity: n > 60 ? 0.05 : 0.08,
                     edgeLength: n > 60 ? [40, 250] : [60, 200],
-                    friction: 0.6
+                    friction: 0.85,
+                    layoutAnimation: false
                 },
                 roam: true, draggable: true, cursor: 'pointer',
                 emphasis: { focus: 'adjacency', lineStyle: { width: 2.5, opacity: 0.9 } },

@@ -611,6 +611,8 @@ def generate_people(items, links, reverse_links, children_of, item_year, geo):
                     if vrid in coauthors:
                         coauthors[vrid]['value'] += 1
         dashboard['coAuthors'] = sorted(coauthors.values(), key=lambda x: -x['value'])[:20]
+        # People: co-authors replaces contributors (redundant).
+        dashboard.pop('contributors', None)
         save_json(pid, dashboard)
         count += 1
     print(f'  {count} dashboards generated')
@@ -678,12 +680,15 @@ def generate_subjects(items, links, reverse_links, children_of, item_year, geo):
                         cosubs[vrid] = {'name': items.get(vrid, {}).get('title', ''), 'value': 0, 'itemId': vrid}
                     cosubs[vrid]['value'] += 1
         dashboard['coSubjects'] = sorted(cosubs.values(), key=lambda x: -x['value'])[:30]
+        # Subjects: remove self-referential subjects chart.
+        dashboard.pop('subjects', None)
         save_json(sid, dashboard)
         count += 1
     print(f'  {count} dashboards generated')
 
 
-def generate_by_item_set(items, links, reverse_links, item_year, geo, item_sets, set_id, term, label):
+def generate_by_item_set(items, links, reverse_links, item_year, geo, item_sets,
+                         set_id, term, label, exclude_keys=None):
     """Generate dashboards for items in a specific item set, using reverse links."""
     set_items = item_sets.get(set_id, [])
     print(f'\n=== {label} (item set {set_id}, {len(set_items)} items) ===')
@@ -694,6 +699,10 @@ def generate_by_item_set(items, links, reverse_links, item_year, geo, item_sets,
         if not item_ids:
             continue
         dashboard = aggregate_items(item_ids, items, links, item_year, geo)
+        # Remove self-referential charts.
+        if exclude_keys:
+            for k in exclude_keys:
+                dashboard.pop(k, None)
         save_json(eid, dashboard)
         count += 1
     print(f'  {count} dashboards generated')
@@ -718,9 +727,11 @@ def main():
     generate_locations(items, links, reverse_links, children_of, item_year, geo)
     generate_subjects(items, links, reverse_links, children_of, item_year, geo)
     generate_by_item_set(items, links, reverse_links, item_year, geo, item_sets,
-                         set_id=1, term='dcterms:type', label='Resource Types')
+                         set_id=1, term='dcterms:type', label='Resource Types',
+                         exclude_keys=['types'])
     generate_by_item_set(items, links, reverse_links, item_year, geo, item_sets,
-                         set_id=19, term='dcterms:language', label='Languages')
+                         set_id=19, term='dcterms:language', label='Languages',
+                         exclude_keys=['languages'])
     generate_by_item_set(items, links, reverse_links, item_year, geo, item_sets,
                          set_id=21, term='dcterms:format', label='Genres')
 
