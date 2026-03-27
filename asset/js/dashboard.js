@@ -1,8 +1,9 @@
 /**
  * Dashboard visualizations using ECharts.
  *
- * Reads aggregated data from the container's data-dashboard attribute and
- * renders timeline, distributions, word cloud, and contributor charts.
+ * Supports two modes:
+ * 1. Inline: reads data from data-dashboard attribute (item-set-dashboard)
+ * 2. Async: fetches precomputed JSON from module assets (linked-items-dashboard)
  */
 (function () {
     'use strict';
@@ -25,17 +26,15 @@
         var values = years.map(function (y) { return data[y]; });
 
         chart.setOption({
-            tooltip: { trigger: 'axis' },
+            tooltip: { trigger: 'axis', confine: true },
             grid: { left: 50, right: 20, top: 20, bottom: 40 },
             xAxis: {
-                type: 'category',
-                data: years,
+                type: 'category', data: years,
                 axisLabel: { rotate: years.length > 15 ? 45 : 0, fontSize: 11 }
             },
             yAxis: { type: 'value', minInterval: 1 },
             series: [{
-                type: 'bar',
-                data: values,
+                type: 'bar', data: values,
                 itemStyle: {
                     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                         { offset: 0, color: COLORS[0] },
@@ -58,27 +57,17 @@
         entries.sort(function (a, b) { return b.value - a.value; });
 
         chart.setOption({
-            tooltip: {
-                trigger: 'item',
-                formatter: '{b}: {c} ({d}%)'
-            },
+            tooltip: { trigger: 'item', confine: true, formatter: '{b}: {c} ({d}%)' },
             legend: {
-                orient: 'vertical',
-                right: 10,
-                top: 'center',
-                type: 'scroll',
-                textStyle: { fontSize: 11 }
+                orient: 'vertical', right: 10, top: 'center',
+                type: 'scroll', textStyle: { fontSize: 11 }
             },
             series: [{
-                type: 'pie',
-                radius: ['35%', '65%'],
-                center: ['40%', '50%'],
+                type: 'pie', radius: ['35%', '65%'], center: ['40%', '50%'],
                 avoidLabelOverlap: true,
                 itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 2 },
                 label: { show: false },
-                emphasis: {
-                    label: { show: true, fontSize: 13, fontWeight: 'bold' }
-                },
+                emphasis: { label: { show: true, fontSize: 13, fontWeight: 'bold' } },
                 data: entries.map(function (e, i) {
                     e.itemStyle = { color: COLORS[i % COLORS.length] };
                     return e;
@@ -92,46 +81,33 @@
         if (!data || !Object.keys(data).length) return;
         var chart = echarts.init(el);
         var entries = [];
-        var keys = Object.keys(data);
-        keys.forEach(function (k) { entries.push({ name: k, value: data[k] }); });
+        Object.keys(data).forEach(function (k) { entries.push({ name: k, value: data[k] }); });
         entries.sort(function (a, b) { return a.value - b.value; });
-
-        // Show top 20 for readability.
-        if (entries.length > 20) {
-            entries = entries.slice(entries.length - 20);
-        }
+        if (entries.length > 20) entries = entries.slice(entries.length - 20);
 
         var names = entries.map(function (e) { return e.name; });
         var values = entries.map(function (e) { return e.value; });
 
         chart.setOption({
-            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+            tooltip: { trigger: 'axis', confine: true, axisPointer: { type: 'shadow' } },
             grid: {
                 left: Math.min(200, Math.max(80, names.reduce(function (m, n) {
                     return Math.max(m, n.length);
                 }, 0) * 7)),
-                right: 20,
-                top: 10,
-                bottom: 20
+                right: 20, top: 10, bottom: 20
             },
             xAxis: { type: 'value', minInterval: 1 },
             yAxis: {
-                type: 'category',
-                data: names,
+                type: 'category', data: names,
                 axisLabel: {
                     fontSize: 11,
-                    formatter: function (v) {
-                        return v.length > 25 ? v.substring(0, 25) + '\u2026' : v;
-                    }
+                    formatter: function (v) { return v.length > 25 ? v.substring(0, 25) + '\u2026' : v; }
                 }
             },
             series: [{
                 type: 'bar',
                 data: values.map(function (v, i) {
-                    return {
-                        value: v,
-                        itemStyle: { color: COLORS[i % COLORS.length], borderRadius: [0, 3, 3, 0] }
-                    };
+                    return { value: v, itemStyle: { color: COLORS[i % COLORS.length], borderRadius: [0, 3, 3, 0] } };
                 }),
                 barMaxWidth: 24
             }]
@@ -141,120 +117,162 @@
 
     function buildWordCloud(el, data) {
         if (!data || !Object.keys(data).length) return;
-
-        // Fallback to bar chart if echarts-wordcloud is not available.
-        if (typeof echarts.init === 'function' && !isWordCloudAvailable()) {
-            return buildBarChart(el, data);
-        }
+        if (!isWordCloudAvailable()) return buildBarChart(el, data);
 
         var chart = echarts.init(el);
-        var maxVal = 0;
-        var entries = Object.keys(data).map(function (k) {
-            if (data[k] > maxVal) maxVal = data[k];
-            return { name: k, value: data[k] };
-        });
+        var entries = Object.keys(data).map(function (k) { return { name: k, value: data[k] }; });
 
         chart.setOption({
             tooltip: {
-                trigger: 'item',
-                formatter: function (params) {
-                    return echarts.format.encodeHTML(params.name) + ': ' + params.value;
-                }
+                confine: true,
+                formatter: function (p) { return echarts.format.encodeHTML(p.name) + ': ' + p.value; }
             },
             series: [{
-                type: 'wordCloud',
-                shape: 'circle',
+                type: 'wordCloud', shape: 'circle',
                 sizeRange: [12, Math.max(40, Math.min(80, entries.length > 10 ? 60 : 80))],
-                rotationRange: [-30, 30],
-                rotationStep: 15,
-                gridSize: 8,
-                drawOutOfBound: false,
-                layoutAnimation: true,
+                rotationRange: [-30, 30], rotationStep: 15, gridSize: 8,
+                drawOutOfBound: false, layoutAnimation: true,
                 textStyle: {
                     fontFamily: 'sans-serif',
-                    fontWeight: 'normal',
-                    color: function () {
-                        return COLORS[Math.floor(Math.random() * COLORS.length)];
-                    }
+                    color: function () { return COLORS[Math.floor(Math.random() * COLORS.length)]; }
                 },
-                emphasis: {
-                    textStyle: { fontWeight: 'bold', shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.3)' }
-                },
+                emphasis: { textStyle: { fontWeight: 'bold', shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.3)' } },
                 data: entries
             }]
         });
         return chart;
     }
 
+    var _wordCloudOk = null;
     function isWordCloudAvailable() {
+        if (_wordCloudOk !== null) return _wordCloudOk;
         try {
-            var testDiv = document.createElement('div');
-            testDiv.style.width = '1px';
-            testDiv.style.height = '1px';
-            testDiv.style.position = 'absolute';
-            testDiv.style.left = '-9999px';
-            document.body.appendChild(testDiv);
-            var testChart = echarts.init(testDiv);
-            testChart.setOption({ series: [{ type: 'wordCloud', data: [{ name: 'test', value: 1 }] }] });
-            testChart.dispose();
-            document.body.removeChild(testDiv);
-            return true;
-        } catch (e) {
-            return false;
-        }
+            var d = document.createElement('div');
+            d.style.cssText = 'width:1px;height:1px;position:absolute;left:-9999px';
+            document.body.appendChild(d);
+            var c = echarts.init(d);
+            c.setOption({ series: [{ type: 'wordCloud', data: [{ name: 'x', value: 1 }] }] });
+            c.dispose(); document.body.removeChild(d);
+            _wordCloudOk = true;
+        } catch (e) { _wordCloudOk = false; }
+        return _wordCloudOk;
     }
 
     /* ------------------------------------------------------------------ */
-    /*  Dashboard initialization                                           */
+    /*  Render dashboard from data object                                  */
     /* ------------------------------------------------------------------ */
 
-    function initDashboard(container) {
-        var raw = container.getAttribute('data-dashboard');
-        if (!raw) return;
+    var CHART_MAP = {
+        'timeline': buildTimeline,
+        'types': buildPieChart,
+        'languages': buildBarChart,
+        'subjects': buildWordCloud,
+        'contributors': buildBarChart,
+        'projects': buildBarChart
+    };
 
-        var data;
-        try {
-            data = JSON.parse(raw);
-        } catch (e) {
-            console.error('ResourceVisualizations: invalid dashboard data', e);
-            return;
-        }
+    var CHART_LABELS = {
+        'timeline': 'Timeline',
+        'types': 'Resource Types',
+        'languages': 'Languages',
+        'subjects': 'Subjects',
+        'contributors': 'Top Contributors',
+        'projects': 'Items per Project'
+    };
 
+    function renderDashboard(container, data) {
+        // Build HTML structure.
+        var html = '<div class="dashboard-header">'
+            + '<h3>Dashboard</h3>'
+            + '<span class="dashboard-total">' + (data.totalItems || 0) + ' items</span>'
+            + '</div>'
+            + '<div class="dashboard-charts">';
+
+        var chartKeys = ['timeline', 'types', 'languages', 'subjects', 'contributors', 'projects'];
+        chartKeys.forEach(function (key) {
+            if (!data[key] || !Object.keys(data[key]).length) return;
+            var wide = (key === 'timeline' || key === 'subjects') ? ' chart-panel-wide' : '';
+            var tall = key === 'subjects' ? ' chart-container-tall' : '';
+            html += '<div class="chart-panel' + wide + '">'
+                + '<h4>' + (CHART_LABELS[key] || key) + '</h4>'
+                + '<div class="chart-container' + tall + '" data-chart="' + key + '"></div>'
+                + '</div>';
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+
+        // Render charts.
         var charts = [];
-        var chartMap = {
-            'timeline': buildTimeline,
-            'types': buildPieChart,
-            'languages': buildBarChart,
-            'subjects': buildWordCloud,
-            'contributors': buildBarChart
-        };
-
-        Object.keys(chartMap).forEach(function (key) {
+        chartKeys.forEach(function (key) {
             var el = container.querySelector('[data-chart="' + key + '"]');
-            if (el && data[key]) {
-                var chart = chartMap[key](el, data[key]);
+            if (el && data[key] && CHART_MAP[key]) {
+                var chart = CHART_MAP[key](el, data[key]);
                 if (chart) charts.push(chart);
             }
         });
 
-        // Responsive resize.
-        var resizeTimer;
+        var timer;
         window.addEventListener('resize', function () {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(function () {
-                charts.forEach(function (c) { c.resize(); });
-            }, 100);
+            clearTimeout(timer);
+            timer = setTimeout(function () { charts.forEach(function (c) { c.resize(); }); }, 100);
         });
     }
 
+    /* ------------------------------------------------------------------ */
+    /*  Async dashboard (precomputed JSON)                                 */
+    /* ------------------------------------------------------------------ */
+
+    function initAsyncDashboard(container) {
+        var itemId = container.dataset.itemId;
+        var basePath = container.dataset.basePath || '';
+        var url = basePath + '/modules/ResourceVisualizations/asset/data/section-dashboards/' + itemId + '.json';
+
+        fetch(url).then(function (r) {
+            if (!r.ok) throw new Error('not found');
+            return r.json();
+        }).then(function (data) {
+            if (!data || !data.totalItems) {
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = '';
+            renderDashboard(container, data);
+        }).catch(function () {
+            // No precomputed data — hide the block.
+            container.innerHTML = '';
+        });
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Inline dashboard (data-dashboard attribute, used by item sets)     */
+    /* ------------------------------------------------------------------ */
+
+    function initInlineDashboard(container) {
+        var raw = container.getAttribute('data-dashboard');
+        if (!raw) return;
+        var data;
+        try { data = JSON.parse(raw); } catch (e) { return; }
+        renderDashboard(container.parentElement || container, data);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Init                                                               */
+    /* ------------------------------------------------------------------ */
+
     function init() {
-        if (typeof echarts === 'undefined') {
-            console.warn('ResourceVisualizations: ECharts not loaded');
-            return;
+        if (typeof echarts === 'undefined') return;
+
+        // Async dashboards (linked-items-dashboard).
+        var asyncContainers = document.querySelectorAll('.dashboard-async-container');
+        for (var i = 0; i < asyncContainers.length; i++) {
+            initAsyncDashboard(asyncContainers[i]);
         }
-        var containers = document.querySelectorAll('.dashboard-container');
-        for (var i = 0; i < containers.length; i++) {
-            initDashboard(containers[i]);
+
+        // Inline dashboards (item-set-dashboard via partials/dashboard-charts.phtml).
+        var inlineContainers = document.querySelectorAll('.dashboard-container');
+        for (var j = 0; j < inlineContainers.length; j++) {
+            initInlineDashboard(inlineContainers[j]);
         }
     }
 
