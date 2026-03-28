@@ -221,13 +221,14 @@
 
         var block = container.closest('.knowledge-graph-block');
         if (block) {
-            // Add save button to existing toolbar.
+            // Add save button to the toolbar inside the card.
             var toolbar = block.querySelector('.knowledge-graph-toolbar');
             if (toolbar) {
                 var saveBtn = document.createElement('button');
                 saveBtn.type = 'button';
-                saveBtn.className = 'rv-btn rv-save-btn';
+                saveBtn.className = 'rv-btn';
                 saveBtn.setAttribute('aria-label', 'Save as image');
+                saveBtn.title = 'Save as image';
                 saveBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
                 saveBtn.addEventListener('click', function () {
                     var url = chart.getDataURL({ pixelRatio: 2, backgroundColor: '#fff' });
@@ -240,12 +241,6 @@
             }
 
             var toggle = block.querySelector('.rv-fullscreen-toggle');
-            if (toggle) {
-                toggle.addEventListener('click', function () {
-                    block.classList.toggle('rv-fullscreen');
-                    setTimeout(function () { chart.resize(); }, 50);
-                });
-            }
             document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape' && block.classList.contains('rv-fullscreen')) {
                     block.classList.remove('rv-fullscreen');
