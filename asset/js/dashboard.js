@@ -23,13 +23,15 @@
 
     /** Shared design tokens for consistent appearance across all charts. */
     var THEME = {
+        /** Set to true to enable automatic dark mode via prefers-color-scheme. */
+        darkModeEnabled: false,
         accent: '#22817b',
         accentDark: '#4db6ac',
         accentLight: '#b2dfdb',
-        gradientEnd: _darkMode ? '#2c5f5b' : '#b2dfdb',
-        text: _darkMode ? '#e0e0e0' : '#333',
-        textMuted: _darkMode ? '#aaa' : '#666',
-        border: _darkMode ? '#3a3a3a' : '#fff',
+        gradientEnd: '#b2dfdb',
+        text: '#333',
+        textMuted: '#666',
+        border: '#fff',
         fontSize: 11,
         fontSizeEmphasis: 13,
         labelMaxLen: 30,
@@ -50,8 +52,8 @@
         emphasis: { iconStyle: { borderColor: '#666' } }
     };
 
-    /** Dark mode detection. */
-    var _darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    /** Dark mode detection (gated by THEME.darkModeEnabled). */
+    var _darkQuery = THEME.darkModeEnabled && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
     var _darkMode = _darkQuery ? _darkQuery.matches : false;
     var _allCharts = [];
 

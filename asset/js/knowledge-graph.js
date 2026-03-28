@@ -28,6 +28,8 @@
 
     /** Shared design tokens. */
     var THEME = {
+        /** Set to true to enable automatic dark mode via prefers-color-scheme. */
+        darkModeEnabled: false,
         accent: '#22817b',
         accentDark: '#4db6ac',
         fontSize: 11,
@@ -35,8 +37,8 @@
         labelMaxLen: 35
     };
 
-    /** Dark mode detection. */
-    var _darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    /** Dark mode detection (gated by THEME.darkModeEnabled). */
+    var _darkQuery = THEME.darkModeEnabled && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
     var _darkMode = _darkQuery ? _darkQuery.matches : false;
     var _allCharts = [];
 

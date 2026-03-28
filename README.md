@@ -14,6 +14,15 @@ A force-directed network showing the item's relationships. For items with rich o
 - Adjacency highlighting on hover
 - Node cap (150 direct + 30 shared) prevents overload on highly-connected entities
 
+### Item Location Map (Item Pages)
+
+Automatically rendered below the knowledge graph when an item has geographic data. Shows distinct markers for:
+
+- **Origin** (teal) — where the resource was produced/fieldwork conducted (`dcterms:spatial`)
+- **Current location** (orange) — where the resource is currently held (`dcterms:provenance`)
+
+Coordinates are resolved from linked Location items with `geo:lat`/`geo:long`. 2,898 items have location map data.
+
 ### Visualizations Dashboard (Item Pages)
 
 Contextual charts adapted per entity type. All chart elements are clickable, linking to the corresponding Omeka S item page. 2,551 dashboards pre-computed across all entity types.
@@ -26,20 +35,33 @@ Contextual charts adapted per entity type. All chart elements are clickable, lin
 | Timeline | x | x | x | x | x | x | x | x | x |
 | Gantt (project timelines) | x | | | | | | | | |
 | Resource Types (pie) | x | x | x | x | x | x | x | | x |
+| Languages | x | x | x | x | x | x | | x | x |
 | Heatmap (type x language) | x | x | | | | | | | |
-| Sankey (contributor > project > type) | x | x | | | | | | | |
+| Subjects (word cloud) | x | x | x | x | x | | x | x | |
 | Sunburst (type > language > subject) | x | x | | | | | | | |
 | Geographic Origins (map) | x | x | x | x | | | x | x | |
 | Self-location MiniMap | | | | | x | | | | |
-| Languages | x | x | x | x | x | x | | x | x |
-| Subjects (word cloud) | x | x | x | x | x | | x | x | |
 | Subject Co-occurrence (chord) | x | x | | | | | | | |
 | Top Associated Persons | x | x | | x | x | x | x | x | x |
 | Co-authors | | | x | | | | | | |
 | Co-occurring Subjects | | | | | | x | | | |
 | Items per Project | x | | | | | | | | |
+| Sankey (contributor > project > type) | x | x | | | | | | | |
 
-Maps include fullscreen mode, clustered markers sized by item count, and paginated popups listing associated items with links.
+Note: The basic Timeline is automatically hidden when the Stacked Timeline is available (since it's redundant).
+
+#### Chart Features
+
+- **Toolbox**: Save-as-image (2x resolution) and restore on all ECharts charts
+- **DataZoom**: Interactive slider on timeline charts with >15 data points
+- **ARIA**: Screen reader descriptions on all charts; decal patterns on pie, stacked, sankey, and sunburst for accessibility
+- **Cooperative gestures**: Main maps require Ctrl+scroll to zoom (prevents scroll hijacking)
+- **Globe projection**: Main maps default to globe view with a toggle control
+- **Scale control**: Metric scale bar on all maps
+
+### Item Set Dashboard
+
+Inline dashboard for item set pages with server-side aggregation.
 
 ## Installation
 
@@ -70,7 +92,7 @@ Visualizations load from pre-computed JSON files stored in the module's `asset/d
 
 ### Knowledge Graphs
 
-Generates one JSON file per item (~6,000 files):
+Generates one JSON file per item (~6,000 files), including embedded location map data for items with spatial/provenance links:
 
 ```bash
 python3 scripts/precompute-graphs.py
@@ -113,7 +135,7 @@ ResourceVisualizations/
 │   └── partials/dashboard-charts.phtml # Shared chart rendering (inline mode)
 ├── asset/
 │   ├── js/
-│   │   ├── knowledge-graph.js          # Graph: precomputed JSON + API fallback
+│   │   ├── knowledge-graph.js          # Graph + item map: precomputed JSON + API fallback
 │   │   └── dashboard.js                # All chart builders + async loading
 │   ├── css/
 │   │   └── resource-visualizations.css # Styles with CSS custom properties
@@ -121,15 +143,35 @@ ResourceVisualizations/
 │       ├── knowledge-graphs/           # Pre-computed graph JSON (~6,000 files)
 │       └── item-dashboards/            # Pre-computed dashboard JSON (~2,500 files)
 ├── scripts/
-│   ├── precompute-graphs.py            # Generate knowledge graph JSON
+│   ├── precompute-graphs.py            # Generate knowledge graph + location map JSON
 │   └── precompute-dashboards.py        # Generate dashboard JSON (all entities)
 ├── ROADMAP.md                          # Full visualization roadmap
 └── README.md
 ```
 
-## Theming
+## Configuration
 
-Override CSS custom properties in your theme:
+### THEME Design Tokens
+
+Both `dashboard.js` and `knowledge-graph.js` define a shared `THEME` object at the top of their IIFE. All design values (colors, font sizes, truncation lengths) flow from this single config:
+
+```javascript
+var THEME = {
+    darkModeEnabled: false,  // Set to true to enable auto dark mode
+    accent: '#22817b',
+    accentDark: '#4db6ac',
+    accentLight: '#b2dfdb',
+    fontSize: 11,
+    fontSizeEmphasis: 13,
+    labelMaxLen: 30,
+    barMaxWidth: 24,
+    barMaxWidthWide: 40
+};
+```
+
+### CSS Custom Properties
+
+Override in your theme for consistent styling:
 
 ```css
 :root {
@@ -141,6 +183,16 @@ Override CSS custom properties in your theme:
     --rv-accent: #22817b;
 }
 ```
+
+### Dark Mode (Disabled by Default)
+
+The module includes full dark mode infrastructure:
+
+- **ECharts**: Auto-detects `prefers-color-scheme` and uses `setTheme('dark')` (ECharts 6)
+- **MapLibre**: Switches basemap from CartoDB Positron to Dark Matter
+- **CSS**: `@media (prefers-color-scheme: dark)` overrides all custom properties
+
+To enable, set `THEME.darkModeEnabled = true` in both JS files. The CSS dark mode activates automatically via media query.
 
 ## Dependencies
 
