@@ -383,10 +383,12 @@
         init();
     }
 
-    /* Dark mode: switch ECharts theme when OS preference changes. */
+    /* Dark mode: switch ECharts theme + CSS class when OS preference changes. */
     if (_darkQuery) {
+        if (_darkMode) document.documentElement.classList.add('rv-dark-mode');
         _darkQuery.addEventListener('change', function () {
             _darkMode = _darkQuery.matches;
+            document.documentElement.classList.toggle('rv-dark-mode', _darkMode);
             var theme = _darkMode ? 'dark' : 'default';
             _allCharts.forEach(function (c) {
                 if (!c.isDisposed()) c.setTheme(theme);

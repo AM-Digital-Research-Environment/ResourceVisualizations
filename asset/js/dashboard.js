@@ -896,8 +896,11 @@
     /* ------------------------------------------------------------------ */
 
     if (_darkQuery) {
+        // Apply initial dark mode class if needed.
+        if (_darkMode) document.documentElement.classList.add('rv-dark-mode');
         _darkQuery.addEventListener('change', function () {
             _darkMode = _darkQuery.matches;
+            document.documentElement.classList.toggle('rv-dark-mode', _darkMode);
             var theme = _darkMode ? 'dark' : 'default';
             _allCharts.forEach(function (c) {
                 if (!c.isDisposed()) c.setTheme(theme);
