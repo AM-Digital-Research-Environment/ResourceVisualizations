@@ -21,6 +21,22 @@
     /*  Shared chart config                                                */
     /* ------------------------------------------------------------------ */
 
+    /** Shared design tokens for consistent appearance across all charts. */
+    var THEME = {
+        accent: '#22817b',
+        accentDark: '#4db6ac',
+        accentLight: '#b2dfdb',
+        gradientEnd: _darkMode ? '#2c5f5b' : '#b2dfdb',
+        text: _darkMode ? '#e0e0e0' : '#333',
+        textMuted: _darkMode ? '#aaa' : '#666',
+        border: _darkMode ? '#3a3a3a' : '#fff',
+        fontSize: 11,
+        fontSizeEmphasis: 13,
+        labelMaxLen: 30,
+        barMaxWidth: 24,
+        barMaxWidthWide: 40
+    };
+
     /** Reusable toolbox: save-as-image + restore. */
     var TOOLBOX = {
         show: true,
@@ -106,18 +122,18 @@
             grid: { left: 50, right: 20, top: 20, bottom: zoom.length ? 60 : 40 },
             xAxis: {
                 type: 'category', data: years,
-                axisLabel: { rotate: years.length > 15 ? 45 : 0, fontSize: 11 }
+                axisLabel: { rotate: years.length > 15 ? 45 : 0, fontSize: THEME.fontSize }
             },
             yAxis: { type: 'value', minInterval: 1 },
             series: [{
                 type: 'bar', data: values,
                 itemStyle: {
                     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                        { offset: 0, color: COLORS[0] }, { offset: 1, color: '#b2dfdb' }
+                        { offset: 0, color: COLORS[0] }, { offset: 1, color: THEME.gradientEnd }
                     ]),
                     borderRadius: [3, 3, 0, 0]
                 },
-                barMaxWidth: 40
+                barMaxWidth: THEME.barMaxWidthWide
             }]
         });
         return chart;
@@ -135,14 +151,14 @@
             aria: { enabled: true, decal: { show: true } },
             legend: {
                 orient: 'vertical', right: 10, top: 'center',
-                type: 'scroll', textStyle: { fontSize: 11 }
+                type: 'scroll', textStyle: { fontSize: THEME.fontSize }
             },
             series: [{
                 type: 'pie', radius: ['35%', '65%'], center: ['40%', '50%'],
                 avoidLabelOverlap: true,
-                itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 2 },
+                itemStyle: { borderRadius: 4, borderColor: THEME.border, borderWidth: 2 },
                 label: { show: false },
-                emphasis: { label: { show: true, fontSize: 13, fontWeight: 'bold' } },
+                emphasis: { label: { show: true, fontSize: THEME.fontSizeEmphasis, fontWeight: 'bold' } },
                 data: entries.map(function (e, i) {
                     return { name: e.name, value: e.value, itemStyle: { color: COLORS[i % COLORS.length] } };
                 })
@@ -176,8 +192,8 @@
             yAxis: {
                 type: 'category', data: names,
                 axisLabel: {
-                    fontSize: 11, width: 200, overflow: 'truncate',
-                    formatter: function (v) { return v.length > 30 ? v.substring(0, 30) + '\u2026' : v; }
+                    fontSize: THEME.fontSize, width: 200, overflow: 'truncate',
+                    formatter: function (v) { return v.length > THEME.labelMaxLen ? v.substring(0, THEME.labelMaxLen) + '\u2026' : v; }
                 }
             },
             series: [{
@@ -185,7 +201,7 @@
                 data: values.map(function (v, i) {
                     return { value: v, itemStyle: { color: COLORS[i % COLORS.length], borderRadius: [0, 3, 3, 0] } };
                 }),
-                barMaxWidth: 24
+                barMaxWidth: THEME.barMaxWidth
             }]
         });
         addClickHandler(chart, entries, siteBase);
@@ -486,12 +502,12 @@
                 type: 'time',
                 min: new Date(minYear, 0, 1).getTime(),
                 max: new Date(maxYear + 1, 0, 1).getTime(),
-                axisLabel: { fontSize: 11 }
+                axisLabel: { fontSize: THEME.fontSize }
             },
             yAxis: {
                 type: 'category', data: names,
                 axisLabel: {
-                    fontSize: 11, width: 200, overflow: 'truncate',
+                    fontSize: THEME.fontSize, width: 200, overflow: 'truncate',
                     formatter: function (v) { return v.length > 28 ? v.substring(0, 28) + '\u2026' : v; }
                 }
             },
@@ -537,11 +553,11 @@
             grid: { left: 120, right: 60, top: 10, bottom: 80 },
             xAxis: {
                 type: 'category', data: data.cols, splitArea: { show: true },
-                axisLabel: { rotate: 35, fontSize: 11, formatter: function (v) { return v.length > 15 ? v.substring(0, 15) + '\u2026' : v; } }
+                axisLabel: { rotate: 35, fontSize: THEME.fontSize, formatter: function (v) { return v.length > 15 ? v.substring(0, 15) + '\u2026' : v; } }
             },
             yAxis: {
                 type: 'category', data: data.rows, splitArea: { show: true },
-                axisLabel: { fontSize: 11, formatter: function (v) { return v.length > 15 ? v.substring(0, 15) + '\u2026' : v; } }
+                axisLabel: { fontSize: THEME.fontSize, formatter: function (v) { return v.length > 15 ? v.substring(0, 15) + '\u2026' : v; } }
             },
             visualMap: {
                 min: 0, max: maxVal || 1, calculable: true, orient: 'vertical', right: 0, top: 'center',
@@ -581,7 +597,7 @@
                         name: n.name, symbolSize: Math.max(10, Math.min(40, n.value * 2)),
                         itemStyle: { color: COLORS[i % COLORS.length] },
                         itemId: n.itemId,
-                        label: { fontSize: 10, formatter: function (p) { var s = p.name; return s.length > 20 ? s.substring(0, 20) + '\u2026' : s; } }
+                        label: { fontSize: THEME.fontSize - 1, formatter: function (p) { var s = p.name; return s.length > 20 ? s.substring(0, 20) + '\u2026' : s; } }
                     };
                 }),
                 links: data.links.map(function (l) {
@@ -620,7 +636,7 @@
                 nodeWidth: 20, nodeGap: 10,
                 lineStyle: { color: 'gradient', curveness: 0.5, opacity: 0.4 },
                 label: {
-                    fontSize: 11,
+                    fontSize: THEME.fontSize,
                     formatter: function (p) { var s = p.name; return s.length > 25 ? s.substring(0, 25) + '\u2026' : s; }
                 },
                 data: data.nodes.map(function (n, i) {
@@ -648,8 +664,8 @@
                 emphasis: { focus: 'ancestor' },
                 levels: [
                     {},
-                    { r0: '10%', r: '40%', label: { fontSize: 11, rotate: 'tangential' }, itemStyle: { borderWidth: 2 } },
-                    { r0: '40%', r: '65%', label: { fontSize: 10, rotate: 'tangential' }, itemStyle: { borderWidth: 1 } },
+                    { r0: '10%', r: '40%', label: { fontSize: THEME.fontSize, rotate: 'tangential' }, itemStyle: { borderWidth: 2 } },
+                    { r0: '40%', r: '65%', label: { fontSize: THEME.fontSize - 1, rotate: 'tangential' }, itemStyle: { borderWidth: 1 } },
                     { r0: '65%', r: '90%', label: { show: false }, itemStyle: { borderWidth: 0.5 } }
                 ]
             }]
@@ -676,11 +692,11 @@
             toolbox: TOOLBOX,
             aria: { enabled: true, decal: { show: true } },
             dataZoom: zoom,
-            legend: { bottom: zoom.length ? 35 : 10, textStyle: { fontSize: 11 }, type: 'scroll' },
-            grid: { left: 50, right: 20, top: 20, bottom: zoom.length ? 75 : 50 },
+            legend: { bottom: zoom.length ? 40 : 5, textStyle: { fontSize: THEME.fontSize }, type: 'scroll' },
+            grid: { left: 50, right: 20, top: 20, bottom: zoom.length ? 85 : 55 },
             xAxis: {
                 type: 'category', data: data.years,
-                axisLabel: { rotate: data.years.length > 15 ? 45 : 0, fontSize: 11 }
+                axisLabel: { rotate: data.years.length > 15 ? 45 : 0, fontSize: THEME.fontSize }
             },
             yAxis: { type: 'value', minInterval: 1 },
             series: series
@@ -702,7 +718,7 @@
         map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
         map.addControl(new maplibregl.FullscreenControl(), 'top-right');
         map.addControl(new maplibregl.ScaleControl({ maxWidth: 80, unit: 'metric' }), 'bottom-left');
-        new maplibregl.Marker({ color: '#22817b' })
+        new maplibregl.Marker({ color: _darkMode ? THEME.accentDark : THEME.accent })
             .setLngLat([data.lon, data.lat])
             .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML('<strong>' + (data.name || '') + '</strong>'))
             .addTo(map);
@@ -782,6 +798,8 @@
             var d = data[key];
             var hasData = Array.isArray(d) ? d.length > 0 : (d && Object.keys(d).length > 0);
             if (!hasData) return;
+            // Skip basic timeline when stacked timeline is available (redundant).
+            if (key === 'timeline' && data.stackedTimeline && data.stackedTimeline.years && data.stackedTimeline.years.length > 0) return;
             var wideKeys = ['selfLocation', 'stackedTimeline', 'gantt', 'heatmap', 'sankey', 'sunburst', 'subjects', 'locations', 'chord', 'projects', 'coSubjects'];
             var tallKeys = ['selfLocation', 'gantt', 'heatmap', 'sankey', 'sunburst', 'subjects', 'locations', 'chord'];
             var wide = wideKeys.indexOf(key) >= 0 ? ' chart-panel-wide' : '';

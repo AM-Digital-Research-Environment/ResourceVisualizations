@@ -26,6 +26,15 @@
         emphasis: { iconStyle: { borderColor: '#666' } }
     };
 
+    /** Shared design tokens. */
+    var THEME = {
+        accent: '#22817b',
+        accentDark: '#4db6ac',
+        fontSize: 11,
+        fontSizeTitle: 14,
+        labelMaxLen: 35
+    };
+
     /** Dark mode detection. */
     var _darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
     var _darkMode = _darkQuery ? _darkQuery.matches : false;
@@ -150,7 +159,7 @@
             },
             legend: {
                 data: data.categories.map(function (c) { return c.name; }),
-                bottom: 10, textStyle: { fontSize: 11 }, type: 'scroll'
+                bottom: 10, textStyle: { fontSize: THEME.fontSize }, type: 'scroll'
             },
             animationDuration: 300,
             animationEasingUpdate: 'cubicOut',
@@ -162,7 +171,7 @@
                         id: nd.id, name: nd.name, category: nd.category, url: nd.url || null,
                         symbolSize: nd.symbolSize,
                         label: {
-                            show: !!nd.isCenter, fontSize: nd.isCenter ? 14 : 11,
+                            show: !!nd.isCenter, fontSize: nd.isCenter ? THEME.fontSizeTitle : THEME.fontSize,
                             fontWeight: nd.isCenter ? 'bold' : 'normal',
                             width: 150, overflow: 'break'
                         },
@@ -195,7 +204,7 @@
                 roam: true, draggable: true, cursor: 'pointer',
                 emphasis: { focus: 'adjacency', lineStyle: { width: 2.5, opacity: 0.9 } },
                 blur: { itemStyle: { opacity: 0.15 }, lineStyle: { opacity: 0.08 } },
-                label: { position: 'right', formatter: function (p) { var s = p.name || ''; return s.length > 35 ? s.substring(0, 35) + '\u2026' : s; } },
+                label: { position: 'right', formatter: function (p) { var s = p.name || ''; return s.length > THEME.labelMaxLen ? s.substring(0, THEME.labelMaxLen) + '\u2026' : s; } },
                 lineStyle: { opacity: 0.5, width: 1.2 },
                 scaleLimit: { min: 0.2, max: 5 }
             }]
