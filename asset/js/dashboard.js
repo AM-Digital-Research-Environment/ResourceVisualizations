@@ -18,6 +18,44 @@
     ];
 
     /* ------------------------------------------------------------------ */
+    /*  Shared chart config                                                */
+    /* ------------------------------------------------------------------ */
+
+    /** Reusable toolbox: save-as-image + restore. */
+    var TOOLBOX = {
+        show: true,
+        feature: {
+            saveAsImage: { show: true, title: 'Save', pixelRatio: 2 },
+            restore: { show: true, title: 'Reset' }
+        },
+        right: 10,
+        top: 2,
+        iconStyle: { borderColor: '#999' },
+        emphasis: { iconStyle: { borderColor: '#666' } }
+    };
+
+    /** Dark mode detection. */
+    var _darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    var _darkMode = _darkQuery ? _darkQuery.matches : false;
+    var _allCharts = [];
+
+    /** Init an ECharts instance with the correct theme, tracking it for dark mode switches. */
+    function initChart(el) {
+        var chart = echarts.init(el, _darkMode ? 'dark' : null);
+        _allCharts.push(chart);
+        return chart;
+    }
+
+    /** Build a dataZoom config (slider + scroll) for timeline-type charts. */
+    function buildDataZoom(count) {
+        if (count <= 15) return [];
+        return [
+            { type: 'slider', start: 0, end: 100, bottom: 8, height: 22 },
+            { type: 'inside' }
+        ];
+    }
+
+    /* ------------------------------------------------------------------ */
     /*  Data normalization                                                 */
     /* ------------------------------------------------------------------ */
 
@@ -48,13 +86,17 @@
     function buildTimeline(el, data) {
         var raw = (typeof data === 'object' && !Array.isArray(data)) ? data : null;
         if (!raw || !Object.keys(raw).length) return;
-        var chart = echarts.init(el);
+        var chart = initChart(el);
         var years = Object.keys(raw).sort();
         var values = years.map(function (y) { return raw[y]; });
 
+        var zoom = buildDataZoom(years.length);
         chart.setOption({
             tooltip: { trigger: 'axis', confine: true },
-            grid: { left: 50, right: 20, top: 20, bottom: 40 },
+            toolbox: TOOLBOX,
+            aria: { enabled: true },
+            dataZoom: zoom,
+            grid: { left: 50, right: 20, top: 20, bottom: zoom.length ? 60 : 40 },
             xAxis: {
                 type: 'category', data: years,
                 axisLabel: { rotate: years.length > 15 ? 45 : 0, fontSize: 11 }
@@ -77,11 +119,13 @@
     function buildPieChart(el, data, siteBase) {
         var entries = toEntries(data);
         if (!entries.length) return;
-        var chart = echarts.init(el);
+        var chart = initChart(el);
         entries.sort(function (a, b) { return b.value - a.value; });
 
         chart.setOption({
             tooltip: { trigger: 'item', confine: true, formatter: '{b}: {c} ({d}%)' },
+            toolbox: TOOLBOX,
+            aria: { enabled: true, decal: { show: true } },
             legend: {
                 orient: 'vertical', right: 10, top: 'center',
                 type: 'scroll', textStyle: { fontSize: 11 }
@@ -104,7 +148,7 @@
     function buildBarChart(el, data, siteBase) {
         var entries = toEntries(data);
         if (!entries.length) return;
-        var chart = echarts.init(el);
+        var chart = initChart(el);
         entries.sort(function (a, b) { return a.value - b.value; });
         if (entries.length > 20) entries = entries.slice(entries.length - 20);
 
@@ -113,6 +157,8 @@
 
         chart.setOption({
             tooltip: { trigger: 'axis', confine: true, axisPointer: { type: 'shadow' } },
+            toolbox: TOOLBOX,
+            aria: { enabled: true },
             grid: {
                 left: Math.min(220, Math.max(80, names.reduce(function (m, n) {
                     return Math.max(m, n.length);
@@ -144,13 +190,15 @@
         if (!entries.length) return;
         if (!isWordCloudAvailable()) return buildBarChart(el, data, siteBase);
 
-        var chart = echarts.init(el);
+        var chart = initChart(el);
 
         chart.setOption({
             tooltip: {
                 confine: true,
                 formatter: function (p) { return echarts.format.encodeHTML(p.name) + ': ' + p.value; }
             },
+            toolbox: TOOLBOX,
+            aria: { enabled: true },
             series: [{
                 type: 'wordCloud', shape: 'circle',
                 sizeRange: [12, Math.max(40, Math.min(80, entries.length > 10 ? 60 : 80))],
@@ -391,7 +439,7 @@
 
     function buildGantt(el, data, siteBase) {
         if (!data || !data.length) return;
-        var chart = echarts.init(el);
+        var chart = initChart(el);
         var projects = data.slice().reverse();
         var names = projects.map(function (p) { return p.name; });
         var minYear = 9999, maxYear = 0;
@@ -419,6 +467,8 @@
                     return '<strong>' + echarts.format.encodeHTML(params.name) + '</strong><br/>' + s + ' \u2192 ' + e;
                 }
             },
+            toolbox: TOOLBOX,
+            aria: { enabled: true },
             grid: { left: 220, right: 30, top: 10, bottom: 30 },
             xAxis: {
                 type: 'time',
@@ -458,7 +508,7 @@
 
     function buildHeatmap(el, data) {
         if (!data || !data.rows || !data.cols || !data.values) return;
-        var chart = echarts.init(el);
+        var chart = initChart(el);
         var maxVal = 0;
         data.values.forEach(function (v) { if (v[2] > maxVal) maxVal = v[2]; });
 
@@ -470,6 +520,8 @@
                         + echarts.format.encodeHTML(data.cols[p.value[0]]) + ': ' + p.value[2];
                 }
             },
+            toolbox: TOOLBOX,
+            aria: { enabled: true },
             grid: { left: 120, right: 60, top: 10, bottom: 80 },
             xAxis: {
                 type: 'category', data: data.cols, splitArea: { show: true },
@@ -494,7 +546,7 @@
 
     function buildChord(el, data, siteBase) {
         if (!data || !data.nodes || !data.links || data.nodes.length < 2) return;
-        var chart = echarts.init(el);
+        var chart = initChart(el);
 
         chart.setOption({
             tooltip: {
@@ -508,6 +560,8 @@
                     return '';
                 }
             },
+            toolbox: TOOLBOX,
+            aria: { enabled: true },
             series: [{
                 type: 'graph', layout: 'circular', circular: { rotateLabel: true },
                 data: data.nodes.map(function (n, i) {
@@ -541,10 +595,12 @@
 
     function buildSankey(el, data) {
         if (!data || !data.nodes || !data.links || data.links.length < 1) return;
-        var chart = echarts.init(el);
+        var chart = initChart(el);
 
         chart.setOption({
             tooltip: { trigger: 'item', confine: true },
+            toolbox: TOOLBOX,
+            aria: { enabled: true, decal: { show: true } },
             series: [{
                 type: 'sankey', layout: 'none',
                 emphasis: { focus: 'adjacency' },
@@ -566,10 +622,12 @@
 
     function buildSunburst(el, data) {
         if (!data || !data.length) return;
-        var chart = echarts.init(el);
+        var chart = initChart(el);
 
         chart.setOption({
             tooltip: { confine: true },
+            toolbox: TOOLBOX,
+            aria: { enabled: true, decal: { show: true } },
             series: [{
                 type: 'sunburst',
                 data: data,
@@ -589,7 +647,7 @@
 
     function buildStackedTimeline(el, data) {
         if (!data || !data.years || !data.series) return;
-        var chart = echarts.init(el);
+        var chart = initChart(el);
 
         var series = data.series.map(function (s, i) {
             return {
@@ -600,10 +658,14 @@
             };
         });
 
+        var zoom = buildDataZoom(data.years.length);
         chart.setOption({
             tooltip: { trigger: 'axis', confine: true },
-            legend: { bottom: 10, textStyle: { fontSize: 11 }, type: 'scroll' },
-            grid: { left: 50, right: 20, top: 20, bottom: 50 },
+            toolbox: TOOLBOX,
+            aria: { enabled: true, decal: { show: true } },
+            dataZoom: zoom,
+            legend: { bottom: zoom.length ? 35 : 10, textStyle: { fontSize: 11 }, type: 'scroll' },
+            grid: { left: 50, right: 20, top: 20, bottom: zoom.length ? 75 : 50 },
             xAxis: {
                 type: 'category', data: data.years,
                 axisLabel: { rotate: data.years.length > 15 ? 45 : 0, fontSize: 11 }
@@ -786,5 +848,19 @@
         document.addEventListener('DOMContentLoaded', init);
     } else {
         init();
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Dark mode: switch ECharts theme when OS preference changes          */
+    /* ------------------------------------------------------------------ */
+
+    if (_darkQuery) {
+        _darkQuery.addEventListener('change', function () {
+            _darkMode = _darkQuery.matches;
+            var theme = _darkMode ? 'dark' : 'default';
+            _allCharts.forEach(function (c) {
+                if (!c.isDisposed()) c.setTheme(theme);
+            });
+        });
     }
 })();

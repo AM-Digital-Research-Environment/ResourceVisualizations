@@ -327,6 +327,62 @@
 }
 
 /* ------------------------------------------------------------------ */
+/*  Dark mode                                                          */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --rv-bg: #1e1e1e;
+        --rv-border: #3a3a3a;
+        --rv-heading-color: #e0e0e0;
+        --rv-text-color: #aaa;
+        --rv-accent: #4db6ac;
+    }
+
+    .knowledge-graph-block.rv-fullscreen {
+        background: #121212;
+    }
+
+    .rv-btn {
+        background: #2a2a2a;
+        border-color: #444;
+        color: #bbb;
+    }
+
+    .rv-btn:hover {
+        background: #333;
+        color: var(--rv-accent);
+    }
+
+    .rv-popup-items li {
+        border-bottom-color: #333;
+    }
+
+    .rv-popup-pagination button {
+        background: #2a2a2a;
+        border-color: #444;
+        color: #ccc;
+    }
+
+    .rv-popup-pagination button:hover {
+        background: #333;
+    }
+
+    .rv-map-popup .maplibregl-popup-content {
+        background: #2a2a2a;
+        color: #ddd;
+    }
+
+    .rv-map-popup .maplibregl-popup-tip {
+        border-top-color: #2a2a2a;
+    }
+
+    .rv-popup-items a {
+        color: var(--rv-accent);
+    }
+}
+
+/* ------------------------------------------------------------------ */
 /*  Responsive                                                         */
 /* ------------------------------------------------------------------ */
 

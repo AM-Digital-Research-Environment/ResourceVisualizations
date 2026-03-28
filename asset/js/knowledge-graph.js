@@ -13,6 +13,24 @@
         '#c5504d', '#4a8c6f', '#8b6f47', '#7c5295', '#cc8963'
     ];
 
+    /** Reusable toolbox: save-as-image + restore. */
+    var TOOLBOX = {
+        show: true,
+        feature: {
+            saveAsImage: { show: true, title: 'Save', pixelRatio: 2 },
+            restore: { show: true, title: 'Reset' }
+        },
+        right: 10,
+        top: 2,
+        iconStyle: { borderColor: '#999' },
+        emphasis: { iconStyle: { borderColor: '#666' } }
+    };
+
+    /** Dark mode detection. */
+    var _darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    var _darkMode = _darkQuery ? _darkQuery.matches : false;
+    var _allCharts = [];
+
     // Property -> category mapping (used in API fallback only).
     var PROP_CAT = {
         'dcterms:creator': 'Person', 'dcterms:contributor': 'Person', 'foaf:member': 'Person',
@@ -104,7 +122,8 @@
             }
         });
 
-        var chart = echarts.init(container);
+        var chart = echarts.init(container, _darkMode ? 'dark' : null);
+        _allCharts.push(chart);
         var n = data.nodes.length;
 
         data.categories.forEach(function (cat, i) {
@@ -112,6 +131,8 @@
         });
 
         var option = {
+            toolbox: TOOLBOX,
+            aria: { enabled: true },
             tooltip: {
                 trigger: 'item',
                 confine: true,
@@ -241,5 +262,16 @@
         document.addEventListener('DOMContentLoaded', init);
     } else {
         init();
+    }
+
+    /* Dark mode: switch ECharts theme when OS preference changes. */
+    if (_darkQuery) {
+        _darkQuery.addEventListener('change', function () {
+            _darkMode = _darkQuery.matches;
+            var theme = _darkMode ? 'dark' : 'default';
+            _allCharts.forEach(function (c) {
+                if (!c.isDisposed()) c.setTheme(theme);
+            });
+        });
     }
 })();
