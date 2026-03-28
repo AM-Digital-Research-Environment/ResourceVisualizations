@@ -46,6 +46,13 @@
         return chart;
     }
 
+    /** Get the appropriate basemap style URL for the current color scheme. */
+    function getBasemapStyle() {
+        return _darkMode
+            ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+            : 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
+    }
+
     /** Build a dataZoom config (slider + scroll) for timeline-type charts. */
     function buildDataZoom(count) {
         if (count <= 15) return [];
@@ -262,16 +269,21 @@
         el.style.borderRadius = '6px';
         var map = new maplibregl.Map({
             container: el,
-            style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+            style: getBasemapStyle(),
             center: [0, 15],
             zoom: 1.5,
             attributionControl: false,
+            cooperativeGestures: true,
         });
-        map.addControl(new maplibregl.NavigationControl(), 'top-right');
+        map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
         map.addControl(new maplibregl.FullscreenControl(), 'top-right');
+        if (maplibregl.GlobeControl) map.addControl(new maplibregl.GlobeControl(), 'top-right');
+        map.addControl(new maplibregl.ScaleControl({ maxWidth: 100, unit: 'metric' }), 'bottom-left');
         map.addControl(new maplibregl.AttributionControl({ compact: true, collapsed: true }), 'bottom-right');
 
         map.on('load', function () {
+            if (map.setProjection) map.setProjection({ type: 'globe' });
+
             var features = data.map(function (loc) {
                 return {
                     type: 'Feature',
@@ -330,7 +342,7 @@
                 }
             });
 
-            // Point labels.
+            // Point labels — adapt to dark mode.
             map.addLayer({
                 id: 'point-labels',
                 type: 'symbol',
@@ -343,8 +355,8 @@
                     'text-anchor': 'top',
                 },
                 paint: {
-                    'text-color': '#333',
-                    'text-halo-color': '#fff',
+                    'text-color': _darkMode ? '#e0e0e0' : '#333',
+                    'text-halo-color': _darkMode ? '#1e1e1e' : '#fff',
                     'text-halo-width': 1.5,
                 }
             });
@@ -681,13 +693,15 @@
         el.style.borderRadius = '6px';
         var map = new maplibregl.Map({
             container: el,
-            style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+            style: getBasemapStyle(),
             center: [data.lon, data.lat],
             zoom: 4,
             attributionControl: false,
+            scrollZoom: false,
         });
-        map.addControl(new maplibregl.NavigationControl(), 'top-right');
+        map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
         map.addControl(new maplibregl.FullscreenControl(), 'top-right');
+        map.addControl(new maplibregl.ScaleControl({ maxWidth: 80, unit: 'metric' }), 'bottom-left');
         new maplibregl.Marker({ color: '#22817b' })
             .setLngLat([data.lon, data.lat])
             .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML('<strong>' + (data.name || '') + '</strong>'))
