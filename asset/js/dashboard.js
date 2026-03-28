@@ -84,6 +84,12 @@
     /*  Data normalization                                                 */
     /* ------------------------------------------------------------------ */
 
+    /** Truncate a string with ellipsis if it exceeds maxLen. */
+    function truncateLabel(str, maxLen) {
+        if (!str) return '';
+        return str.length > maxLen ? str.substring(0, maxLen) + '\u2026' : str;
+    }
+
     /** Convert either format to array of { name, value, itemId? }. */
     function toEntries(data) {
         if (!data) return [];
@@ -174,6 +180,7 @@
         var entries = toEntries(data);
         if (!entries.length) return;
         var chart = initChart(el);
+        // Sort ascending, then keep only the top 20 (last 20 after asc sort) for readability.
         entries.sort(function (a, b) { return a.value - b.value; });
         if (entries.length > 20) entries = entries.slice(entries.length - 20);
 
@@ -195,7 +202,7 @@
                 type: 'category', data: names,
                 axisLabel: {
                     fontSize: THEME.fontSize, width: 200, overflow: 'truncate',
-                    formatter: function (v) { return v.length > THEME.labelMaxLen ? v.substring(0, THEME.labelMaxLen) + '\u2026' : v; }
+                    formatter: function (v) { return truncateLabel(v, THEME.labelMaxLen); }
                 }
             },
             series: [{
@@ -259,7 +266,7 @@
             h += '<ul class="rv-popup-items">';
             pageItems.forEach(function (it) {
                 var url = siteBase ? siteBase + '/item/' + it.id : '#';
-                var title = it.title.length > 55 ? it.title.substring(0, 55) + '\u2026' : it.title;
+                var title = truncateLabel(it.title, 55);
                 h += '<li><a href="' + url + '">' + title + '</a></li>';
             });
             h += '</ul>';
@@ -325,7 +332,7 @@
                 source: 'locations',
                 filter: ['has', 'point_count'],
                 paint: {
-                    'circle-color': ['step', ['get', 'point_count'], '#22817b', 10, '#e07c3e', 30, '#c5504d'],
+                    'circle-color': ['step', ['get', 'point_count'], COLORS[0], 10, COLORS[1], 30, COLORS[5]],
                     'circle-radius': ['step', ['get', 'point_count'], 18, 10, 24, 30, 32],
                     'circle-stroke-width': 2,
                     'circle-stroke-color': '#fff',
@@ -352,7 +359,7 @@
                 source: 'locations',
                 filter: ['!', ['has', 'point_count']],
                 paint: {
-                    'circle-color': '#22817b',
+                    'circle-color': THEME.accent,
                     'circle-radius': ['interpolate', ['linear'], ['get', 'value'], 1, 7, 50, 18, 200, 28],
                     'circle-stroke-width': 2,
                     'circle-stroke-color': '#fff',
@@ -373,8 +380,8 @@
                     'text-anchor': 'top',
                 },
                 paint: {
-                    'text-color': _darkMode ? '#e0e0e0' : '#333',
-                    'text-halo-color': _darkMode ? '#1e1e1e' : '#fff',
+                    'text-color': THEME.text,
+                    'text-halo-color': THEME.border,
                     'text-halo-width': 1.5,
                 }
             });
@@ -510,7 +517,7 @@
                 type: 'category', data: names,
                 axisLabel: {
                     fontSize: THEME.fontSize, width: 200, overflow: 'truncate',
-                    formatter: function (v) { return v.length > 28 ? v.substring(0, 28) + '\u2026' : v; }
+                    formatter: function (v) { return truncateLabel(v, 28); }
                 }
             },
             series: [{
@@ -555,11 +562,11 @@
             grid: { left: 120, right: 60, top: 10, bottom: 80 },
             xAxis: {
                 type: 'category', data: data.cols, splitArea: { show: true },
-                axisLabel: { rotate: 35, fontSize: THEME.fontSize, formatter: function (v) { return v.length > 15 ? v.substring(0, 15) + '\u2026' : v; } }
+                axisLabel: { rotate: 35, fontSize: THEME.fontSize, formatter: function (v) { return truncateLabel(v, 15); } }
             },
             yAxis: {
                 type: 'category', data: data.rows, splitArea: { show: true },
-                axisLabel: { fontSize: THEME.fontSize, formatter: function (v) { return v.length > 15 ? v.substring(0, 15) + '\u2026' : v; } }
+                axisLabel: { fontSize: THEME.fontSize, formatter: function (v) { return truncateLabel(v, 15); } }
             },
             visualMap: {
                 min: 0, max: maxVal || 1, calculable: true, orient: 'vertical', right: 0, top: 'center',
@@ -599,7 +606,7 @@
                         name: n.name, symbolSize: Math.max(10, Math.min(40, n.value * 2)),
                         itemStyle: { color: COLORS[i % COLORS.length] },
                         itemId: n.itemId,
-                        label: { fontSize: THEME.fontSize - 1, formatter: function (p) { var s = p.name; return s.length > 20 ? s.substring(0, 20) + '\u2026' : s; } }
+                        label: { fontSize: THEME.fontSize - 1, formatter: function (p) { return truncateLabel(p.name, 20); } }
                     };
                 }),
                 links: data.links.map(function (l) {
@@ -639,7 +646,7 @@
                 lineStyle: { color: 'gradient', curveness: 0.5, opacity: 0.4 },
                 label: {
                     fontSize: THEME.fontSize,
-                    formatter: function (p) { var s = p.name; return s.length > 25 ? s.substring(0, 25) + '\u2026' : s; }
+                    formatter: function (p) { return truncateLabel(p.name, 25); }
                 },
                 data: data.nodes.map(function (n, i) {
                     return { name: n.name, itemStyle: { color: COLORS[i % COLORS.length] } };
@@ -720,7 +727,7 @@
         map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
         map.addControl(new maplibregl.FullscreenControl(), 'top-right');
         map.addControl(new maplibregl.ScaleControl({ maxWidth: 80, unit: 'metric' }), 'bottom-left');
-        new maplibregl.Marker({ color: _darkMode ? THEME.accentDark : THEME.accent })
+        new maplibregl.Marker({ color: THEME.accent })
             .setLngLat([data.lon, data.lat])
             .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML('<strong>' + (data.name || '') + '</strong>'))
             .addTo(map);

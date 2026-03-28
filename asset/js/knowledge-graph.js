@@ -42,6 +42,19 @@
     var _darkMode = _darkQuery ? _darkQuery.matches : false;
     var _allCharts = [];
 
+    /** Init an ECharts instance with the correct theme, tracking it for dark mode switches. */
+    function initChart(el) {
+        var chart = echarts.init(el, _darkMode ? 'dark' : null);
+        _allCharts.push(chart);
+        return chart;
+    }
+
+    /** Truncate a string with ellipsis if it exceeds maxLen. */
+    function truncateLabel(str, maxLen) {
+        if (!str) return '';
+        return str.length > maxLen ? str.substring(0, maxLen) + '\u2026' : str;
+    }
+
     // Property -> category mapping (used in API fallback only).
     var PROP_CAT = {
         'dcterms:creator': 'Person', 'dcterms:contributor': 'Person', 'foaf:member': 'Person',
@@ -133,8 +146,7 @@
             }
         });
 
-        var chart = echarts.init(container, _darkMode ? 'dark' : null);
-        _allCharts.push(chart);
+        var chart = initChart(container);
         var n = data.nodes.length;
 
         data.categories.forEach(function (cat, i) {
@@ -206,7 +218,7 @@
                 roam: true, draggable: true, cursor: 'pointer',
                 emphasis: { focus: 'adjacency', lineStyle: { width: 2.5, opacity: 0.9 } },
                 blur: { itemStyle: { opacity: 0.15 }, lineStyle: { opacity: 0.08 } },
-                label: { position: 'right', formatter: function (p) { var s = p.name || ''; return s.length > THEME.labelMaxLen ? s.substring(0, THEME.labelMaxLen) + '\u2026' : s; } },
+                label: { position: 'right', formatter: function (p) { return truncateLabel(p.name, THEME.labelMaxLen); } },
                 lineStyle: { opacity: 0.5, width: 1.2 },
                 scaleLimit: { min: 0.2, max: 5 }
             }]
@@ -281,7 +293,7 @@
                 var popupHtml = '<strong>' + loc.name + '</strong><br/>'
                     + '<span style="color:' + THEME.accent + '">Origin</span>';
                 if (siteBase) popupHtml += '<br/><a href="' + siteBase + '/item/' + loc.itemId + '" style="font-size:12px">View location</a>';
-                new maplibregl.Marker({ color: _darkMode ? THEME.accentDark : THEME.accent })
+                new maplibregl.Marker({ color: THEME.accent })
                     .setLngLat([loc.lon, loc.lat])
                     .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML(popupHtml))
                     .addTo(map);
@@ -290,9 +302,9 @@
             // Current location markers (orange).
             current.forEach(function (loc) {
                 var popupHtml = '<strong>' + loc.name + '</strong><br/>'
-                    + '<span style="color:#e07c3e">Current location</span>';
+                    + '<span style="color:' + COLORS[1] + '">Current location</span>';
                 if (siteBase) popupHtml += '<br/><a href="' + siteBase + '/item/' + loc.itemId + '" style="font-size:12px">View location</a>';
-                new maplibregl.Marker({ color: '#e07c3e' })
+                new maplibregl.Marker({ color: COLORS[1] })
                     .setLngLat([loc.lon, loc.lat])
                     .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML(popupHtml))
                     .addTo(map);
@@ -339,7 +351,7 @@
                     legend.innerHTML += '<span class="rv-legend-dot" style="background:' + THEME.accent + '"></span> Origin';
                 }
                 if (data.itemMap.current.length) {
-                    legend.innerHTML += '<span class="rv-legend-dot" style="background:#e07c3e"></span> Current location';
+                    legend.innerHTML += '<span class="rv-legend-dot" style="background:' + COLORS[1] + '"></span> Current location';
                 }
                 wrapper.appendChild(legend);
 
