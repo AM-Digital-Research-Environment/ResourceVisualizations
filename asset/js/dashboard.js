@@ -793,7 +793,7 @@
             + '</div>'
             + '<div class="dashboard-charts">';
 
-        var chartKeys = ['selfLocation', 'stackedTimeline', 'timeline', 'gantt', 'types', 'heatmap', 'sankey', 'sunburst', 'locations', 'languages', 'subjects', 'chord', 'contributors', 'coAuthors', 'coSubjects', 'projects'];
+        var chartKeys = ['selfLocation', 'stackedTimeline', 'timeline', 'gantt', 'types', 'languages', 'heatmap', 'subjects', 'sunburst', 'locations', 'chord', 'contributors', 'coAuthors', 'coSubjects', 'projects', 'sankey'];
         chartKeys.forEach(function (key) {
             var d = data[key];
             var hasData = Array.isArray(d) ? d.length > 0 : (d && Object.keys(d).length > 0);

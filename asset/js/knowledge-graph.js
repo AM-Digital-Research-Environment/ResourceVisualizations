@@ -238,6 +238,74 @@
     }
 
     /* ------------------------------------------------------------------ */
+    /*  Item location map                                                  */
+    /* ------------------------------------------------------------------ */
+
+    /** Get the appropriate basemap style URL for the current color scheme. */
+    function getBasemapStyle() {
+        return _darkMode
+            ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+            : 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
+    }
+
+    /**
+     * Render a MapLibre map showing origin and current locations for an item.
+     * @param {HTMLElement} el - Container element for the map.
+     * @param {Object} itemMap - { origins: [{name,lat,lon,itemId}], current: [{name,lat,lon,itemId}] }
+     * @param {string} siteBase - Base URL for item links.
+     */
+    function renderItemMap(el, itemMap, siteBase) {
+        if (typeof maplibregl === 'undefined') return;
+        var origins = itemMap.origins || [];
+        var current = itemMap.current || [];
+        if (!origins.length && !current.length) return;
+
+        var all = origins.concat(current);
+
+        var map = new maplibregl.Map({
+            container: el,
+            style: getBasemapStyle(),
+            center: [all[0].lon, all[0].lat],
+            zoom: 3,
+            attributionControl: false,
+            scrollZoom: false,
+        });
+        map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
+        map.addControl(new maplibregl.ScaleControl({ maxWidth: 80, unit: 'metric' }), 'bottom-left');
+
+        map.on('load', function () {
+            // Origin markers (teal).
+            origins.forEach(function (loc) {
+                var popupHtml = '<strong>' + loc.name + '</strong><br/>'
+                    + '<span style="color:' + THEME.accent + '">Origin</span>';
+                if (siteBase) popupHtml += '<br/><a href="' + siteBase + '/item/' + loc.itemId + '" style="font-size:12px">View location</a>';
+                new maplibregl.Marker({ color: _darkMode ? THEME.accentDark : THEME.accent })
+                    .setLngLat([loc.lon, loc.lat])
+                    .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML(popupHtml))
+                    .addTo(map);
+            });
+
+            // Current location markers (orange).
+            current.forEach(function (loc) {
+                var popupHtml = '<strong>' + loc.name + '</strong><br/>'
+                    + '<span style="color:#e07c3e">Current location</span>';
+                if (siteBase) popupHtml += '<br/><a href="' + siteBase + '/item/' + loc.itemId + '" style="font-size:12px">View location</a>';
+                new maplibregl.Marker({ color: '#e07c3e' })
+                    .setLngLat([loc.lon, loc.lat])
+                    .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML(popupHtml))
+                    .addTo(map);
+            });
+
+            // Fit bounds to all markers.
+            if (all.length > 1) {
+                var bounds = new maplibregl.LngLatBounds();
+                all.forEach(function (loc) { bounds.extend([loc.lon, loc.lat]); });
+                map.fitBounds(bounds, { padding: 50, maxZoom: 8 });
+            }
+        });
+    }
+
+    /* ------------------------------------------------------------------ */
     /*  Init                                                               */
     /* ------------------------------------------------------------------ */
 
@@ -252,6 +320,34 @@
             }
             container.innerHTML = '';
             renderChart(container, data, siteBase);
+
+            // If item has location data, render a map below the graph.
+            if (data.itemMap && (data.itemMap.origins.length || data.itemMap.current.length)) {
+                var block = container.closest('.knowledge-graph-block') || container.parentElement;
+                var wrapper = document.createElement('div');
+                wrapper.className = 'rv-item-map-panel';
+
+                var heading = document.createElement('h4');
+                heading.textContent = 'Locations';
+                wrapper.appendChild(heading);
+
+                var legend = document.createElement('div');
+                legend.className = 'rv-item-map-legend';
+                if (data.itemMap.origins.length) {
+                    legend.innerHTML += '<span class="rv-legend-dot" style="background:' + THEME.accent + '"></span> Origin';
+                }
+                if (data.itemMap.current.length) {
+                    legend.innerHTML += '<span class="rv-legend-dot" style="background:#e07c3e"></span> Current location';
+                }
+                wrapper.appendChild(legend);
+
+                var mapEl = document.createElement('div');
+                mapEl.className = 'rv-item-map-container';
+                wrapper.appendChild(mapEl);
+
+                block.appendChild(wrapper);
+                renderItemMap(mapEl, data.itemMap, siteBase);
+            }
         }).catch(function (err) {
             console.error('ResourceVisualizations:', err);
             container.innerHTML = '<p class="rv-error">Failed to load knowledge graph.</p>';

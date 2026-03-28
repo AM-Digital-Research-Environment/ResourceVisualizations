@@ -120,7 +120,31 @@ def load_data(password):
             reverse.setdefault(vrid, set()).add(rid)
     print(f'    {sum(len(v) for v in links.values())} links, {len(all_reverse)} reverse entries')
 
-    return items, links, reverse, all_reverse
+    print('  Loading geo coordinates...')
+    geo = {}
+    for row in query_mysql("""
+        SELECT r.id, r.title,
+               MAX(CASE WHEN CONCAT(vo.prefix, ':', p.local_name) = 'geo:lat' THEN v.value END) AS lat,
+               MAX(CASE WHEN CONCAT(vo.prefix, ':', p.local_name) = 'geo:long' THEN v.value END) AS lon
+        FROM resource r
+        JOIN value v ON v.resource_id = r.id
+        JOIN property p ON v.property_id = p.id
+        JOIN vocabulary vo ON p.vocabulary_id = vo.id
+        WHERE CONCAT(vo.prefix, ':', p.local_name) IN ('geo:lat', 'geo:long')
+        GROUP BY r.id
+        HAVING lat IS NOT NULL AND lon IS NOT NULL
+    """, password):
+        try:
+            geo[int(row[0])] = {
+                'name': row[1] or f'Location {row[0]}',
+                'lat': float(row[2]), 'lon': float(row[3]),
+                'itemId': int(row[0]),
+            }
+        except (ValueError, TypeError):
+            pass
+    print(f'    {len(geo)} locations with coordinates')
+
+    return items, links, reverse, all_reverse, geo
 
 
 MAX_DIRECT_NODES = 150
@@ -132,6 +156,28 @@ CAT_PRIORITY = ['Person', 'Contributor', 'Subject', 'Project', 'Location', 'Inst
 
 
 MAX_REVERSE_ITEMS = 40  # For entities like subjects/languages: max items shown linking to them
+
+
+def build_item_map(item_id, links, geo):
+    """Extract origin (dcterms:spatial) and current (dcterms:provenance) locations with coordinates."""
+    origins = []
+    current = []
+    seen = set()
+    for term, label, vrid in links.get(item_id, []):
+        if term not in ('dcterms:spatial', 'dcterms:provenance'):
+            continue
+        if vrid in seen or vrid not in geo:
+            continue
+        seen.add(vrid)
+        loc = geo[vrid]
+        entry = {'name': loc['name'], 'lat': loc['lat'], 'lon': loc['lon'], 'itemId': loc['itemId']}
+        if term == 'dcterms:spatial':
+            origins.append(entry)
+        else:
+            current.append(entry)
+    if not origins and not current:
+        return None
+    return {'origins': origins, 'current': current}
 
 
 def build_graph(item_id, items, links, reverse, all_reverse=None):
@@ -252,24 +298,29 @@ def build_graph(item_id, items, links, reverse, all_reverse=None):
 def main():
     password = get_password()
     print(f'Loading data via docker compose exec...')
-    items, links, reverse, all_reverse = load_data(password)
+    items, links, reverse, all_reverse, geo = load_data(password)
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     print(f'Generating graphs to {OUTPUT_DIR}/')
 
-    generated = skipped = 0
+    generated = skipped = map_count = 0
     for item_id in items:
         graph = build_graph(item_id, items, links, reverse, all_reverse)
         if not graph:
             skipped += 1
             continue
+        # Embed location map data when the item has spatial/provenance links.
+        item_map = build_item_map(item_id, links, geo)
+        if item_map:
+            graph['itemMap'] = item_map
+            map_count += 1
         with open(os.path.join(OUTPUT_DIR, f'{item_id}.json'), 'w', encoding='utf-8') as f:
             json.dump(graph, f, ensure_ascii=False, separators=(',', ':'))
         generated += 1
         if generated % 500 == 0:
             print(f'  {generated} graphs...')
 
-    print(f'Done. {generated} generated, {skipped} skipped.')
+    print(f'Done. {generated} generated ({map_count} with location maps), {skipped} skipped.')
 
 
 if __name__ == '__main__':
