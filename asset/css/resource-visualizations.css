@@ -45,6 +45,8 @@
     top: 0;
     right: 0;
     z-index: 10;
+    display: flex;
+    gap: 0.25rem;
 }
 
 .knowledge-graph-container {
@@ -161,12 +163,43 @@
 }
 
 .chart-panel h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     font-size: 0.95rem;
     font-weight: 600;
     color: var(--rv-heading-color);
     margin: 0 0 0.5rem;
     overflow-wrap: break-word;
     word-break: break-word;
+}
+
+/* Chart-level toolbar (save button, inline with title). */
+.rv-chart-toolbar {
+    margin-left: auto;
+    display: flex;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+.rv-toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border: 1px solid var(--rv-border);
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    color: var(--rv-text-color);
+    transition: color 0.15s, border-color 0.15s;
+    padding: 0;
+}
+
+.rv-toolbar-btn:hover {
+    color: var(--rv-accent);
+    border-color: var(--rv-accent);
 }
 
 .dashboard-header h3,

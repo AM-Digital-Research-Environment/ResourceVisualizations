@@ -39,18 +39,28 @@
         barMaxWidthWide: 40
     };
 
-    /** Reusable toolbox: save-as-image + restore. */
-    var TOOLBOX = {
-        show: true,
-        feature: {
-            saveAsImage: { show: true, title: 'Save', pixelRatio: 2 },
-            restore: { show: true, title: 'Reset' }
-        },
-        right: 10,
-        top: 2,
-        iconStyle: { borderColor: '#999' },
-        emphasis: { iconStyle: { borderColor: '#666' } }
-    };
+    /** Attach HTML-level save/reset toolbar to a chart panel. */
+    function attachToolbar(panel, chart) {
+        if (!chart || !chart.getDataURL) return;
+        var bar = document.createElement('span');
+        bar.className = 'rv-chart-toolbar';
+        bar.innerHTML = '<button type="button" class="rv-toolbar-btn" data-action="save" title="Save as image">'
+            + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'
+            + '</button>';
+        var h4 = panel.querySelector('h4');
+        if (h4) h4.appendChild(bar);
+        bar.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            if (btn.dataset.action === 'save') {
+                var url = chart.getDataURL({ pixelRatio: 2, backgroundColor: '#fff' });
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = (panel.querySelector('h4').textContent || 'chart').trim() + '.png';
+                a.click();
+            }
+        });
+    }
 
     /** Dark mode detection (gated by THEME.darkModeEnabled). */
     var _darkQuery = THEME.darkModeEnabled && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
@@ -124,7 +134,7 @@
         var zoom = buildDataZoom(years.length);
         chart.setOption({
             tooltip: { trigger: 'axis', confine: true },
-            toolbox: TOOLBOX,
+
             aria: { enabled: true },
             dataZoom: zoom,
             grid: { left: 50, right: 20, top: 20, bottom: zoom.length ? 60 : 40 },
@@ -155,7 +165,7 @@
 
         chart.setOption({
             tooltip: { trigger: 'item', confine: true, formatter: '{b}: {c} ({d}%)' },
-            toolbox: TOOLBOX,
+
             aria: { enabled: true, decal: { show: true } },
             legend: {
                 orient: 'vertical', right: 10, top: 'center',
@@ -189,7 +199,7 @@
 
         chart.setOption({
             tooltip: { trigger: 'axis', confine: true, axisPointer: { type: 'shadow' } },
-            toolbox: TOOLBOX,
+
             aria: { enabled: true },
             grid: {
                 left: Math.min(220, Math.max(80, names.reduce(function (m, n) {
@@ -229,7 +239,7 @@
                 confine: true,
                 formatter: function (p) { return echarts.format.encodeHTML(p.name) + ': ' + p.value; }
             },
-            toolbox: TOOLBOX,
+
             aria: { enabled: true },
             series: [{
                 type: 'wordCloud', shape: 'circle',
@@ -504,7 +514,7 @@
                     return '<strong>' + echarts.format.encodeHTML(params.name) + '</strong><br/>' + s + ' \u2192 ' + e;
                 }
             },
-            toolbox: TOOLBOX,
+
             aria: { enabled: true },
             grid: { left: 220, right: 30, top: 10, bottom: 30 },
             xAxis: {
@@ -557,7 +567,7 @@
                         + echarts.format.encodeHTML(data.cols[p.value[0]]) + ': ' + p.value[2];
                 }
             },
-            toolbox: TOOLBOX,
+
             aria: { enabled: true },
             grid: { left: 120, right: 60, top: 10, bottom: 80 },
             xAxis: {
@@ -597,7 +607,7 @@
                     return '';
                 }
             },
-            toolbox: TOOLBOX,
+
             aria: { enabled: true },
             series: [{
                 type: 'graph', layout: 'circular', circular: { rotateLabel: true },
@@ -636,7 +646,7 @@
 
         chart.setOption({
             tooltip: { trigger: 'item', confine: true },
-            toolbox: TOOLBOX,
+
             aria: { enabled: true, decal: { show: true } },
             series: [{
                 type: 'sankey', layout: 'none',
@@ -663,7 +673,7 @@
 
         chart.setOption({
             tooltip: { confine: true },
-            toolbox: TOOLBOX,
+
             aria: { enabled: true, decal: { show: true } },
             series: [{
                 type: 'sunburst',
@@ -698,7 +708,7 @@
         var zoom = buildDataZoom(data.years.length);
         chart.setOption({
             tooltip: { trigger: 'axis', confine: true },
-            toolbox: TOOLBOX,
+
             aria: { enabled: true, decal: { show: true } },
             dataZoom: zoom,
             legend: { bottom: zoom.length ? 40 : 5, textStyle: { fontSize: THEME.fontSize }, type: 'scroll' },
@@ -828,7 +838,10 @@
             var el = container.querySelector('[data-chart="' + key + '"]');
             if (el && data[key] && CHART_MAP[key]) {
                 var chart = CHART_MAP[key](el, data[key], siteBase);
-                if (chart) charts.push(chart);
+                if (chart) {
+                    charts.push(chart);
+                    attachToolbar(el.closest('.chart-panel'), chart);
+                }
             }
         });
 

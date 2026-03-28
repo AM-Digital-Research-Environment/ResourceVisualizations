@@ -13,19 +13,6 @@
         '#c5504d', '#4a8c6f', '#8b6f47', '#7c5295', '#cc8963'
     ];
 
-    /** Reusable toolbox: save-as-image + restore. */
-    var TOOLBOX = {
-        show: true,
-        feature: {
-            saveAsImage: { show: true, title: 'Save', pixelRatio: 2 },
-            restore: { show: true, title: 'Reset' }
-        },
-        right: 10,
-        top: 2,
-        iconStyle: { borderColor: '#999' },
-        emphasis: { iconStyle: { borderColor: '#666' } }
-    };
-
     /** Shared design tokens. */
     var THEME = {
         /** Set to true to enable automatic dark mode via prefers-color-scheme. */
@@ -154,7 +141,6 @@
         });
 
         var option = {
-            toolbox: TOOLBOX,
             aria: { enabled: true },
             tooltip: {
                 trigger: 'item',
@@ -235,6 +221,24 @@
 
         var block = container.closest('.knowledge-graph-block');
         if (block) {
+            // Add save button to existing toolbar.
+            var toolbar = block.querySelector('.knowledge-graph-toolbar');
+            if (toolbar) {
+                var saveBtn = document.createElement('button');
+                saveBtn.type = 'button';
+                saveBtn.className = 'rv-btn rv-save-btn';
+                saveBtn.setAttribute('aria-label', 'Save as image');
+                saveBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+                saveBtn.addEventListener('click', function () {
+                    var url = chart.getDataURL({ pixelRatio: 2, backgroundColor: '#fff' });
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'knowledge-graph.png';
+                    a.click();
+                });
+                toolbar.insertBefore(saveBtn, toolbar.firstChild);
+            }
+
             var toggle = block.querySelector('.rv-fullscreen-toggle');
             if (toggle) {
                 toggle.addEventListener('click', function () {
