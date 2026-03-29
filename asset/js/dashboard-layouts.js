@@ -57,6 +57,12 @@
                     'contributors', 'locations'],
             wide:  ['coSubjects', 'locations'],
             tall:  ['coSubjects', 'locations']
+        },
+        researchItem: {
+            order: ['timeline', 'types', 'languages', 'subjects',
+                    'contributors', 'locations'],
+            wide:  ['subjects', 'contributors', 'locations'],
+            tall:  ['subjects', 'locations']
         }
     };
 

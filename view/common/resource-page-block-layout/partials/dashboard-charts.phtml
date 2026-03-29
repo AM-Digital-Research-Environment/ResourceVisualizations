@@ -110,6 +110,7 @@ arsort($subjects);
 arsort($contributors);
 
 $dashboardData = json_encode([
+    'resourceType' => 'researchItem',
     'timeline'     => $timeline,
     'types'        => $types,
     'languages'    => $languages,
