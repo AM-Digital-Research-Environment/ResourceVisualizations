@@ -17,11 +17,11 @@
 
     ns.charts = ns.charts || {};
 
-    /** Category color palettes for bipartite graphs. */
+    /** Category color palettes for bipartite graphs (from COLORS palette). */
     var CATEGORY_COLORS = {
-        person:      '#22817b',
-        project:     '#e07c3e',
-        institution: '#6b5b95'
+        person:      COLORS[0],
+        project:     COLORS[1],
+        institution: COLORS[2]
     };
 
     /**

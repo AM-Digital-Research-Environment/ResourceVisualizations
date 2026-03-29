@@ -11,7 +11,7 @@
     'use strict';
 
     var ns = window.RV;
-    var THEME = ns.THEME;
+    var THEME = ns.THEME, COLORS = ns.COLORS;
 
     ns.charts = ns.charts || {};
 
@@ -104,9 +104,9 @@
                 source: 'origins',
                 paint: {
                     'circle-radius': 5,
-                    'circle-color': '#e07c3e',
+                    'circle-color': COLORS[1],
                     'circle-stroke-width': 1,
-                    'circle-stroke-color': '#fff'
+                    'circle-stroke-color': THEME.border
                 }
             });
 
@@ -116,9 +116,9 @@
                 source: 'currents',
                 paint: {
                     'circle-radius': 5,
-                    'circle-color': '#6b5b95',
+                    'circle-color': COLORS[2],
                     'circle-stroke-width': 1,
-                    'circle-stroke-color': '#fff'
+                    'circle-stroke-color': THEME.border
                 }
             });
 

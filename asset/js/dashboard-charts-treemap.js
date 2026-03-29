@@ -46,7 +46,7 @@
                     show: true,
                     height: 22,
                     fontSize: THEME.fontSize,
-                    color: '#fff',
+                    color: THEME.border,
                     formatter: function (p) { return truncateLabel(p.name, 30); }
                 },
                 itemStyle: {
