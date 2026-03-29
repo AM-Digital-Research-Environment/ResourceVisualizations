@@ -29,7 +29,7 @@ Contextual charts adapted per entity type. All chart elements are clickable, lin
 
 #### Charts by Entity Type
 
-| Chart | Sections | Projects | People | Institutions | Locations | Subjects | Languages | Types | Genres |
+| Chart | Sections | Projects | People | Organisations | Locations | Subjects | Languages | Types | Genres |
 |---|---|---|---|---|---|---|---|---|---|
 | Stacked Timeline | x | x | | | | | | | |
 | Timeline | x | x | x | x | x | x | x | x | x |
@@ -42,6 +42,7 @@ Contextual charts adapted per entity type. All chart elements are clickable, lin
 | Geographic Origins (map) | x | x | x | x | | | x | x | |
 | Self-location MiniMap | | | | | x | | | | |
 | Subject Co-occurrence (chord) | x | x | | | | | | | |
+| Collaboration Network | | | | x | | | | | |
 | Top Associated Persons | x | x | | x | x | x | x | x | x |
 | Co-authors | | | x | | | | | | |
 | Co-occurring Subjects | | | | | | x | | | |
@@ -50,9 +51,12 @@ Contextual charts adapted per entity type. All chart elements are clickable, lin
 
 Note: The basic Timeline is automatically hidden when the Stacked Timeline is available (since it's redundant).
 
+Dashboard layouts are resource-type-aware: each resource template has its own chart order and wide/tall configuration defined in `dashboard-layouts.js`. This prevents layout gaps in the 2-column grid by pairing half-width charts side by side.
+
 #### Chart Features
 
 - **Toolbox**: Save-as-image (2x resolution) and restore on all ECharts charts
+- **Word count slider**: Adjust the number of words displayed in the word cloud (5 to max)
 - **DataZoom**: Interactive slider on timeline charts with >15 data points
 - **ARIA**: Screen reader descriptions on all charts; decal patterns on pie, stacked, sankey, and sunburst for accessibility
 - **Cooperative gestures**: Main maps require Ctrl+scroll to zoom (prevents scroll hijacking)
@@ -135,8 +139,15 @@ ResourceVisualizations/
 │   └── partials/dashboard-charts.phtml # Shared chart rendering (inline mode)
 ├── asset/
 │   ├── js/
-│   │   ├── knowledge-graph.js          # Graph + item map: precomputed JSON + API fallback
-│   │   └── dashboard.js                # All chart builders + async loading
+│   │   ├── knowledge-graph.js            # Graph + item map: precomputed JSON + API fallback
+│   │   ├── dashboard-core.js             # Shared THEME, COLORS, helpers (window.RV namespace)
+│   │   ├── dashboard-layouts.js          # Per-resource-type layout configs (chart order, wide/tall)
+│   │   ├── dashboard-charts-basic.js     # Timeline, pie, bar, word cloud
+│   │   ├── dashboard-charts-advanced.js  # Gantt, heatmap, chord, sankey, sunburst, stacked timeline
+│   │   ├── dashboard-charts-map.js       # Geographic origins map, self-location mini map
+│   │   ├── dashboard-collab-network.js   # Institution collaboration network (force graph)
+│   │   ├── dashboard-registry.js         # CHART_MAP, labels, descriptions
+│   │   └── dashboard.js                  # Orchestrator: render + async/inline init
 │   ├── css/
 │   │   └── resource-visualizations.css # Styles with CSS custom properties
 │   └── data/
@@ -153,7 +164,7 @@ ResourceVisualizations/
 
 ### THEME Design Tokens
 
-Both `dashboard.js` and `knowledge-graph.js` define a shared `THEME` object at the top of their IIFE. All design values (colors, font sizes, truncation lengths) flow from this single config:
+`dashboard.js` and `knowledge-graph.js` each define a `THEME` object. Dashboard modules share helpers (THEME, COLORS, initChart, truncateLabel) via the `window.RV` namespace. All design values flow from this config:
 
 ```javascript
 var THEME = {

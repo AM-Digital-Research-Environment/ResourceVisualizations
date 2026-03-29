@@ -39,10 +39,23 @@ DB_PASS = os.environ.get('DB_PASS', '')
 DB_NAME = os.environ.get('DB_NAME', 'omeka')
 
 # Resource template IDs (from Omeka S config).
-TEMPLATE_PROJECTS = 5
-TEMPLATE_PERSONS = 4
+TEMPLATE_ORGANISATION = 2
 TEMPLATE_LOCATION = 3
+TEMPLATE_PERSONS = 4
+TEMPLATE_PROJECTS = 5
 TEMPLATE_AUTHORITY = 6
+TEMPLATE_SECTIONS = 7
+TEMPLATE_RESEARCH_ITEMS = 10
+
+# Template ID → dashboard resourceType string.
+TEMPLATE_RESOURCE_TYPE = {
+    TEMPLATE_ORGANISATION: 'organisation',
+    TEMPLATE_LOCATION: 'location',
+    TEMPLATE_PERSONS: 'person',
+    TEMPLATE_PROJECTS: 'project',
+    TEMPLATE_SECTIONS: 'section',
+    TEMPLATE_RESEARCH_ITEMS: 'researchItem',
+}
 
 
 # ── MySQL helper ──────────────────────────────────────────────────────
@@ -595,6 +608,7 @@ def generate_sections(items, links, reverse_links, children_of, item_year, tempo
         sunburst = build_sunburst(item_ids, links, items)
         if sunburst:
             dashboard['sunburst'] = sunburst
+        dashboard['resourceType'] = TEMPLATE_RESOURCE_TYPE.get(items[sid]['template_id'], 'section')
         save_json(sid, dashboard)
         print(f'  {sinfo["title"]}: {len(item_ids)} items')
 
@@ -624,6 +638,7 @@ def generate_projects(items, links, reverse_links, children_of, item_year, geo):
         sunburst = build_sunburst(item_ids, links, items)
         if sunburst:
             dashboard['sunburst'] = sunburst
+        dashboard['resourceType'] = TEMPLATE_RESOURCE_TYPE.get(items[pid]['template_id'], 'project')
         save_json(pid, dashboard)
         count += 1
     print(f'  {count} dashboards generated')
@@ -663,6 +678,7 @@ def generate_people(items, links, reverse_links, children_of, item_year, geo):
         dashboard['coAuthors'] = sorted(coauthors.values(), key=lambda x: -x['value'])[:20]
         # People: co-authors replaces contributors (redundant).
         dashboard.pop('contributors', None)
+        dashboard['resourceType'] = TEMPLATE_RESOURCE_TYPE.get(items[pid]['template_id'], 'person')
         save_json(pid, dashboard)
         count += 1
     print(f'  {count} dashboards generated')
@@ -692,6 +708,7 @@ def generate_institutions(items, links, reverse_links, children_of, item_year, g
         if collab:
             dashboard['collabNetwork'] = collab
 
+        dashboard['resourceType'] = TEMPLATE_RESOURCE_TYPE.get(items[iid]['template_id'], 'organisation')
         save_json(iid, dashboard)
         count += 1
     print(f'  {count} dashboards generated')
@@ -712,6 +729,7 @@ def generate_locations(items, links, reverse_links, children_of, item_year, geo)
         if lid in geo:
             g = geo[lid]
             dashboard['selfLocation'] = {'name': g['name'], 'lat': g['lat'], 'lon': g['lon'], 'itemId': lid}
+        dashboard['resourceType'] = TEMPLATE_RESOURCE_TYPE.get(items[lid]['template_id'], 'location')
         save_json(lid, dashboard)
         count += 1
     print(f'  {count} dashboards generated')
@@ -740,13 +758,15 @@ def generate_subjects(items, links, reverse_links, children_of, item_year, geo):
         dashboard['coSubjects'] = sorted(cosubs.values(), key=lambda x: -x['value'])[:30]
         # Subjects: remove self-referential subjects chart.
         dashboard.pop('subjects', None)
+        dashboard['resourceType'] = 'authority'
         save_json(sid, dashboard)
         count += 1
     print(f'  {count} dashboards generated')
 
 
 def generate_by_item_set(items, links, reverse_links, item_year, geo, item_sets,
-                         set_id, term, label, exclude_keys=None):
+                         set_id, term, label, resource_type='authority',
+                         exclude_keys=None):
     """Generate dashboards for items in a specific item set, using reverse links."""
     set_items = item_sets.get(set_id, [])
     print(f'\n=== {label} (item set {set_id}, {len(set_items)} items) ===')
@@ -761,6 +781,7 @@ def generate_by_item_set(items, links, reverse_links, item_year, geo, item_sets,
         if exclude_keys:
             for k in exclude_keys:
                 dashboard.pop(k, None)
+        dashboard['resourceType'] = resource_type
         save_json(eid, dashboard)
         count += 1
     print(f'  {count} dashboards generated')

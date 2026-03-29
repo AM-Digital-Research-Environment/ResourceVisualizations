@@ -10,6 +10,13 @@
  * @var \Omeka\Api\Representation\ItemRepresentation $resource
  */
 
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-core.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-layouts.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-basic.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-advanced.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-map.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-collab-network.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-registry.js', 'ResourceVisualizations'));
 $this->headScript()->appendFile($this->assetUrl('js/dashboard.js', 'ResourceVisualizations'));
 $siteSlug = $this->currentSite()->slug();
 ?>
