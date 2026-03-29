@@ -1234,6 +1234,46 @@ def main():
     generate_by_item_set(items, links, reverse_links, item_year, geo, item_sets,
                          set_id=21, term='dcterms:format', label='Genres')
 
+    # ── Collection Overview (all research items) ─────────────────────────
+    research_items = [iid for iid, info in items.items()
+                      if info['template_id'] == TEMPLATE_RESEARCH_ITEMS]
+    print(f'\n=== Collection Overview ({len(research_items)} research items) ===')
+    if research_items:
+        dashboard = aggregate_items(research_items, items, links, item_year, geo)
+        stacked = build_stacked_timeline(research_items, links, items, item_year)
+        if stacked:
+            dashboard['stackedTimeline'] = stacked
+        heatmap = build_heatmap(research_items, links, items)
+        if heatmap:
+            dashboard['heatmap'] = heatmap
+        roles = build_roles(research_items, links, items)
+        if roles:
+            dashboard['roles'] = roles
+        subj_trends = build_subject_trends(research_items, links, items, item_year)
+        if subj_trends:
+            dashboard['subjectTrends'] = subj_trends
+        lang_timeline = build_language_timeline(research_items, links, items, item_year)
+        if lang_timeline:
+            dashboard['languageTimeline'] = lang_timeline
+        chord = build_chord(research_items, links, items)
+        if chord:
+            dashboard['chord'] = chord
+        sankey = build_sankey(research_items, links, items)
+        if sankey:
+            dashboard['sankey'] = sankey
+        sunburst = build_sunburst(research_items, links, items)
+        if sunburst:
+            dashboard['sunburst'] = sunburst
+        geo_flows = build_geo_flows(research_items, links, items, geo)
+        if geo_flows:
+            dashboard['geoFlows'] = geo_flows
+        # Use section layout since it has the most charts.
+        dashboard['resourceType'] = 'section'
+        path = os.path.join(OUTPUT_DIR, 'collection-overview.json')
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(dashboard, f, ensure_ascii=False, separators=(',', ':'))
+        print(f'  Overview dashboard saved ({dashboard["totalItems"]} items)')
+
     print(f'\nDone. Files in {OUTPUT_DIR}/')
 
 

@@ -19,10 +19,10 @@
     /* ------------------------------------------------------------------ */
 
     var COMPARE_CHARTS = [
-        { key: 'stackedTimeline', label: 'Items by Year and Type', wide: true,  tall: false },
-        { key: 'types',           label: 'Resource Types',         wide: false, tall: false },
-        { key: 'languages',       label: 'Languages',              wide: false, tall: false },
-        { key: 'subjects',        label: 'Subjects',               wide: true,  tall: true  }
+        { key: 'stackedTimeline', label: 'Items by Year and Type', tall: false },
+        { key: 'types',           label: 'Resource Types',         tall: false },
+        { key: 'languages',       label: 'Languages',              tall: false },
+        { key: 'subjects',        label: 'Subjects',               tall: true  }
     ];
 
     /* ------------------------------------------------------------------ */
@@ -140,9 +140,9 @@
         return html;
     }
 
-    function buildChartPair(key, label, leftData, rightData, siteBase, wide, tall) {
+    function buildChartPair(key, label, leftData, rightData, siteBase, tall) {
         var container = document.createElement('div');
-        container.className = 'compare-chart-row' + (wide ? ' compare-chart-row-wide' : '');
+        container.className = 'compare-chart-row';
 
         var leftPanel = buildChartSide(key, label + ' (A)', leftData, siteBase, tall);
         var rightPanel = buildChartSide(key, label + ' (B)', rightData, siteBase, tall);
@@ -299,7 +299,7 @@
 
             // Chart pairs
             COMPARE_CHARTS.forEach(function (cfg) {
-                var pair = buildChartPair(cfg.key, cfg.label, leftData, rightData, siteBase, cfg.wide, cfg.tall);
+                var pair = buildChartPair(cfg.key, cfg.label, leftData, rightData, siteBase, cfg.tall);
                 content.appendChild(pair);
             });
         }

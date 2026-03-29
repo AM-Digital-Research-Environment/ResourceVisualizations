@@ -1,14 +1,26 @@
 <?php
 /**
- * Compare Projects resource page block.
+ * Compare Projects page block.
  *
  * Side-by-side comparison of two projects: select from dropdowns,
  * fetch both dashboard JSONs, and render paired charts with overlap stats.
  *
  * @var \Laminas\View\Renderer\PhpRenderer $this
- * @var \Omeka\Api\Representation\ItemRepresentation $resource
+ * @var \Omeka\Api\Representation\SitePageBlockRepresentation $block
  */
 
+// CDN assets (not injected by Module.php on page controllers).
+$this->headLink()->appendStylesheet(
+    $this->assetUrl('css/resource-visualizations.css', 'ResourceVisualizations')
+);
+$this->headScript()->appendFile(
+    'https://cdn.jsdelivr.net/npm/echarts@6/dist/echarts.min.js'
+);
+$this->headScript()->appendFile(
+    'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2/dist/echarts-wordcloud.min.js'
+);
+
+// Module JS.
 $this->headScript()->appendFile($this->assetUrl('js/dashboard-core.js', 'ResourceVisualizations'));
 $this->headScript()->appendFile($this->assetUrl('js/dashboard-layouts.js', 'ResourceVisualizations'));
 $this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-basic.js', 'ResourceVisualizations'));
@@ -22,6 +34,7 @@ $this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-treemap.js'
 $this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-geo-flows.js', 'ResourceVisualizations'));
 $this->headScript()->appendFile($this->assetUrl('js/dashboard-registry.js', 'ResourceVisualizations'));
 $this->headScript()->appendFile($this->assetUrl('js/dashboard-compare.js', 'ResourceVisualizations'));
+
 $siteSlug = $this->currentSite()->slug();
 ?>
 

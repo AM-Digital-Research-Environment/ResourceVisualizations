@@ -2,12 +2,17 @@
 namespace ResourceVisualizations;
 
 return [
+    'block_layouts' => [
+        'invokables' => [
+            'compareProjects' => Site\BlockLayout\CompareProjects::class,
+            'collectionOverview' => Site\BlockLayout\CollectionOverview::class,
+        ],
+    ],
     'resource_page_block_layouts' => [
         'invokables' => [
             'knowledgeGraph' => Site\ResourcePageBlockLayout\KnowledgeGraph::class,
             'itemSetDashboard' => Site\ResourcePageBlockLayout\ItemSetDashboard::class,
             'linkedItemsDashboard' => Site\ResourcePageBlockLayout\LinkedItemsDashboard::class,
-            'compareProjects' => Site\ResourcePageBlockLayout\CompareProjects::class,
         ],
     ],
     'view_manager' => [

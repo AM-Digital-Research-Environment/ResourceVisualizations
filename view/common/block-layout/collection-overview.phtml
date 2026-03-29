@@ -1,0 +1,58 @@
+<?php
+/**
+ * Collection Overview page block.
+ *
+ * Aggregate visualizations across the entire collection.
+ * Loads precomputed collection-overview.json and renders charts
+ * using the standard dashboard orchestrator.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var \Omeka\Api\Representation\SitePageBlockRepresentation $block
+ */
+
+// CDN assets (not injected by Module.php on page controllers).
+$this->headLink()->appendStylesheet(
+    $this->assetUrl('css/resource-visualizations.css', 'ResourceVisualizations')
+);
+$this->headScript()->appendFile(
+    'https://cdn.jsdelivr.net/npm/echarts@6/dist/echarts.min.js'
+);
+$this->headScript()->appendFile(
+    'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2/dist/echarts-wordcloud.min.js'
+);
+$this->headLink()->appendStylesheet(
+    'https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.css'
+);
+$this->headScript()->appendFile(
+    'https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js'
+);
+
+// Module JS.
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-core.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-layouts.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-basic.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-advanced.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-beeswarm.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-map.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-collab-network.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-contributor-network.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-stacked-area.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-treemap.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-geo-flows.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-registry.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard.js', 'ResourceVisualizations'));
+
+$siteSlug = $this->currentSite()->slug();
+?>
+
+<div class="resource-vis-block dashboard-block">
+    <div class="dashboard-async-container"
+         data-item-id="collection-overview"
+         data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
+         data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">
+        <div class="rv-loading">
+            <div class="rv-spinner"></div>
+            <span><?= $this->translate('Loading collection overview…') ?></span>
+        </div>
+    </div>
+</div>
