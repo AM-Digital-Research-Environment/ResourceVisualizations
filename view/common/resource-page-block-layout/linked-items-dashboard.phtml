@@ -14,8 +14,13 @@ $this->headScript()->appendFile($this->assetUrl('js/dashboard-core.js', 'Resourc
 $this->headScript()->appendFile($this->assetUrl('js/dashboard-layouts.js', 'ResourceVisualizations'));
 $this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-basic.js', 'ResourceVisualizations'));
 $this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-advanced.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-beeswarm.js', 'ResourceVisualizations'));
 $this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-map.js', 'ResourceVisualizations'));
 $this->headScript()->appendFile($this->assetUrl('js/dashboard-collab-network.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-contributor-network.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-stacked-area.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-treemap.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-geo-flows.js', 'ResourceVisualizations'));
 $this->headScript()->appendFile($this->assetUrl('js/dashboard-registry.js', 'ResourceVisualizations'));
 $this->headScript()->appendFile($this->assetUrl('js/dashboard.js', 'ResourceVisualizations'));
 $siteSlug = $this->currentSite()->slug();

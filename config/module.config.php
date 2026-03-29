@@ -7,6 +7,7 @@ return [
             'knowledgeGraph' => Site\ResourcePageBlockLayout\KnowledgeGraph::class,
             'itemSetDashboard' => Site\ResourcePageBlockLayout\ItemSetDashboard::class,
             'linkedItemsDashboard' => Site\ResourcePageBlockLayout\LinkedItemsDashboard::class,
+            'compareProjects' => Site\ResourcePageBlockLayout\CompareProjects::class,
         ],
     ],
     'view_manager' => [

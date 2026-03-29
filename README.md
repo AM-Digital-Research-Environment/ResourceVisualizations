@@ -32,17 +32,25 @@ Contextual charts adapted per entity type. All chart elements are clickable, lin
 | Chart | Sections | Projects | People | Organisations | Locations | Subjects | Languages | Types | Genres |
 |---|---|---|---|---|---|---|---|---|---|
 | Stacked Timeline | x | x | | | | | | | |
+| Language Timeline | x | x | | | | | | | |
 | Timeline | x | x | x | x | x | x | x | x | x |
 | Gantt (project timelines) | x | | | | | | | | |
+| Beeswarm (projects by year) | x | | | | | | | | |
 | Resource Types (pie) | x | x | x | x | x | x | x | | x |
 | Languages | x | x | x | x | x | x | | x | x |
+| Contributor Roles | x | x | | | | | | | |
 | Heatmap (type x language) | x | x | | | | | | | |
 | Subjects (word cloud) | x | x | x | x | x | | x | x | |
+| Subject Trends over Time | x | x | | | | | | | |
 | Sunburst (type > language > subject) | x | x | | | | | | | |
+| Treemap (project x type) | x | x | | | | | | | |
 | Geographic Origins (map) | x | x | x | x | | | x | x | |
+| Origin > Current Location (flow map) | x | x | | | | | | | |
 | Self-location MiniMap | | | | | x | | | | |
 | Subject Co-occurrence (chord) | x | x | | | | | | | |
 | Collaboration Network | | | | x | | | | | |
+| Contributor Network | x | x | x | | | | | | |
+| Affiliation Network | | | | x | | | | | |
 | Top Associated Persons | x | x | | x | x | x | x | x | x |
 | Co-authors | | | x | | | | | | |
 | Co-occurring Subjects | | | | | | x | | | |
@@ -53,6 +61,14 @@ Note: The basic Timeline is automatically hidden when the Stacked Timeline is av
 
 Dashboard layouts are resource-type-aware: each resource template has its own chart order and wide/tall configuration defined in `dashboard-layouts.js`. This prevents layout gaps in the 2-column grid by pairing half-width charts side by side.
 
+### Compare Projects
+
+Side-by-side comparison of two projects with paired charts (stacked timeline, resource types, languages, subjects) and overlap statistics (shared subject percentage, shared subject badges). Accessible as a resource page block.
+
+### Item Set Dashboard
+
+Inline dashboard for item set pages with server-side aggregation.
+
 #### Chart Features
 
 - **Toolbox**: Save-as-image (2x resolution) and restore on all ECharts charts
@@ -62,10 +78,6 @@ Dashboard layouts are resource-type-aware: each resource template has its own ch
 - **Cooperative gestures**: Main maps require Ctrl+scroll to zoom (prevents scroll hijacking)
 - **Globe projection**: Main maps default to globe view with a toggle control
 - **Scale control**: Metric scale bar on all maps
-
-### Item Set Dashboard
-
-Inline dashboard for item set pages with server-side aggregation.
 
 ## Installation
 
@@ -81,7 +93,7 @@ Then activate in **Admin > Modules**.
 
 Go to **Admin > Sites > [site] > Theme > Configure resource pages**:
 
-- **Item page**: add "Knowledge Graph" and "Visualizations" blocks
+- **Item page**: add "Knowledge Graph", "Visualizations", and optionally "Compare Projects" blocks
 - **Item set page**: add "Item Set Dashboard" block (optional)
 
 ## Pre-computing Data
@@ -131,23 +143,31 @@ ResourceVisualizations/
 ├── src/Site/ResourcePageBlockLayout/
 │   ├── KnowledgeGraph.php              # Item pages — graph block
 │   ├── LinkedItemsDashboard.php        # Item pages — visualizations block
+│   ├── CompareProjects.php             # Item pages — project comparison block
 │   └── ItemSetDashboard.php            # Item set pages — dashboard block
 ├── view/common/resource-page-block-layout/
 │   ├── knowledge-graph.phtml           # Lightweight async container
 │   ├── linked-items-dashboard.phtml    # Lightweight async container
+│   ├── compare-projects.phtml          # Compare view async container
 │   ├── item-set-dashboard.phtml        # Server-side rendered
 │   └── partials/dashboard-charts.phtml # Shared chart rendering (inline mode)
 ├── asset/
 │   ├── js/
-│   │   ├── knowledge-graph.js            # Graph + item map: precomputed JSON + API fallback
-│   │   ├── dashboard-core.js             # Shared THEME, COLORS, helpers (window.RV namespace)
-│   │   ├── dashboard-layouts.js          # Per-resource-type layout configs (chart order, wide/tall)
-│   │   ├── dashboard-charts-basic.js     # Timeline, pie, bar, word cloud
-│   │   ├── dashboard-charts-advanced.js  # Gantt, heatmap, chord, sankey, sunburst, stacked timeline
-│   │   ├── dashboard-charts-map.js       # Geographic origins map, self-location mini map
-│   │   ├── dashboard-collab-network.js   # Institution collaboration network (force graph)
-│   │   ├── dashboard-registry.js         # CHART_MAP, labels, descriptions
-│   │   └── dashboard.js                  # Orchestrator: render + async/inline init
+│   │   ├── knowledge-graph.js                    # Graph + item map
+│   │   ├── dashboard-core.js                     # THEME, COLORS, helpers (window.RV)
+│   │   ├── dashboard-layouts.js                  # Per-resource-type layout configs
+│   │   ├── dashboard-charts-basic.js             # Timeline, pie, bar, word cloud
+│   │   ├── dashboard-charts-advanced.js          # Gantt, heatmap, chord, sankey, sunburst, stacked timeline
+│   │   ├── dashboard-charts-beeswarm.js          # Beeswarm scatter (projects by year)
+│   │   ├── dashboard-charts-map.js               # Geographic origins map, mini map
+│   │   ├── dashboard-charts-stacked-area.js      # Subject trends, language timeline
+│   │   ├── dashboard-charts-treemap.js           # Hierarchical treemap
+│   │   ├── dashboard-charts-geo-flows.js         # Origin → current location flow map
+│   │   ├── dashboard-charts-contributor-network.js # Contributor + affiliation networks
+│   │   ├── dashboard-collab-network.js           # Institution collaboration network
+│   │   ├── dashboard-compare.js                  # Compare Projects controller
+│   │   ├── dashboard-registry.js                 # CHART_MAP, labels, descriptions
+│   │   └── dashboard.js                          # Orchestrator: render + async/inline init
 │   ├── css/
 │   │   └── resource-visualizations.css # Styles with CSS custom properties
 │   └── data/
@@ -164,7 +184,7 @@ ResourceVisualizations/
 
 ### THEME Design Tokens
 
-`dashboard.js` and `knowledge-graph.js` each define a `THEME` object. Dashboard modules share helpers (THEME, COLORS, initChart, truncateLabel) via the `window.RV` namespace. All design values flow from this config:
+`dashboard-core.js` and `knowledge-graph.js` each define a `THEME` object. Dashboard modules share helpers (THEME, COLORS, initChart, truncateLabel) via the `window.RV` namespace. All design values flow from this config:
 
 ```javascript
 var THEME = {
@@ -201,7 +221,7 @@ The module includes full dark mode infrastructure:
 
 - **ECharts**: Auto-detects `prefers-color-scheme` and uses `setTheme('dark')` (ECharts 6)
 - **MapLibre**: Switches basemap from CartoDB Positron to Dark Matter
-- **CSS**: `@media (prefers-color-scheme: dark)` overrides all custom properties
+- **CSS**: `.rv-dark-mode` class overrides all custom properties
 
 To enable, set `THEME.darkModeEnabled = true` in both JS files. The CSS dark mode activates automatically via media query.
 

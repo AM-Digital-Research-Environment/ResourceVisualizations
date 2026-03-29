@@ -549,6 +549,316 @@ def build_collab_network(inst_id, inst_title, item_ids, items, links,
     return {'nodes': nodes, 'links': net_links} if net_links else None
 
 
+def build_contributor_network(entity_id, entity_title, item_ids, items, links,
+                              children_of, max_nodes=30):
+    """Build person → project force graph from research items linked to an entity.
+
+    Nodes are persons + projects. Edges connect a person to a project when
+    the person contributed to an item belonging to that project.
+    """
+    from collections import Counter
+
+    person_project = Counter()  # (person_id, project_id) -> count
+    person_counts = Counter()
+    project_counts = Counter()
+
+    for iid in item_ids:
+        item_persons = []
+        item_project = None
+        for term, label, vrid in links.get(iid, []):
+            if (term.startswith('marcrel:') or term in ('dcterms:creator', 'dcterms:contributor')):
+                if items.get(vrid, {}).get('template_id') == TEMPLATE_PERSONS:
+                    item_persons.append(vrid)
+            elif term == 'dcterms:isPartOf':
+                if items.get(vrid, {}).get('template_id') == TEMPLATE_PROJECTS:
+                    item_project = vrid
+        if item_project and item_persons:
+            for pid in item_persons:
+                person_project[(pid, item_project)] += 1
+                person_counts[pid] += 1
+            project_counts[item_project] += 1
+
+    if not person_project:
+        return None
+
+    # Keep top persons by frequency.
+    top_persons = {pid for pid, _ in person_counts.most_common(max_nodes)}
+    top_projects = {pid for pid, _ in project_counts.most_common(15)}
+
+    nodes = []
+    node_names = set()
+    for pid in top_persons:
+        title = items.get(pid, {}).get('title', f'Person {pid}')
+        nodes.append({'name': title, 'value': person_counts[pid],
+                       'itemId': pid, 'category': 'person'})
+        node_names.add(title)
+    for pid in top_projects:
+        title = items.get(pid, {}).get('title', f'Project {pid}')
+        nodes.append({'name': title, 'value': project_counts[pid],
+                       'itemId': pid, 'category': 'project'})
+        node_names.add(title)
+
+    net_links = []
+    for (person_id, proj_id), count in person_project.items():
+        if person_id in top_persons and proj_id in top_projects:
+            p_title = items.get(person_id, {}).get('title', '')
+            pr_title = items.get(proj_id, {}).get('title', '')
+            if p_title in node_names and pr_title in node_names:
+                net_links.append({'source': p_title, 'target': pr_title, 'value': count})
+
+    return {'nodes': nodes, 'links': net_links,
+            'categories': ['person', 'project']} if net_links else None
+
+
+def build_affiliation_network(inst_id, inst_title, items, links, reverse_links,
+                              max_nodes=30):
+    """Build person → institution affiliation network centred on an institution.
+
+    Nodes are persons + institutions. Edges connect a person to each
+    institution they are affiliated with (dcterms:isPartOf).
+    """
+    from collections import Counter
+
+    # Find persons affiliated with this institution.
+    affiliated = reverse_links.get(inst_id, {}).get('dcterms:isPartOf', [])
+    affiliated_persons = [pid for pid in affiliated
+                          if items.get(pid, {}).get('template_id') == TEMPLATE_PERSONS]
+    if not affiliated_persons:
+        return None
+
+    # For each affiliated person, find ALL their affiliations.
+    inst_counts = Counter()
+    person_affl = {}  # person_id -> [inst_id, ...]
+    for pid in affiliated_persons:
+        affls = []
+        for term, label, vrid in links.get(pid, []):
+            if term == 'dcterms:isPartOf' and items.get(vrid, {}).get('class_term') == 'foaf:Organization':
+                affls.append(vrid)
+                inst_counts[vrid] += 1
+        person_affl[pid] = affls
+
+    # Keep top institutions + always include self.
+    top_insts = {iid for iid, _ in inst_counts.most_common(max_nodes)}
+    top_insts.add(inst_id)
+
+    nodes = [{'name': inst_title, 'value': len(affiliated_persons),
+              'itemId': inst_id, 'category': 'institution', 'isSelf': True}]
+    node_names = {inst_title}
+
+    for iid in top_insts:
+        if iid == inst_id:
+            continue
+        title = items.get(iid, {}).get('title', f'Institution {iid}')
+        nodes.append({'name': title, 'value': inst_counts[iid],
+                       'itemId': iid, 'category': 'institution'})
+        node_names.add(title)
+
+    for pid in affiliated_persons[:max_nodes]:
+        title = items.get(pid, {}).get('title', f'Person {pid}')
+        nodes.append({'name': title, 'value': len(person_affl.get(pid, [])),
+                       'itemId': pid, 'category': 'person'})
+        node_names.add(title)
+
+    net_links = []
+    for pid in affiliated_persons[:max_nodes]:
+        p_title = items.get(pid, {}).get('title', '')
+        for iid in person_affl.get(pid, []):
+            if iid not in top_insts:
+                continue
+            i_title = items.get(iid, {}).get('title', '')
+            if p_title in node_names and i_title in node_names:
+                net_links.append({'source': p_title, 'target': i_title, 'value': 1})
+
+    return {'nodes': nodes, 'links': net_links,
+            'categories': ['person', 'institution']} if net_links else None
+
+
+def build_roles(item_ids, links, items):
+    """Build contributor role distribution (marcrel:* + dcterms:creator/contributor)."""
+    role_counts = {}  # label -> count
+
+    for iid in item_ids:
+        for term, label, vrid in links.get(iid, []):
+            if term.startswith('marcrel:') or term in ('dcterms:creator', 'dcterms:contributor'):
+                # Use the human-readable label (e.g. "author", "photographer").
+                role_counts[label] = role_counts.get(label, 0) + 1
+
+    if not role_counts:
+        return None
+
+    return sorted(
+        [{'name': name, 'value': count} for name, count in role_counts.items()],
+        key=lambda x: -x['value']
+    )
+
+
+def build_subject_trends(item_ids, links, items, item_year, top_n=10):
+    """Build subject × year matrix for temporal trend visualization."""
+    # Collect: subject -> year -> count
+    subject_year = {}
+    subject_totals = {}
+
+    for iid in item_ids:
+        year = item_year.get(iid)
+        if not year:
+            continue
+        for term, label, vrid in links.get(iid, []):
+            if term == 'dcterms:subject':
+                title = items.get(vrid, {}).get('title', '')
+                if title:
+                    subject_year.setdefault(title, {})
+                    subject_year[title][year] = subject_year[title].get(year, 0) + 1
+                    subject_totals[title] = subject_totals.get(title, 0) + 1
+
+    if not subject_year:
+        return None
+
+    # Keep top N subjects by total frequency.
+    top_subjects = sorted(subject_totals, key=lambda s: -subject_totals[s])[:top_n]
+    all_years = sorted(set(y for s in top_subjects for y in subject_year.get(s, {})))
+
+    if len(all_years) < 2:
+        return None
+
+    series = []
+    for s in top_subjects:
+        sy = subject_year.get(s, {})
+        series.append({
+            'name': s,
+            'data': [sy.get(y, 0) for y in all_years],
+        })
+
+    return {'years': all_years, 'series': series}
+
+
+def build_language_timeline(item_ids, links, items, item_year):
+    """Build language × year stacked area (like stackedTimeline but by language)."""
+    year_lang = {}
+    all_langs = set()
+
+    for iid in item_ids:
+        year = item_year.get(iid)
+        if not year:
+            continue
+        for term, label, vrid in links.get(iid, []):
+            if term == 'dcterms:language':
+                title = items.get(vrid, {}).get('title', '')
+                if title:
+                    year_lang.setdefault(year, {})
+                    year_lang[year][title] = year_lang[year].get(title, 0) + 1
+                    all_langs.add(title)
+
+    if not year_lang or len(year_lang) < 2:
+        return None
+
+    years = sorted(year_lang.keys())
+    lang_list = sorted(all_langs)
+    series = []
+    for lang in lang_list:
+        series.append({
+            'name': lang,
+            'data': [year_lang.get(y, {}).get(lang, 0) for y in years],
+        })
+
+    return {'years': years, 'series': series}
+
+
+def build_treemap(item_ids, links, items, children_of, parent_title):
+    """Build Section → Project → Type treemap hierarchy."""
+    # For sections: group items by project, then by type within each project.
+    # For projects: group items directly by type.
+
+    # Determine if parent is a section (has child projects) or a project.
+    project_ids_set = set()
+    for pid in children_of.get(None, []):
+        pass  # Not used; we derive from items directly.
+
+    # Group items by project.
+    project_items = {}
+    unassigned = []
+    for iid in item_ids:
+        assigned = False
+        for term, label, vrid in links.get(iid, []):
+            if term == 'dcterms:isPartOf' and items.get(vrid, {}).get('template_id') == TEMPLATE_PROJECTS:
+                project_items.setdefault(vrid, []).append(iid)
+                assigned = True
+                break
+        if not assigned:
+            unassigned.append(iid)
+
+    if not project_items and not unassigned:
+        return None
+
+    def type_children(iids):
+        types = {}
+        for iid in iids:
+            for term, label, vrid in links.get(iid, []):
+                if term == 'dcterms:type':
+                    title = items.get(vrid, {}).get('title', '')
+                    if title:
+                        types[title] = types.get(title, 0) + 1
+        return [{'name': t, 'value': c} for t, c in sorted(types.items(), key=lambda x: -x[1])]
+
+    result = []
+    for pid, iids in sorted(project_items.items(), key=lambda x: -len(x[1])):
+        ptitle = items.get(pid, {}).get('title', f'Project {pid}')
+        children = type_children(iids)
+        if children:
+            result.append({'name': ptitle, 'value': len(iids), 'children': children})
+
+    if unassigned:
+        children = type_children(unassigned)
+        if children:
+            result.append({'name': '(unassigned)', 'value': len(unassigned), 'children': children})
+
+    return result if result else None
+
+
+def build_geo_flows(item_ids, links, items, geo):
+    """Build geographic flow data: origin → current location arcs."""
+    flows = {}  # (origin_id, current_id) -> count
+
+    for iid in item_ids:
+        origins = []
+        currents = []
+        for term, label, vrid in links.get(iid, []):
+            if term == 'dcterms:spatial' and vrid in geo:
+                origins.append(vrid)
+            elif term == 'dcterms:provenance' and vrid in geo:
+                currents.append(vrid)
+        for o in origins:
+            for c in currents:
+                if o != c:
+                    flows[(o, c)] = flows.get((o, c), 0) + 1
+
+    if not flows:
+        return None
+
+    # Build node and link lists.
+    node_ids = set()
+    for (o, c) in flows:
+        node_ids.add(o)
+        node_ids.add(c)
+
+    nodes = []
+    for nid in node_ids:
+        g = geo[nid]
+        nodes.append({
+            'name': g['name'], 'lat': g['lat'], 'lon': g['lon'], 'itemId': nid,
+        })
+
+    flow_links = []
+    for (o, c), count in sorted(flows.items(), key=lambda x: -x[1]):
+        og, cg = geo[o], geo[c]
+        flow_links.append({
+            'from': og['name'], 'fromLat': og['lat'], 'fromLon': og['lon'],
+            'to': cg['name'], 'toLat': cg['lat'], 'toLon': cg['lon'],
+            'value': count,
+        })
+
+    return {'nodes': nodes, 'links': flow_links} if flow_links else None
+
+
 def save_json(item_id, data):
     path = os.path.join(OUTPUT_DIR, f'{item_id}.json')
     with open(path, 'w', encoding='utf-8') as f:
@@ -566,10 +876,34 @@ def find_items_linking_to(entity_id, reverse_links, terms):
 
 # ── Entity generators ─────────────────────────────────────────────────
 
+def build_beeswarm(section_title, project_ids, items, children_of, temporal):
+    """Build beeswarm data: projects as scatter points by start year, sized by item count."""
+    points = []
+    for pid in project_ids:
+        ptitle = items.get(pid, {}).get('title', f'Project {pid}')
+        proj_items = children_of.get(pid, [])
+        item_count = len(proj_items)
+        if pid in temporal:
+            start_str = temporal[pid][0]
+            m = re.search(r'(\d{4})', start_str)
+            if m:
+                points.append({
+                    'category': section_title,
+                    'value': int(m.group(1)),
+                    'label': ptitle,
+                    'size': max(item_count, 1),
+                    'itemId': pid,
+                })
+    return points if points else None
+
+
 def generate_sections(items, links, reverse_links, children_of, item_year, temporal, geo):
     sections = [(iid, info) for iid, info in items.items()
                 if info['class_term'] == 'frapo:ResearchGroup']
     print(f'\n=== Research Sections ({len(sections)}) ===')
+
+    # Collect cross-section beeswarm data for a global file.
+    all_beeswarm = []
 
     for sid, sinfo in sections:
         project_ids = children_of.get(sid, [])
@@ -593,6 +927,11 @@ def generate_sections(items, links, reverse_links, children_of, item_year, tempo
         if gantt_data:
             gantt_data.sort(key=lambda x: x['start'])
             dashboard['gantt'] = gantt_data
+        # Beeswarm: per-section projects by start year.
+        beeswarm = build_beeswarm(sinfo['title'], project_ids, items, children_of, temporal)
+        if beeswarm:
+            dashboard['beeswarm'] = beeswarm
+            all_beeswarm.extend(beeswarm)
         heatmap = build_heatmap(item_ids, links, items)
         if heatmap:
             dashboard['heatmap'] = heatmap
@@ -608,20 +947,65 @@ def generate_sections(items, links, reverse_links, children_of, item_year, tempo
         sunburst = build_sunburst(item_ids, links, items)
         if sunburst:
             dashboard['sunburst'] = sunburst
+        roles = build_roles(item_ids, links, items)
+        if roles:
+            dashboard['roles'] = roles
+        contrib_net = build_contributor_network(sid, sinfo['title'], item_ids,
+                                                items, links, children_of)
+        if contrib_net:
+            dashboard['contributorNetwork'] = contrib_net
+        # Tier 3 charts.
+        subj_trends = build_subject_trends(item_ids, links, items, item_year)
+        if subj_trends:
+            dashboard['subjectTrends'] = subj_trends
+        lang_timeline = build_language_timeline(item_ids, links, items, item_year)
+        if lang_timeline:
+            dashboard['languageTimeline'] = lang_timeline
+        treemap = build_treemap(item_ids, links, items, children_of, sinfo['title'])
+        if treemap:
+            dashboard['treemap'] = treemap
+        geo_flows = build_geo_flows(item_ids, links, items, geo)
+        if geo_flows:
+            dashboard['geoFlows'] = geo_flows
         dashboard['resourceType'] = TEMPLATE_RESOURCE_TYPE.get(items[sid]['template_id'], 'section')
         save_json(sid, dashboard)
         print(f'  {sinfo["title"]}: {len(item_ids)} items')
+
+    # Save cross-section beeswarm as a standalone file.
+    if all_beeswarm:
+        path = os.path.join(OUTPUT_DIR, 'beeswarm-all-sections.json')
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(all_beeswarm, f, ensure_ascii=False, separators=(',', ':'))
+        print(f'  Cross-section beeswarm: {len(all_beeswarm)} points')
 
 
 def generate_projects(items, links, reverse_links, children_of, item_year, geo):
     projects = [(iid, info) for iid, info in items.items()
                 if info['template_id'] == TEMPLATE_PROJECTS]
     print(f'\n=== Projects ({len(projects)}) ===')
+
+    # Collect project index for Compare View selector.
+    project_index = []
+
     count = 0
     for pid, pinfo in projects:
         item_ids = children_of.get(pid, [])
         if not item_ids:
             continue
+
+        # Find section name(s) for this project.
+        section_names = []
+        for term, label, vrid in links.get(pid, []):
+            if term == 'dcterms:isPartOf' and items.get(vrid, {}).get('class_term') == 'frapo:ResearchGroup':
+                section_names.append(items[vrid]['title'])
+
+        project_index.append({
+            'id': pid,
+            'name': pinfo['title'],
+            'items': len(item_ids),
+            'sections': section_names,
+        })
+
         dashboard = aggregate_items(item_ids, items, links, item_year, geo)
         heatmap = build_heatmap(item_ids, links, items)
         if heatmap:
@@ -638,10 +1022,37 @@ def generate_projects(items, links, reverse_links, children_of, item_year, geo):
         sunburst = build_sunburst(item_ids, links, items)
         if sunburst:
             dashboard['sunburst'] = sunburst
+        roles = build_roles(item_ids, links, items)
+        if roles:
+            dashboard['roles'] = roles
+        contrib_net = build_contributor_network(pid, pinfo['title'], item_ids,
+                                                items, links, children_of)
+        if contrib_net:
+            dashboard['contributorNetwork'] = contrib_net
+        # Tier 3 charts.
+        subj_trends = build_subject_trends(item_ids, links, items, item_year)
+        if subj_trends:
+            dashboard['subjectTrends'] = subj_trends
+        lang_timeline = build_language_timeline(item_ids, links, items, item_year)
+        if lang_timeline:
+            dashboard['languageTimeline'] = lang_timeline
+        treemap = build_treemap(item_ids, links, items, children_of, pinfo['title'])
+        if treemap:
+            dashboard['treemap'] = treemap
+        geo_flows = build_geo_flows(item_ids, links, items, geo)
+        if geo_flows:
+            dashboard['geoFlows'] = geo_flows
         dashboard['resourceType'] = TEMPLATE_RESOURCE_TYPE.get(items[pid]['template_id'], 'project')
         save_json(pid, dashboard)
         count += 1
     print(f'  {count} dashboards generated')
+
+    # Save project index for Compare View.
+    project_index.sort(key=lambda p: p['name'])
+    path = os.path.join(OUTPUT_DIR, 'projects-index.json')
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(project_index, f, ensure_ascii=False, separators=(',', ':'))
+    print(f'  Project index: {len(project_index)} projects')
 
 
 def generate_people(items, links, reverse_links, children_of, item_year, geo):
@@ -678,6 +1089,11 @@ def generate_people(items, links, reverse_links, children_of, item_year, geo):
         dashboard['coAuthors'] = sorted(coauthors.values(), key=lambda x: -x['value'])[:20]
         # People: co-authors replaces contributors (redundant).
         dashboard.pop('contributors', None)
+        # Contributor network: person → project links.
+        contrib_net = build_contributor_network(pid, pinfo['title'], item_ids,
+                                                items, links, children_of)
+        if contrib_net:
+            dashboard['contributorNetwork'] = contrib_net
         dashboard['resourceType'] = TEMPLATE_RESOURCE_TYPE.get(items[pid]['template_id'], 'person')
         save_json(pid, dashboard)
         count += 1
@@ -707,6 +1123,10 @@ def generate_institutions(items, links, reverse_links, children_of, item_year, g
                                       links, reverse_links, inst_set, inst_terms)
         if collab:
             dashboard['collabNetwork'] = collab
+
+        affil = build_affiliation_network(iid, iinfo['title'], items, links, reverse_links)
+        if affil:
+            dashboard['affiliationNetwork'] = affil
 
         dashboard['resourceType'] = TEMPLATE_RESOURCE_TYPE.get(items[iid]['template_id'], 'organisation')
         save_json(iid, dashboard)

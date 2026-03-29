@@ -1,0 +1,37 @@
+<?php
+/**
+ * Compare Projects resource page block.
+ *
+ * Side-by-side comparison of two projects: select from dropdowns,
+ * fetch both dashboard JSONs, and render paired charts with overlap stats.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var \Omeka\Api\Representation\ItemRepresentation $resource
+ */
+
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-core.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-layouts.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-basic.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-advanced.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-beeswarm.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-map.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-collab-network.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-contributor-network.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-stacked-area.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-treemap.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-geo-flows.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-registry.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/dashboard-compare.js', 'ResourceVisualizations'));
+$siteSlug = $this->currentSite()->slug();
+?>
+
+<div class="resource-vis-block compare-block">
+    <div class="compare-container"
+         data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
+         data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">
+        <div class="rv-loading">
+            <div class="rv-spinner"></div>
+            <span><?= $this->translate('Loading project comparison…') ?></span>
+        </div>
+    </div>
+</div>

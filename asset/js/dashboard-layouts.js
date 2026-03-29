@@ -16,35 +16,43 @@
 
     ns.LAYOUTS = {
         organisation: {
-            order: ['timeline', 'types', 'languages', 'contributors',
-                    'subjects', 'collabNetwork', 'locations'],
-            wide:  ['subjects', 'collabNetwork', 'locations'],
-            tall:  ['subjects', 'collabNetwork', 'locations']
+            order: ['timeline', 'types', 'languages', 'roles', 'contributors',
+                    'subjects', 'collabNetwork', 'affiliationNetwork', 'locations'],
+            wide:  ['subjects', 'collabNetwork', 'affiliationNetwork', 'locations'],
+            tall:  ['subjects', 'collabNetwork', 'affiliationNetwork', 'locations']
         },
         person: {
             order: ['timeline', 'types', 'languages', 'coAuthors',
-                    'subjects', 'locations'],
-            wide:  ['subjects', 'locations'],
-            tall:  ['subjects', 'locations']
+                    'subjects', 'contributorNetwork', 'locations'],
+            wide:  ['subjects', 'contributorNetwork', 'locations'],
+            tall:  ['subjects', 'contributorNetwork', 'locations']
         },
         section: {
-            order: ['selfLocation', 'stackedTimeline', 'timeline', 'gantt',
-                    'types', 'languages', 'heatmap', 'subjects', 'sunburst',
-                    'locations', 'chord', 'contributors', 'projects', 'sankey'],
-            wide:  ['selfLocation', 'stackedTimeline', 'gantt', 'heatmap',
-                    'sankey', 'sunburst', 'subjects', 'locations', 'chord',
-                    'projects'],
-            tall:  ['selfLocation', 'gantt', 'heatmap', 'sankey', 'sunburst',
-                    'subjects', 'locations', 'chord']
+            order: ['selfLocation', 'stackedTimeline', 'languageTimeline',
+                    'timeline', 'gantt', 'beeswarm', 'types', 'languages',
+                    'roles', 'heatmap', 'subjects', 'subjectTrends',
+                    'sunburst', 'treemap', 'locations', 'geoFlows', 'chord',
+                    'contributorNetwork', 'contributors', 'projects', 'sankey'],
+            wide:  ['selfLocation', 'stackedTimeline', 'languageTimeline',
+                    'gantt', 'beeswarm', 'heatmap', 'sankey', 'sunburst',
+                    'treemap', 'subjects', 'subjectTrends', 'locations',
+                    'geoFlows', 'chord', 'contributorNetwork', 'projects'],
+            tall:  ['selfLocation', 'gantt', 'beeswarm', 'heatmap', 'sankey',
+                    'sunburst', 'treemap', 'subjects', 'subjectTrends',
+                    'locations', 'geoFlows', 'chord', 'contributorNetwork']
         },
         project: {
-            order: ['stackedTimeline', 'timeline', 'types', 'languages',
-                    'heatmap', 'subjects', 'sunburst', 'locations', 'chord',
-                    'contributors', 'sankey'],
-            wide:  ['stackedTimeline', 'heatmap', 'sankey', 'sunburst',
-                    'subjects', 'locations', 'chord'],
-            tall:  ['heatmap', 'sankey', 'sunburst', 'subjects', 'locations',
-                    'chord']
+            order: ['stackedTimeline', 'languageTimeline', 'timeline',
+                    'types', 'languages', 'roles', 'heatmap', 'subjects',
+                    'subjectTrends', 'sunburst', 'treemap', 'locations',
+                    'geoFlows', 'chord', 'contributorNetwork', 'contributors',
+                    'sankey'],
+            wide:  ['stackedTimeline', 'languageTimeline', 'heatmap', 'sankey',
+                    'sunburst', 'treemap', 'subjects', 'subjectTrends',
+                    'locations', 'geoFlows', 'chord', 'contributorNetwork'],
+            tall:  ['heatmap', 'sankey', 'sunburst', 'treemap', 'subjects',
+                    'subjectTrends', 'locations', 'geoFlows', 'chord',
+                    'contributorNetwork']
         },
         location: {
             order: ['selfLocation', 'timeline', 'types', 'languages',
@@ -67,14 +75,20 @@
     };
 
     ns.DEFAULT_LAYOUT = {
-        order: ['selfLocation', 'stackedTimeline', 'timeline', 'gantt',
-                'types', 'languages', 'heatmap', 'subjects', 'sunburst',
-                'locations', 'chord', 'collabNetwork', 'contributors',
+        order: ['selfLocation', 'stackedTimeline', 'languageTimeline',
+                'timeline', 'gantt', 'beeswarm', 'types', 'languages',
+                'roles', 'heatmap', 'subjects', 'subjectTrends', 'sunburst',
+                'treemap', 'locations', 'geoFlows', 'chord', 'collabNetwork',
+                'contributorNetwork', 'affiliationNetwork', 'contributors',
                 'coAuthors', 'coSubjects', 'projects', 'sankey'],
-        wide:  ['selfLocation', 'stackedTimeline', 'gantt', 'heatmap',
-                'sankey', 'sunburst', 'subjects', 'locations', 'chord',
-                'collabNetwork', 'projects', 'coSubjects'],
-        tall:  ['selfLocation', 'gantt', 'heatmap', 'sankey', 'sunburst',
-                'subjects', 'locations', 'chord', 'collabNetwork']
+        wide:  ['selfLocation', 'stackedTimeline', 'languageTimeline', 'gantt',
+                'beeswarm', 'heatmap', 'sankey', 'sunburst', 'treemap',
+                'subjects', 'subjectTrends', 'locations', 'geoFlows', 'chord',
+                'collabNetwork', 'contributorNetwork', 'affiliationNetwork',
+                'projects', 'coSubjects'],
+        tall:  ['selfLocation', 'gantt', 'beeswarm', 'heatmap', 'sankey',
+                'sunburst', 'treemap', 'subjects', 'subjectTrends',
+                'locations', 'geoFlows', 'chord', 'collabNetwork',
+                'contributorNetwork', 'affiliationNetwork']
     };
 })();

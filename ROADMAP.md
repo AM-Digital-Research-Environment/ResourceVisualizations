@@ -6,99 +6,97 @@ Comprehensive plan for adding interactive visualizations to all entity types in 
 
 | Entity | Knowledge Graph | Dashboard Charts | Map | Status |
 |---|---|---|---|---|
-| Research Items | Force-directed graph | — | — | Done |
-| Research Sections (6) | Force-directed graph | Timeline, Types, Languages, Subjects, Contributors, Projects | MapLibre clustered | Done |
-| Projects (36 with data) | Force-directed graph | Timeline, Types, Languages, Subjects, Contributors | MapLibre clustered | Done |
+| Research Items | Force-directed graph | Timeline, Types, Languages, Subjects, Contributors | MapLibre clustered | Done |
+| Research Sections (6) | Force-directed graph | Stacked Timeline, Timeline, Gantt, Beeswarm, Types, Languages, Roles, Heatmap, Subjects, Sunburst, Locations, Chord, Contributor Network, Contributors, Projects, Sankey | MapLibre clustered | Done |
+| Projects (36 with data) | Force-directed graph | Stacked Timeline, Timeline, Types, Languages, Roles, Heatmap, Subjects, Sunburst, Locations, Chord, Contributor Network, Contributors, Sankey | MapLibre clustered | Done |
+| People (~1 242) | Force-directed graph | Timeline, Types, Languages, Subjects, Co-authors, Contributor Network | MapLibre clustered | Done |
+| Institutions (~552) | Force-directed graph | Timeline, Types, Languages, Contributors, Subjects, Collaboration Network, Affiliation Network | MapLibre clustered | Done |
+| Locations (~161) | Force-directed graph | Self-location MiniMap, Timeline, Types, Languages, Contributors, Subjects | — | Done |
+| Subjects (~1 437) | Force-directed graph | Timeline, Types, Languages, Co-subjects, Contributors | MapLibre clustered | Done |
+| Languages (28) | — | Timeline, Types, Subjects, Contributors | MapLibre clustered | Done |
+| Resource Types (16) | — | Timeline, Languages, Subjects, Contributors | MapLibre clustered | Done |
+| Genres (124) | — | Timeline, Types, Languages, Contributors | — | Done |
 
-## Phase 1 — Extend to All Entity Types
+### Completed phases
 
-Reuses existing chart builders (`buildTimeline`, `buildPieChart`, `buildBarChart`, `buildWordCloud`, `buildMap`). Only requires extending the precompute script.
+**Phase 1 — Extend to All Entity Types** ✓
+All entity types now have knowledge graphs + dashboards using shared chart builders.
 
-### People (resource template: Persons)
-| Chart | Description |
-|---|---|
-| Timeline | Items associated with this person by year |
-| Resource Types | Pie chart of item types they contributed to |
-| Languages | Bar chart of languages in their items |
-| Subjects | Word cloud of subjects across their items |
-| Map | Geographic origins of their items |
-| Co-authors | Bar chart of persons who frequently appear alongside this person |
+**Phase 2 — Advanced Visualizations** ✓
+Gantt, Heatmap, Chord Diagram, and Collaboration Network for relevant entity types.
 
-### Institutions (resource class: foaf:Organization)
-| Chart | Description |
-|---|---|
-| Timeline | Items linked to this institution by year |
-| Resource Types | Pie chart of item types |
-| Languages | Bar chart |
-| Subjects | Word cloud |
-| Map | Geographic origins |
-| Top Associated Persons | Bar chart of people most linked to this institution's items |
+**Phase 3 — Complex Data Flows** (partial) ✓
+Sankey, Sunburst, and Stacked Timeline implemented. Beeswarm and Compare View remain.
 
-### Locations (resource template: Location)
-| Chart | Description |
-|---|---|
-| Self-location MiniMap | Single marker showing this location's coordinates |
-| Timeline | Items from this location by year |
-| Resource Types | Pie chart |
-| Languages | Bar chart |
-| Subjects | Word cloud |
-| Top Associated Persons | Bar chart |
+---
 
-### Subjects (resource template: Authority)
-| Chart | Description |
-|---|---|
-| Timeline | Items about this subject by year |
-| Resource Types | Pie chart |
-| Languages | Bar chart |
-| Top Associated Persons | Bar chart |
-| Co-occurring Subjects | Bar chart of subjects that frequently appear alongside this one |
+## Tier 1 — Complete Phase 3 ✓
 
-### Languages (item set: Languages)
-| Chart | Description |
-|---|---|
-| Timeline | Items in this language by year |
-| Resource Types | Pie chart |
-| Subjects | Word cloud |
-| Top Associated Persons | Bar chart |
-| Map | Geographic origins |
+Finished.
 
-### Resource Types (item set: Type of Resource)
-| Chart | Description |
-|---|---|
-| Timeline | Items of this type by year |
-| Languages | Bar chart |
-| Subjects | Word cloud |
-| Top Associated Persons | Bar chart |
-| Map | Geographic origins |
+| Visualization | Entity Types | Description | Data source |
+|---|---|---|---|
+| **Beeswarm Chart** | Sections | Projects plotted by section (y-axis) × start year (x-axis), bubble size = item count. Gives an at-a-glance view of research activity density across sections and time. | `dcterms:temporal` on projects + `children_of` item counts |
+| **Compare View** | Projects | Side-by-side comparison of two projects: stacked timeline, resource types, languages, subjects, plus overlap statistics (shared subjects %). | Fetches two project dashboard JSONs and renders paired charts |
 
-### Genres (item set: Genres)
-| Chart | Description |
-|---|---|
-| Timeline | Items of this genre by year |
-| Resource Types | Pie chart |
-| Languages | Bar chart |
-| Top Associated Persons | Bar chart |
+### Architecture notes
 
-## Phase 2 — Advanced Visualizations
+- **Beeswarm**: new `dashboard-charts-beeswarm.js` module. Precompute adds `beeswarm` key to section dashboards. Uses ECharts scatter with jitter.
+- **Compare View**: new `CompareProjects` block layout + `dashboard-compare.js`. Selector UI for picking two projects, fetches both JSONs, renders 2-column comparison grid.
 
-New chart types requiring additional JS builders.
+---
 
-| Visualization | Entity Types | Description |
-|---|---|---|
-| **Gantt Chart** | Sections, Projects | Project timelines with start/end dates |
-| **Heatmap** | Sections, Projects | Resource type x language cross-tabulation |
-| **Chord Diagram** | Projects, Subjects | Co-occurrence relationships (e.g., subject pairs) |
-| **Network Graph** | People, Institutions | Co-authorship and collaboration networks |
+## Tier 2 — Port Proven WissKI Patterns ✓
 
-## Phase 3 — Complex Data Flows
+Implemented. Contributor Network on 694 persons + 36 projects + 6 sections. Affiliation Network on 12 institutions. Roles on 6 sections + 36 projects.
+
+| Visualization | Entity Types | Description | Data source |
+|---|---|---|---|
+| **Contributor Network** | People, Projects | Force-directed graph showing person → project links. Reveals collaboration clusters beyond the institution level. | `marcrel:*` / `dcterms:creator` / `dcterms:contributor` reverse links |
+| **Affiliation Network** | Organisations | Person → institution affiliation links. Shows who is affiliated where and how institutions connect through people. | `dcterms:isPartOf` on persons |
+| **Contributor Role Breakdown** | Sections, Projects | Pie or stacked bar showing the proportion of different MARC relator roles (author, collector, photographer, interviewer, etc.). Omeka S has 54 distinct `marcrel:*` roles across 2 899 research items. | Aggregate `marcrel:*` terms per item |
+
+### Architecture notes
+
+- **Contributor Network**: `dashboard-charts-contributor-network.js` with shared bipartite graph builder. `contributorNetwork` key on person, project, and section dashboards.
+- **Affiliation Network**: same module, `buildAffiliationNetwork` builder. `affiliationNetwork` key on organisation dashboards.
+- **Role Breakdown**: uses existing `buildBarChart` builder via `roles` key. Precomputed as `[{name, value}]` from `marcrel:*` labels.
+
+---
+
+## Tier 3 — New High-Impact Visualizations ✓
+
+Implemented. Subject Trends on 6 sections + 21 projects. Language Timeline on 6 sections + 14 projects. Treemap on 6 sections + 36 projects. Geo Flows on 5 sections + 9 projects.
+
+| Visualization | Entity Types | Description | Data source |
+|---|---|---|---|
+| **Subject Temporal Trends** | Sections, Projects | Stacked area or small multiples showing how top-N subjects evolve over years. Reveals shifting research focus. | `dcterms:subject` × `dcterms:issued` year aggregation |
+| **Geographic Flow Map** | Sections, Projects | Arc lines from item origins (`dcterms:spatial`) to current locations (`dcterms:provenance`). Shows material movement patterns — highly relevant for African studies collections. | `dcterms:spatial` + `dcterms:provenance` pairs with `geo:lat`/`geo:long` |
+| **Treemap** | Sections, Projects | Hierarchical space-filling chart: Section → Project → Resource Type, sized by item count. Good alternative to sunburst for showing proportions. | `dcterms:isPartOf` hierarchy + `dcterms:type` |
+| **Language × Time Stacked Area** | Sections, Projects | Stacked area chart showing how language distribution evolves over years. Reveals the multilingual character of the research over time. | `dcterms:language` × year aggregation |
+
+### Architecture notes
+
+- `dashboard-charts-stacked-area.js` — shared stacked area builder for subject trends and language timeline.
+- `dashboard-charts-treemap.js` — ECharts native treemap with project → type hierarchy.
+- `dashboard-charts-geo-flows.js` — MapLibre flow map with origin/current location markers and arc lines.
+- Precompute functions: `build_subject_trends`, `build_language_timeline`, `build_treemap`, `build_geo_flows`.
+
+---
+
+## Tier 4 — Polish & Exploration
+
+Lower-priority items that add analytical depth.
 
 | Visualization | Entity Types | Description |
 |---|---|---|
-| **Sankey Chart** | Projects | Contributor → Project → Resource Type flow |
-| **Sunburst Chart** | Projects, Sections | Type → Language → Subject hierarchy |
-| **Beeswarm Chart** | Sections | Projects by section x year, bubble size = item count |
-| **Stacked Timeline** | Sections, Projects | Items by year stacked by resource type |
-| **Compare View** | Projects | Side-by-side comparison of two projects |
+| **Radar/Spider Chart** | Projects, People | Multi-axis profile (items, languages, subjects, contributors, year span). Quick visual comparison of entities. |
+| **Alluvial/Bump Chart** | Subjects, Languages | Rank changes over time — which subjects/languages rise and fall in prominence. |
+| **Scatter Plot** | Sections | X = contributors, Y = items per project, bubble = year span. Reveals collaborative vs. solo projects. |
+| **Cross-entity Comparison** | Any entity type | Generalize Compare View beyond projects: compare two people, two institutions, two subjects side-by-side. |
+| **Box Plot / Violin** | Sections | Distribution of items-per-project within a section. Shows spread, not just totals. |
+
+---
 
 ## Data Architecture
 
@@ -106,8 +104,8 @@ All visualizations use precomputed JSON files stored in `asset/data/`:
 
 ```
 asset/data/
-├── knowledge-graphs/       # One per item (~4000 files)
-└── item-dashboards/        # One per entity with data
+├── knowledge-graphs/       # One per item (~6 000 files)
+└── item-dashboards/        # One per entity with data (~2 500 files)
 ```
 
 Precompute scripts in `scripts/`:
@@ -115,6 +113,43 @@ Precompute scripts in `scripts/`:
 - `precompute-dashboards.py` — dashboard JSON for all entity types
 
 Both use `docker compose exec` to query MySQL directly. No Omeka S API or PHP needed.
+
+### Omeka S data summary
+
+| Entity | Count | Key properties |
+|---|---|---|
+| Research Items | 2 899 | 54 `marcrel:*` roles, `dcterms:subject` (16 187), `dcterms:format` (12 078), `dcterms:spatial` (4 988), `dcterms:language` (2 079) |
+| Persons | 1 242 | Affiliations via `dcterms:isPartOf` |
+| Authority (Subjects) | 1 437 | LCSH URIs + free-text tags |
+| Institutions | 552 | `foaf:Organization` |
+| Locations | 161 | `geo:lat`/`geo:long` coordinates |
+| Projects | 92 | `dcterms:temporal` intervals, section membership |
+| Languages | 28 | ISO 639-2 codes |
+| Genres | 124 | MARC genre classifications |
+| Research Sections | 6 | Hierarchical: section → projects → items |
+
+## Module architecture
+
+JavaScript is modular — one file per concern:
+
+```
+asset/js/
+├── dashboard-core.js               # THEME, COLORS, helpers (window.RV namespace)
+├── dashboard-layouts.js             # Per-resource-type layout configs
+├── dashboard-charts-basic.js        # Timeline, pie, bar, word cloud
+├── dashboard-charts-advanced.js     # Gantt, heatmap, chord, sankey, sunburst, stacked
+├── dashboard-charts-beeswarm.js     # Beeswarm scatter (Tier 1)
+├── dashboard-charts-map.js          # Geographic maps + mini map
+├── dashboard-collab-network.js      # Institution collaboration force graph
+├── dashboard-charts-contributor-network.js  # Bipartite: contributor + affiliation networks (Tier 2)
+├── dashboard-charts-stacked-area.js # Subject trends + language timeline (Tier 3)
+├── dashboard-charts-treemap.js      # Hierarchical treemap (Tier 3)
+├── dashboard-charts-geo-flows.js    # Origin → current location flow map (Tier 3)
+├── dashboard-compare.js             # Compare View (Tier 1)
+├── dashboard-registry.js            # CHART_MAP, CHART_LABELS, CHART_DESCRIPTIONS
+├── dashboard.js                     # Orchestrator (async + inline rendering)
+└── knowledge-graph.js               # Graph + item map rendering
+```
 
 ## Regeneration
 
