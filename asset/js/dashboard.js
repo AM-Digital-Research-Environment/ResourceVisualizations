@@ -233,28 +233,56 @@
         if (!isWordCloudAvailable()) return buildBarChart(el, data, siteBase);
 
         var chart = initChart(el);
+        var total = entries.length;
+        var defaultCount = Math.min(total, 30);
 
-        chart.setOption({
-            tooltip: {
-                confine: true,
-                formatter: function (p) { return echarts.format.encodeHTML(p.name) + ': ' + p.value; }
-            },
-
-            aria: { enabled: true },
-            series: [{
-                type: 'wordCloud', shape: 'circle',
-                sizeRange: [12, Math.max(40, Math.min(80, entries.length > 10 ? 60 : 80))],
-                rotationRange: [-30, 30], rotationStep: 15, gridSize: 8,
-                drawOutOfBound: false, layoutAnimation: true,
-                textStyle: {
-                    fontFamily: 'sans-serif',
-                    color: function () { return COLORS[Math.floor(Math.random() * COLORS.length)]; }
+        function wordCloudOption(count) {
+            var slice = entries.slice(0, count);
+            return {
+                tooltip: {
+                    confine: true,
+                    formatter: function (p) { return echarts.format.encodeHTML(p.name) + ': ' + p.value; }
                 },
-                emphasis: { textStyle: { fontWeight: 'bold', shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.3)' } },
-                data: entries.map(function (e) { return { name: e.name, value: e.value }; })
-            }]
-        });
+                aria: { enabled: true },
+                series: [{
+                    type: 'wordCloud', shape: 'circle',
+                    sizeRange: [12, Math.max(40, Math.min(80, slice.length > 10 ? 60 : 80))],
+                    rotationRange: [-30, 30], rotationStep: 15, gridSize: 8,
+                    drawOutOfBound: false, layoutAnimation: true,
+                    textStyle: {
+                        fontFamily: 'sans-serif',
+                        color: function () { return COLORS[Math.floor(Math.random() * COLORS.length)]; }
+                    },
+                    emphasis: { textStyle: { fontWeight: 'bold', shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.3)' } },
+                    data: slice.map(function (e) { return { name: e.name, value: e.value }; })
+                }]
+            };
+        }
+
+        chart.setOption(wordCloudOption(defaultCount));
         addClickHandler(chart, entries, siteBase);
+
+        // Add word-count slider to the panel header
+        if (total > 5) {
+            var panel = el.closest('.chart-panel');
+            if (panel) {
+                var slider = document.createElement('div');
+                slider.className = 'rv-word-slider';
+                slider.innerHTML = '<label><input type="range" min="5" max="' + total + '" value="' + defaultCount + '" step="1">'
+                    + '<span class="rv-word-slider-value">' + defaultCount + '</span></label>';
+                var desc = panel.querySelector('.chart-description');
+                var insertRef = desc ? desc.nextSibling : el;
+                panel.insertBefore(slider, insertRef);
+
+                var input = slider.querySelector('input');
+                input.addEventListener('input', function () {
+                    var n = parseInt(this.value, 10);
+                    slider.querySelector('.rv-word-slider-value').textContent = n;
+                    chart.setOption(wordCloudOption(n), true);
+                });
+            }
+        }
+
         return chart;
     }
 
@@ -636,6 +664,72 @@
         return chart;
     }
 
+    function buildCollabNetwork(el, data, siteBase) {
+        if (!data || !data.nodes || !data.links || data.links.length < 1) return;
+        var chart = initChart(el);
+        var n = data.nodes.length;
+
+        chart.setOption({
+            tooltip: {
+                confine: true,
+                formatter: function (p) {
+                    if (p.dataType === 'node') {
+                        return '<strong>' + echarts.format.encodeHTML(p.name) + '</strong><br/>'
+                            + p.data.value + (p.data.isSelf ? ' total items' : ' shared items');
+                    }
+                    if (p.dataType === 'edge') {
+                        return echarts.format.encodeHTML(p.data.source) + ' \u2194 '
+                            + echarts.format.encodeHTML(p.data.target) + ': ' + p.data.value + ' shared items';
+                    }
+                    return '';
+                }
+            },
+            aria: { enabled: true },
+            series: [{
+                type: 'graph', layout: 'force',
+                data: data.nodes.map(function (nd, i) {
+                    var isSelf = !!nd.isSelf;
+                    var size = isSelf ? 45 : Math.max(12, Math.min(35, nd.value * 3));
+                    return {
+                        name: nd.name, symbolSize: size, value: nd.value,
+                        isSelf: isSelf, itemId: nd.itemId,
+                        itemStyle: isSelf
+                            ? { color: THEME.accent, borderColor: '#333', borderWidth: 3, shadowBlur: 8, shadowColor: 'rgba(0,0,0,0.2)' }
+                            : { color: COLORS[(i - 1) % COLORS.length], borderColor: '#fff', borderWidth: 1 },
+                        label: {
+                            show: isSelf || n <= 10,
+                            fontSize: isSelf ? THEME.fontSizeEmphasis : THEME.fontSize,
+                            fontWeight: isSelf ? 'bold' : 'normal',
+                            formatter: function (p) { return truncateLabel(p.name, 25); }
+                        },
+                        emphasis: { label: { show: true, fontSize: 12, fontWeight: 'bold' } }
+                    };
+                }),
+                links: data.links.map(function (l) {
+                    return {
+                        source: l.source, target: l.target, value: l.value,
+                        lineStyle: { width: Math.max(1, Math.min(6, l.value)), curveness: 0.15, opacity: 0.5 }
+                    };
+                }),
+                force: {
+                    repulsion: n > 15 ? 400 : 250,
+                    gravity: n > 15 ? 0.06 : 0.1,
+                    edgeLength: [60, 200],
+                    friction: 0.85,
+                    layoutAnimation: true
+                },
+                roam: true, draggable: true,
+                emphasis: { focus: 'adjacency', lineStyle: { width: 4, opacity: 0.9 } },
+                blur: { itemStyle: { opacity: 0.15 }, lineStyle: { opacity: 0.08 } }
+            }]
+        });
+
+        chart.on('click', function (p) {
+            if (p.dataType === 'node' && p.data.itemId && siteBase) window.location.href = siteBase + '/item/' + p.data.itemId;
+        });
+        return chart;
+    }
+
     /* ------------------------------------------------------------------ */
     /*  Phase 3 charts: Sankey, Sunburst, Stacked Timeline                 */
     /* ------------------------------------------------------------------ */
@@ -757,6 +851,7 @@
         'languages': buildBarChart,
         'subjects': buildWordCloud,
         'chord': buildChord,
+        'collabNetwork': buildCollabNetwork,
         'contributors': buildBarChart,
         'coAuthors': buildBarChart,
         'coSubjects': buildBarChart,
@@ -773,6 +868,7 @@
         'languages': 'Languages',
         'subjects': 'Subjects',
         'chord': 'Subject Co-occurrence',
+        'collabNetwork': 'Collaboration Network',
         'contributors': 'Top Associated Persons',
         'sankey': 'Contributor \u2192 Project \u2192 Type',
         'sunburst': 'Type \u2192 Language \u2192 Subject',
@@ -795,6 +891,7 @@
         'sunburst': 'Hierarchical view: resource type, then language, then top subjects.',
         'locations': 'Geographic origins of research items, sized by number of items.',
         'chord': 'Subjects that frequently appear together across research items.',
+        'collabNetwork': 'Institutions connected through shared research items.',
         'contributors': 'Persons most frequently associated with research items.',
         'coAuthors': 'Persons who most frequently appear alongside this person.',
         'coSubjects': 'Subjects that most frequently appear alongside this one.',
@@ -812,15 +909,15 @@
             + '</div>'
             + '<div class="dashboard-charts">';
 
-        var chartKeys = ['selfLocation', 'stackedTimeline', 'timeline', 'gantt', 'types', 'languages', 'heatmap', 'subjects', 'sunburst', 'locations', 'chord', 'contributors', 'coAuthors', 'coSubjects', 'projects', 'sankey'];
+        var chartKeys = ['selfLocation', 'stackedTimeline', 'timeline', 'gantt', 'types', 'languages', 'heatmap', 'subjects', 'sunburst', 'locations', 'chord', 'collabNetwork', 'contributors', 'coAuthors', 'coSubjects', 'projects', 'sankey'];
         chartKeys.forEach(function (key) {
             var d = data[key];
             var hasData = Array.isArray(d) ? d.length > 0 : (d && Object.keys(d).length > 0);
             if (!hasData) return;
             // Skip basic timeline when stacked timeline is available (redundant).
             if (key === 'timeline' && data.stackedTimeline && data.stackedTimeline.years && data.stackedTimeline.years.length > 0) return;
-            var wideKeys = ['selfLocation', 'stackedTimeline', 'gantt', 'heatmap', 'sankey', 'sunburst', 'subjects', 'locations', 'chord', 'projects', 'coSubjects'];
-            var tallKeys = ['selfLocation', 'gantt', 'heatmap', 'sankey', 'sunburst', 'subjects', 'locations', 'chord'];
+            var wideKeys = ['selfLocation', 'stackedTimeline', 'gantt', 'heatmap', 'sankey', 'sunburst', 'subjects', 'locations', 'chord', 'collabNetwork', 'projects', 'coSubjects'];
+            var tallKeys = ['selfLocation', 'gantt', 'heatmap', 'sankey', 'sunburst', 'subjects', 'locations', 'chord', 'collabNetwork'];
             var wide = wideKeys.indexOf(key) >= 0 ? ' chart-panel-wide' : '';
             var tall = tallKeys.indexOf(key) >= 0 ? ' chart-container-tall' : '';
             var desc = CHART_DESCRIPTIONS[key] || '';

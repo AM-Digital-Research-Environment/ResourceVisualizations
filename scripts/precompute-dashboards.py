@@ -486,6 +486,56 @@ def build_stacked_timeline(item_ids, links, items, item_year):
     return {'years': years, 'series': series}
 
 
+def build_collab_network(inst_id, inst_title, item_ids, items, links,
+                         reverse_links, inst_set, inst_terms, max_nodes=25):
+    """Build institution collaboration network from shared research items."""
+    from collections import Counter
+
+    collab_counts = Counter()  # other_inst_id -> shared item count
+
+    for iid in item_ids:
+        for term, label, vrid in links.get(iid, []):
+            if term in inst_terms and vrid != inst_id and vrid in inst_set:
+                collab_counts[vrid] += 1
+
+    if not collab_counts:
+        return None
+
+    top_collabs = collab_counts.most_common(max_nodes)
+    top_ids = {cid for cid, _ in top_collabs}
+
+    # Self node.
+    nodes = [{'name': inst_title, 'value': len(item_ids),
+              'itemId': inst_id, 'isSelf': True}]
+    for cid, count in top_collabs:
+        ctitle = items.get(cid, {}).get('title', f'Institution {cid}')
+        nodes.append({'name': ctitle, 'value': count, 'itemId': cid})
+
+    # Self <-> collaborator edges.
+    net_links = []
+    for cid, count in top_collabs:
+        ctitle = items.get(cid, {}).get('title', f'Institution {cid}')
+        net_links.append({'source': inst_title, 'target': ctitle, 'value': count})
+
+    # Inter-collaborator edges (shared items between pairs of collaborators).
+    collab_items = {}
+    for cid in top_ids:
+        collab_items[cid] = set(find_items_linking_to(cid, reverse_links, inst_terms))
+    collab_list = list(top_ids)
+    for i in range(len(collab_list)):
+        for j in range(i + 1, len(collab_list)):
+            a, b = collab_list[i], collab_list[j]
+            shared = len(collab_items[a] & collab_items[b])
+            if shared >= 2:
+                a_title = items.get(a, {}).get('title', '')
+                b_title = items.get(b, {}).get('title', '')
+                if a_title and b_title:
+                    net_links.append({'source': a_title, 'target': b_title,
+                                      'value': shared})
+
+    return {'nodes': nodes, 'links': net_links} if net_links else None
+
+
 def save_json(item_id, data):
     path = os.path.join(OUTPUT_DIR, f'{item_id}.json')
     with open(path, 'w', encoding='utf-8') as f:
@@ -623,6 +673,8 @@ def generate_institutions(items, links, reverse_links, children_of, item_year, g
                     if info['class_term'] == 'foaf:Organization']
     print(f'\n=== Institutions ({len(institutions)}) ===')
 
+    inst_set = {iid for iid, _ in institutions}
+
     inst_terms = {'frapo:isFundedBy', 'dcterms:provenance'}
     # Also marcrel properties (institutions can be publishers etc.)
     all_marcrel = {t for rev in reverse_links.values() for t in rev if t.startswith('marcrel:')}
@@ -634,6 +686,12 @@ def generate_institutions(items, links, reverse_links, children_of, item_year, g
         if not item_ids:
             continue
         dashboard = aggregate_items(item_ids, items, links, item_year, geo)
+
+        collab = build_collab_network(iid, iinfo['title'], item_ids, items,
+                                      links, reverse_links, inst_set, inst_terms)
+        if collab:
+            dashboard['collabNetwork'] = collab
+
         save_json(iid, dashboard)
         count += 1
     print(f'  {count} dashboards generated')
