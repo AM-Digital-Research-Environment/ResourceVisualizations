@@ -1,5 +1,13 @@
 """Category overview dashboard generators."""
 
+from .config import (
+    ITEM_SET_GENRE, ITEM_SET_LANGUAGE, ITEM_SET_RESOURCE_TYPE,
+    ITEM_SET_TARGET_AUDIENCE, ITEM_SET_PERSON, ITEM_SET_INSTITUTION,
+    ITEM_SET_SUBJECT, ITEM_SET_PROJECT,
+    OVERVIEW_GENRE, OVERVIEW_LANGUAGE, OVERVIEW_RESOURCE_TYPE,
+    OVERVIEW_TARGET_AUDIENCE, OVERVIEW_PERSON, OVERVIEW_INSTITUTION,
+    OVERVIEW_GROUP, OVERVIEW_LCSH, OVERVIEW_TAG, OVERVIEW_PROJECT,
+)
 from .aggregators import (
     aggregate_items, save_json, find_items_linking_to,
     build_stacked_timeline, build_heatmap, build_roles,
@@ -80,67 +88,56 @@ def generate_category_overviews(items, links, reverse_links, item_year, geo, ite
                 person_terms.add(t)
                 inst_terms.add(t)
 
-    # Genre (22198) -- item set 21, linked via dcterms:format
-    generate_overview(22198, 'Genre', item_sets.get(21, []),
+    generate_overview(OVERVIEW_GENRE, 'Genre', item_sets.get(ITEM_SET_GENRE, []),
                       {'dcterms:format'}, items, links, reverse_links,
                       item_year, geo, 'genreOverview', 'genres')
 
-    # Language (2039) -- item set 19, linked via dcterms:language
-    generate_overview(2039, 'Language', item_sets.get(19, []),
+    generate_overview(OVERVIEW_LANGUAGE, 'Language', item_sets.get(ITEM_SET_LANGUAGE, []),
                       {'dcterms:language'}, items, links, reverse_links,
                       item_year, geo, 'languageOverview', 'topLanguages')
 
-    # Resource Type (22203) -- item set 1, linked via dcterms:type
-    generate_overview(22203, 'Resource Type', item_sets.get(1, []),
+    generate_overview(OVERVIEW_RESOURCE_TYPE, 'Resource Type', item_sets.get(ITEM_SET_RESOURCE_TYPE, []),
                       {'dcterms:type'}, items, links, reverse_links,
                       item_year, geo, 'resourceTypeOverview', 'topResourceTypes')
 
-    # Target Audience (22479) -- item set 3169, linked via dcterms:audience
-    generate_overview(22479, 'Target Audience', item_sets.get(3169, []),
+    generate_overview(OVERVIEW_TARGET_AUDIENCE, 'Target Audience', item_sets.get(ITEM_SET_TARGET_AUDIENCE, []),
                       {'dcterms:audience'}, items, links, reverse_links,
                       item_year, geo, 'targetAudienceOverview', 'topAudiences')
 
-    # Person (22200) -- item set 18, linked via marcrel:* + dcterms:creator/contributor
-    generate_overview(22200, 'Person', item_sets.get(18, []),
+    generate_overview(OVERVIEW_PERSON, 'Person', item_sets.get(ITEM_SET_PERSON, []),
                       person_terms, items, links, reverse_links,
                       item_year, geo, 'personOverview', 'topPersons')
 
-    # Institution (22202) -- item set 110, linked via frapo:isFundedBy + provenance + marcrel:*
     # Filter to actual institutions (foaf:Organization), excluding groups.
-    generate_overview(22202, 'Institution', item_sets.get(110, []),
+    generate_overview(OVERVIEW_INSTITUTION, 'Institution', item_sets.get(ITEM_SET_INSTITUTION, []),
                       inst_terms, items, links, reverse_links,
                       item_year, geo, 'institutionOverview', 'topInstitutions',
                       filter_fn=lambda iid, it: it.get(iid, {}).get('class_term') == 'foaf:Organization')
 
-    # Group (22536) -- also in item set 110 but with group class/template
-    # Groups are organizations too -- filter differently if needed. Use same terms.
-    generate_overview(22536, 'Group', item_sets.get(110, []),
+    generate_overview(OVERVIEW_GROUP, 'Group', item_sets.get(ITEM_SET_INSTITUTION, []),
                       inst_terms, items, links, reverse_links,
                       item_year, geo, 'groupOverview', 'topGroups')
 
-    # LCSH Subjects (3167) -- item set 1852, filtered to those with dcterms:type = 3167
     def is_lcsh(sid, it):
         for term, label, vrid in links.get(sid, []):
-            if term == 'dcterms:type' and vrid == 3167:
+            if term == 'dcterms:type' and vrid == OVERVIEW_LCSH:
                 return True
         return False
-    generate_overview(3167, 'LCSH Subject', item_sets.get(1852, []),
+    generate_overview(OVERVIEW_LCSH, 'LCSH Subject', item_sets.get(ITEM_SET_SUBJECT, []),
                       {'dcterms:subject'}, items, links, reverse_links,
                       item_year, geo, 'lcshOverview', 'topSubjects',
                       filter_fn=is_lcsh)
 
-    # Tag (22199) -- item set 1852, filtered to those WITHOUT dcterms:type = 3167
     def is_tag(sid, it):
         for term, label, vrid in links.get(sid, []):
-            if term == 'dcterms:type' and vrid == 3167:
+            if term == 'dcterms:type' and vrid == OVERVIEW_LCSH:
                 return False
         return True
-    generate_overview(22199, 'Tag', item_sets.get(1852, []),
+    generate_overview(OVERVIEW_TAG, 'Tag', item_sets.get(ITEM_SET_SUBJECT, []),
                       {'dcterms:subject'}, items, links, reverse_links,
                       item_year, geo, 'tagOverview', 'topTags',
                       filter_fn=is_tag)
 
-    # Research Project (3346) -- item set 20, linked via dcterms:isPartOf
-    generate_overview(3346, 'Research Project', item_sets.get(20, []),
+    generate_overview(OVERVIEW_PROJECT, 'Research Project', item_sets.get(ITEM_SET_PROJECT, []),
                       {'dcterms:isPartOf'}, items, links, reverse_links,
                       item_year, geo, 'projectOverview', 'topProjects')

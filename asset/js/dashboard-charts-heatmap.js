@@ -15,6 +15,7 @@
     ns.charts.buildHeatmap = function (el, data) {
         if (!data || !data.rows || !data.cols || !data.values) return;
         var chart = initChart(el);
+        chart._noDecal = true;
         var maxVal = 0;
         data.values.forEach(function (v) { if (v[2] > maxVal) maxVal = v[2]; });
 

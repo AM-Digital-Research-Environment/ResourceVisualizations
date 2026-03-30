@@ -1,6 +1,9 @@
 /**
  * Knowledge Graph — loads precomputed JSON files, falls back to REST API.
  *
+ * Depends on:
+ *   - dashboard-core.js (THEME, COLORS, initChart, truncateLabel, getBasemapStyle)
+ *
  * Priority:
  * 1. Try /files/resource-visualizations/{id}.json (precomputed, instant)
  * 2. Fall back to REST API (lightweight: direct relationships only)
@@ -8,39 +11,11 @@
 (function () {
     'use strict';
 
-    var COLORS = [
-        '#22817b', '#e07c3e', '#6b5b95', '#d4a574', '#2c5f7c',
-        '#c5504d', '#4a8c6f', '#8b6f47', '#7c5295', '#cc8963'
-    ];
+    var ns = window.RV;
+    if (!ns) { console.warn('ResourceVisualizations: dashboard-core.js must load before knowledge-graph.js'); return; }
 
-    /** Shared design tokens. */
-    var THEME = {
-        /** Set to true to enable automatic dark mode via prefers-color-scheme. */
-        darkModeEnabled: false,
-        accent: '#22817b',
-        accentDark: '#4db6ac',
-        fontSize: 11,
-        fontSizeTitle: 14,
-        labelMaxLen: 35
-    };
-
-    /** Dark mode detection (gated by THEME.darkModeEnabled). */
-    var _darkQuery = THEME.darkModeEnabled && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-    var _darkMode = _darkQuery ? _darkQuery.matches : false;
-    var _allCharts = [];
-
-    /** Init an ECharts instance with the correct theme, tracking it for dark mode switches. */
-    function initChart(el) {
-        var chart = echarts.init(el, _darkMode ? 'dark' : null);
-        _allCharts.push(chart);
-        return chart;
-    }
-
-    /** Truncate a string with ellipsis if it exceeds maxLen. */
-    function truncateLabel(str, maxLen) {
-        if (!str) return '';
-        return str.length > maxLen ? str.substring(0, maxLen) + '\u2026' : str;
-    }
+    var COLORS = ns.COLORS;
+    var THEME = ns.THEME;
 
     // Property -> category mapping (used in API fallback only).
     var PROP_CAT = {
@@ -133,7 +108,7 @@
             }
         });
 
-        var chart = initChart(container);
+        var chart = ns.initChart(container);
         var n = data.nodes.length;
 
         data.categories.forEach(function (cat, i) {
@@ -204,7 +179,7 @@
                 roam: true, draggable: true, cursor: 'pointer',
                 emphasis: { focus: 'adjacency', lineStyle: { width: 2.5, opacity: 0.9 } },
                 blur: { itemStyle: { opacity: 0.15 }, lineStyle: { opacity: 0.08 } },
-                label: { position: 'right', formatter: function (p) { return truncateLabel(p.name, THEME.labelMaxLen); } },
+                label: { position: 'right', formatter: function (p) { return ns.truncateLabel(p.name, THEME.labelMaxLen); } },
                 lineStyle: { opacity: 0.5, width: 1.2 },
                 scaleLimit: { min: 0.2, max: 5 }
             }]
@@ -241,25 +216,25 @@
             }
 
             var toggle = block.querySelector('.rv-fullscreen-toggle');
-            document.addEventListener('keydown', function (e) {
+            if (toggle) {
+                toggle.addEventListener('click', function () {
+                    block.classList.toggle('rv-fullscreen');
+                    setTimeout(function () { chart.resize(); }, 50);
+                });
+            }
+            var onKeydown = function (e) {
                 if (e.key === 'Escape' && block.classList.contains('rv-fullscreen')) {
                     block.classList.remove('rv-fullscreen');
                     setTimeout(function () { chart.resize(); }, 50);
                 }
-            });
+            };
+            document.addEventListener('keydown', onKeydown);
         }
     }
 
     /* ------------------------------------------------------------------ */
     /*  Item location map                                                  */
     /* ------------------------------------------------------------------ */
-
-    /** Get the appropriate basemap style URL for the current color scheme. */
-    function getBasemapStyle() {
-        return _darkMode
-            ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
-            : 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
-    }
 
     /**
      * Render a MapLibre map showing origin and current locations for an item.
@@ -277,7 +252,7 @@
 
         var map = new maplibregl.Map({
             container: el,
-            style: getBasemapStyle(),
+            style: ns.getBasemapStyle(),
             center: [all[0].lon, all[0].lat],
             zoom: 3,
             attributionControl: false,
@@ -380,18 +355,5 @@
         document.addEventListener('DOMContentLoaded', init);
     } else {
         init();
-    }
-
-    /* Dark mode: switch ECharts theme + CSS class when OS preference changes. */
-    if (_darkQuery) {
-        if (_darkMode) document.documentElement.classList.add('rv-dark-mode');
-        _darkQuery.addEventListener('change', function () {
-            _darkMode = _darkQuery.matches;
-            document.documentElement.classList.toggle('rv-dark-mode', _darkMode);
-            var theme = _darkMode ? 'dark' : 'default';
-            _allCharts.forEach(function (c) {
-                if (!c.isDisposed()) c.setTheme(theme);
-            });
-        });
     }
 })();

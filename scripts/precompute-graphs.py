@@ -13,17 +13,14 @@ Set OMEKA_DOCKER_DIR if the omeka-s-docker directory is elsewhere:
 
 import json
 import os
-import subprocess
 import sys
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 MODULE_DIR = os.path.dirname(SCRIPT_DIR)
 OUTPUT_DIR = os.path.join(MODULE_DIR, 'asset', 'data', 'knowledge-graphs')
 
-OMEKA_DIR = os.environ.get('OMEKA_DOCKER_DIR', os.path.join(os.path.dirname(MODULE_DIR), 'omeka-s-docker'))
-DB_USER = os.environ.get('DB_USER', 'omeka')
-DB_PASS = os.environ.get('DB_PASS', '')
-DB_NAME = os.environ.get('DB_NAME', 'omeka')
+sys.path.insert(0, SCRIPT_DIR)
+from precompute.db import get_password, query_mysql  # noqa: E402
 
 # Properties to include as graph nodes.
 PROP_CAT = {
@@ -43,38 +40,6 @@ SHAREABLE = {
     'dcterms:subject', 'dcterms:isPartOf', 'dcterms:spatial',
     'dcterms:creator', 'dcterms:contributor',
 }
-
-
-def get_password():
-    if DB_PASS:
-        return DB_PASS
-    env_file = os.path.join(OMEKA_DIR, '.env')
-    if os.path.exists(env_file):
-        with open(env_file) as f:
-            for line in f:
-                if line.startswith('MYSQL_PASSWORD='):
-                    return line.strip().split('=', 1)[1]
-    print('ERROR: Set DB_PASS or ensure MYSQL_PASSWORD is in .env')
-    sys.exit(1)
-
-
-def query_mysql(sql, password):
-    cmd = [
-        'docker', 'compose', 'exec', '-T', 'db',
-        'mysql', f'-u{DB_USER}', f'-p{password}', DB_NAME,
-        '--default-character-set=utf8mb4',
-        '--batch', '--skip-column-names', '-e', sql,
-    ]
-    result = subprocess.run(cmd, capture_output=True, cwd=OMEKA_DIR)
-    if result.returncode != 0:
-        print(f'MySQL error: {result.stderr.decode("utf-8", errors="replace").strip()}')
-        return []
-    stdout = result.stdout.decode('utf-8', errors='replace')
-    rows = []
-    for line in stdout.strip().split('\n'):
-        if line:
-            rows.append(tuple(line.split('\t')))
-    return rows
 
 
 def get_category(term):

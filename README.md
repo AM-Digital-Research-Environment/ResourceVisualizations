@@ -91,7 +91,7 @@ Inline dashboard for item set pages with server-side aggregation.
 - **Toolbox**: Save-as-image (2x resolution) and restore on all ECharts charts
 - **Word count slider**: Adjust the number of words displayed in the word cloud (5 to max)
 - **DataZoom**: Interactive slider on timeline charts with >15 data points
-- **ARIA**: Screen reader descriptions on all charts; decal patterns on pie, stacked, sankey, and sunburst for accessibility
+- **ARIA**: Screen reader descriptions on all charts; global decal pattern toggle for accessibility (excluded on wordcloud, chord, heatmap, and sankey where patterns are not meaningful)
 - **Cooperative gestures**: Main maps require Ctrl+scroll to zoom (prevents scroll hijacking)
 - **Globe projection**: Main maps default to globe view with a toggle control
 - **Scale control**: Metric scale bar on all maps
@@ -215,7 +215,7 @@ ResourceVisualizations/
 
 ### THEME Design Tokens
 
-`dashboard-core.js` and `knowledge-graph.js` each define a `THEME` object. Dashboard modules share helpers (THEME, COLORS, initChart, truncateLabel) via the `window.RV` namespace. All design values flow from this config:
+`dashboard-core.js` defines a single `THEME` object shared by all modules (including `knowledge-graph.js`) via the `window.RV` namespace. All design values flow from this config:
 
 ```javascript
 var THEME = {
@@ -254,7 +254,7 @@ The module includes full dark mode infrastructure:
 - **MapLibre**: Switches basemap from CartoDB Positron to Dark Matter
 - **CSS**: `.rv-dark-mode` class overrides all custom properties
 
-To enable, set `THEME.darkModeEnabled = true` in both JS files. The CSS dark mode activates automatically via media query.
+To enable, set `THEME.darkModeEnabled = true` in `dashboard-core.js`. The CSS dark mode activates automatically via media query.
 
 ## Dependencies
 

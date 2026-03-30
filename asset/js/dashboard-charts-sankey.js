@@ -15,6 +15,7 @@
     ns.charts.buildSankey = function (el, data) {
         if (!data || !data.nodes || !data.links || data.links.length < 1) return;
         var chart = initChart(el);
+        chart._noDecal = true;
 
         chart.setOption({
             tooltip: { trigger: 'item', confine: true },

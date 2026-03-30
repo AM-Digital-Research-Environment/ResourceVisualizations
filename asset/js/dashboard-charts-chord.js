@@ -15,6 +15,7 @@
     ns.charts.buildChord = function (el, data, siteBase) {
         if (!data || !data.nodes || !data.links || data.nodes.length < 2) return;
         var chart = initChart(el);
+        chart._noDecal = true;
 
         chart.setOption({
             tooltip: {

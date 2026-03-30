@@ -16,6 +16,45 @@ from .aggregators import (
 )
 
 
+def _add_standard_charts(dashboard, entity_id, entity_title, item_ids,
+                         items, links, children_of, item_year, geo):
+    """Build and attach the standard set of advanced charts to a dashboard."""
+    heatmap = build_heatmap(item_ids, links, items)
+    if heatmap:
+        dashboard['heatmap'] = heatmap
+    chord = build_chord(item_ids, links, items)
+    if chord:
+        dashboard['chord'] = chord
+    stacked = build_stacked_timeline(item_ids, links, items, item_year)
+    if stacked:
+        dashboard['stackedTimeline'] = stacked
+    sankey = build_sankey(item_ids, links, items)
+    if sankey:
+        dashboard['sankey'] = sankey
+    sunburst = build_sunburst(item_ids, links, items)
+    if sunburst:
+        dashboard['sunburst'] = sunburst
+    roles = build_roles(item_ids, links, items)
+    if roles:
+        dashboard['roles'] = roles
+    contrib_net = build_contributor_network(entity_id, entity_title, item_ids,
+                                            items, links, children_of)
+    if contrib_net:
+        dashboard['contributorNetwork'] = contrib_net
+    subj_trends = build_subject_trends(item_ids, links, items, item_year)
+    if subj_trends:
+        dashboard['subjectTrends'] = subj_trends
+    lang_timeline = build_language_timeline(item_ids, links, items, item_year)
+    if lang_timeline:
+        dashboard['languageTimeline'] = lang_timeline
+    treemap = build_treemap(item_ids, links, items, children_of, entity_title)
+    if treemap:
+        dashboard['treemap'] = treemap
+    geo_flows = build_geo_flows(item_ids, links, items, geo)
+    if geo_flows:
+        dashboard['geoFlows'] = geo_flows
+
+
 def generate_sections(items, links, reverse_links, children_of, item_year, temporal, geo):
     sections = [(iid, info) for iid, info in items.items()
                 if info['class_term'] == 'frapo:ResearchGroup']
@@ -51,41 +90,8 @@ def generate_sections(items, links, reverse_links, children_of, item_year, tempo
         if beeswarm:
             dashboard['beeswarm'] = beeswarm
             all_beeswarm.extend(beeswarm)
-        heatmap = build_heatmap(item_ids, links, items)
-        if heatmap:
-            dashboard['heatmap'] = heatmap
-        chord = build_chord(item_ids, links, items)
-        if chord:
-            dashboard['chord'] = chord
-        stacked = build_stacked_timeline(item_ids, links, items, item_year)
-        if stacked:
-            dashboard['stackedTimeline'] = stacked
-        sankey = build_sankey(item_ids, links, items)
-        if sankey:
-            dashboard['sankey'] = sankey
-        sunburst = build_sunburst(item_ids, links, items)
-        if sunburst:
-            dashboard['sunburst'] = sunburst
-        roles = build_roles(item_ids, links, items)
-        if roles:
-            dashboard['roles'] = roles
-        contrib_net = build_contributor_network(sid, sinfo['title'], item_ids,
-                                                items, links, children_of)
-        if contrib_net:
-            dashboard['contributorNetwork'] = contrib_net
-        # Tier 3 charts.
-        subj_trends = build_subject_trends(item_ids, links, items, item_year)
-        if subj_trends:
-            dashboard['subjectTrends'] = subj_trends
-        lang_timeline = build_language_timeline(item_ids, links, items, item_year)
-        if lang_timeline:
-            dashboard['languageTimeline'] = lang_timeline
-        treemap = build_treemap(item_ids, links, items, children_of, sinfo['title'])
-        if treemap:
-            dashboard['treemap'] = treemap
-        geo_flows = build_geo_flows(item_ids, links, items, geo)
-        if geo_flows:
-            dashboard['geoFlows'] = geo_flows
+        _add_standard_charts(dashboard, sid, sinfo['title'], item_ids,
+                             items, links, children_of, item_year, geo)
         dashboard['resourceType'] = TEMPLATE_RESOURCE_TYPE.get(items[sid]['template_id'], 'section')
         save_json(sid, dashboard)
         print(f'  {sinfo["title"]}: {len(item_ids)} items')
@@ -126,41 +132,8 @@ def generate_projects(items, links, reverse_links, children_of, item_year, geo):
         })
 
         dashboard = aggregate_items(item_ids, items, links, item_year, geo)
-        heatmap = build_heatmap(item_ids, links, items)
-        if heatmap:
-            dashboard['heatmap'] = heatmap
-        chord = build_chord(item_ids, links, items)
-        if chord:
-            dashboard['chord'] = chord
-        stacked = build_stacked_timeline(item_ids, links, items, item_year)
-        if stacked:
-            dashboard['stackedTimeline'] = stacked
-        sankey = build_sankey(item_ids, links, items)
-        if sankey:
-            dashboard['sankey'] = sankey
-        sunburst = build_sunburst(item_ids, links, items)
-        if sunburst:
-            dashboard['sunburst'] = sunburst
-        roles = build_roles(item_ids, links, items)
-        if roles:
-            dashboard['roles'] = roles
-        contrib_net = build_contributor_network(pid, pinfo['title'], item_ids,
-                                                items, links, children_of)
-        if contrib_net:
-            dashboard['contributorNetwork'] = contrib_net
-        # Tier 3 charts.
-        subj_trends = build_subject_trends(item_ids, links, items, item_year)
-        if subj_trends:
-            dashboard['subjectTrends'] = subj_trends
-        lang_timeline = build_language_timeline(item_ids, links, items, item_year)
-        if lang_timeline:
-            dashboard['languageTimeline'] = lang_timeline
-        treemap = build_treemap(item_ids, links, items, children_of, pinfo['title'])
-        if treemap:
-            dashboard['treemap'] = treemap
-        geo_flows = build_geo_flows(item_ids, links, items, geo)
-        if geo_flows:
-            dashboard['geoFlows'] = geo_flows
+        _add_standard_charts(dashboard, pid, pinfo['title'], item_ids,
+                             items, links, children_of, item_year, geo)
         dashboard['resourceType'] = TEMPLATE_RESOURCE_TYPE.get(items[pid]['template_id'], 'project')
         save_json(pid, dashboard)
         count += 1

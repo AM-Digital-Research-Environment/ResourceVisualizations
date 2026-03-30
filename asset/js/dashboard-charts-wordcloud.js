@@ -35,6 +35,7 @@
         if (!isWordCloudAvailable()) return ns.charts.buildBarChart(el, data, siteBase);
 
         var chart = initChart(el);
+        chart._noDecal = true;
         var total = entries.length;
         var defaultCount = Math.min(total, total > 100 ? 80 : 30);
 
