@@ -252,7 +252,7 @@ def aggregate_items(item_ids, items, links, item_year, geo):
         'timeline': dict(sorted(timeline.items())),
         'types': sorted(types.values(), key=lambda x: -x['value']),
         'languages': sorted(languages.values(), key=lambda x: -x['value']),
-        'subjects': sorted(subjects.values(), key=lambda x: -x['value'])[:60],
+        'subjects': sorted(subjects.values(), key=lambda x: -x['value'])[:200],
         'contributors': sorted(contributors.values(), key=lambda x: -x['value'])[:30],
         'locations': sorted(locations.values(), key=lambda x: -x['value']),
         'totalItems': len(item_ids),

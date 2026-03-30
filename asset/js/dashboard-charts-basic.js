@@ -145,10 +145,14 @@
 
         var chart = initChart(el);
         var total = entries.length;
-        var defaultCount = Math.min(total, 30);
+        var defaultCount = Math.min(total, total > 100 ? 80 : 30);
 
         function wordCloudOption(count) {
             var slice = entries.slice(0, count);
+            // Scale parameters based on word count so 200+ words can fit.
+            var minFont = count > 100 ? 8 : count > 50 ? 10 : 12;
+            var maxFont = count > 100 ? 45 : count > 50 ? 55 : (count > 10 ? 60 : 80);
+            var grid = count > 100 ? 4 : count > 50 ? 6 : 8;
             return {
                 tooltip: {
                     confine: true,
@@ -157,9 +161,10 @@
                 aria: { enabled: true },
                 series: [{
                     type: 'wordCloud', shape: 'circle',
-                    sizeRange: [12, Math.max(40, Math.min(80, slice.length > 10 ? 60 : 80))],
-                    rotationRange: [-30, 30], rotationStep: 15, gridSize: 8,
-                    drawOutOfBound: false, layoutAnimation: true,
+                    sizeRange: [minFont, maxFont],
+                    rotationRange: [-30, 30], rotationStep: 15, gridSize: grid,
+                    drawOutOfBound: false, shrinkToFit: true, layoutAnimation: count <= 100,
+                    width: '95%', height: '95%',
                     textStyle: {
                         fontFamily: 'sans-serif',
                         color: function () { return COLORS[Math.floor(Math.random() * COLORS.length)]; }

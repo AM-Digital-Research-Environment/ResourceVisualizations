@@ -24,6 +24,7 @@
             style: ns.getBasemapStyle(),
             center: [10, 5],
             zoom: 2.5,
+            attributionControl: false,
             cooperativeGestures: true
         });
 

@@ -219,14 +219,14 @@
 
 .rv-word-slider input[type="range"] {
     flex: 1;
-    max-width: 200px;
+    max-width: 300px;
     height: 4px;
     accent-color: var(--rv-accent);
     cursor: pointer;
 }
 
 .rv-word-slider-value {
-    min-width: 1.8em;
+    min-width: 2.5em;
     text-align: center;
     font-variant-numeric: tabular-nums;
 }
@@ -481,16 +481,18 @@ button.rv-toolbar-btn:hover,
     font-size: 0.95rem;
     font-weight: 600;
     color: var(--rv-text-color);
-    padding-bottom: 0.5rem;
     flex-shrink: 0;
+    align-self: flex-end;
+    padding-bottom: 0.45rem;
 }
 
 /* Stats cards */
 .compare-stats {
-    display: flex;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 1rem;
     margin-bottom: 1.25rem;
-    flex-wrap: wrap;
+    align-items: stretch;
 }
 
 .compare-stat-card {

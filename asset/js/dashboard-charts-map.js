@@ -68,10 +68,9 @@
         map.addControl(new maplibregl.FullscreenControl(), 'top-right');
         if (maplibregl.GlobeControl) map.addControl(new maplibregl.GlobeControl(), 'top-right');
         map.addControl(new maplibregl.ScaleControl({ maxWidth: 100, unit: 'metric' }), 'bottom-left');
-        map.addControl(new maplibregl.AttributionControl({ compact: true, collapsed: true }), 'bottom-right');
+        // Attribution hidden — source info in map tiles. Users can inspect via browser.
 
         map.on('load', function () {
-            if (map.setProjection) map.setProjection({ type: 'globe' });
 
             var features = data.map(function (loc) {
                 return {

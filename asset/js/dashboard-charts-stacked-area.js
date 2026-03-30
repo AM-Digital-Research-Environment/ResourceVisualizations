@@ -21,6 +21,8 @@
     function buildStackedArea(el, data, stackKey) {
         if (!data || !data.years || !data.series || data.years.length < 2) return;
         var chart = initChart(el);
+        var hasZoom = data.years.length > 15;
+        var bottomMargin = hasZoom ? 90 : 50;
 
         chart.setOption({
             tooltip: {
@@ -31,10 +33,10 @@
             aria: { enabled: true },
             legend: {
                 type: 'scroll',
-                bottom: 5,
+                bottom: hasZoom ? 35 : 5,
                 textStyle: { fontSize: THEME.fontSize }
             },
-            grid: { left: 50, right: 30, top: 20, bottom: 60 },
+            grid: { left: 50, right: 30, top: 20, bottom: bottomMargin },
             xAxis: {
                 type: 'category',
                 data: data.years,
