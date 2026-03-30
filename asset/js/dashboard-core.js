@@ -89,12 +89,33 @@
         });
     };
 
-    /** Attach HTML-level save toolbar to a chart panel header. */
+    /* -- Global decal toggle state -- */
+
+    ns._decalEnabled = false;
+
+    /** Toggle decal patterns on all tracked ECharts instances. */
+    ns.toggleDecals = function () {
+        ns._decalEnabled = !ns._decalEnabled;
+        ns._allCharts.forEach(function (c) {
+            if (c.isDisposed()) return;
+            c.setOption({ aria: { enabled: true, decal: { show: ns._decalEnabled } } });
+        });
+        // Update all toggle button states.
+        document.querySelectorAll('[data-action="decal"]').forEach(function (btn) {
+            btn.classList.toggle('rv-toolbar-btn-active', ns._decalEnabled);
+            btn.title = ns._decalEnabled ? 'Hide patterns' : 'Show patterns';
+        });
+    };
+
+    /** Attach HTML-level toolbar (save + decal toggle) to a chart panel header. */
     ns.attachToolbar = function (panel, chart) {
         if (!chart || !chart.getDataURL) return;
         var bar = document.createElement('span');
         bar.className = 'rv-chart-toolbar';
-        bar.innerHTML = '<button type="button" class="rv-toolbar-btn" data-action="save" title="Save as image">'
+        bar.innerHTML = '<button type="button" class="rv-toolbar-btn' + (ns._decalEnabled ? ' rv-toolbar-btn-active' : '') + '" data-action="decal" title="' + (ns._decalEnabled ? 'Hide patterns' : 'Show patterns') + '">'
+            + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="20" x2="20" y2="4"/><line x1="4" y1="14" x2="14" y2="4"/><line x1="4" y1="8" x2="8" y2="4"/><line x1="10" y1="20" x2="20" y2="10"/><line x1="16" y1="20" x2="20" y2="16"/></svg>'
+            + '</button>'
+            + '<button type="button" class="rv-toolbar-btn" data-action="save" title="Save as image">'
             + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'
             + '</button>';
         var h4 = panel.querySelector('h4');
@@ -108,6 +129,8 @@
                 a.href = url;
                 a.download = (panel.querySelector('h4').textContent || 'chart').trim() + '.png';
                 a.click();
+            } else if (btn.dataset.action === 'decal') {
+                ns.toggleDecals();
             }
         });
     };

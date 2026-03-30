@@ -18,7 +18,7 @@
 
         chart.setOption({
             tooltip: { trigger: 'item', confine: true },
-            aria: { enabled: true, decal: { show: true } },
+            aria: { enabled: true, decal: { show: ns._decalEnabled } },
             series: [{
                 type: 'sankey', layout: 'none',
                 emphasis: { focus: 'adjacency' },

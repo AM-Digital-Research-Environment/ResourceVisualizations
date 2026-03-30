@@ -283,6 +283,12 @@ button.rv-toolbar-btn:hover,
     border-color: var(--rv-accent);
 }
 
+.rv-toolbar-btn-active {
+    background: var(--rv-accent) !important;
+    color: #fff !important;
+    border-color: var(--rv-accent) !important;
+}
+
 /* ------------------------------------------------------------------ */
 /*  Loading / error states                                             */
 /* ------------------------------------------------------------------ */

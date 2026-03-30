@@ -21,7 +21,7 @@
 
         chart.setOption({
             tooltip: { trigger: 'item', confine: true, formatter: '{b}: {c} ({d}%)' },
-            aria: { enabled: true, decal: { show: true } },
+            aria: { enabled: true, decal: { show: ns._decalEnabled } },
             legend: {
                 orient: 'vertical', right: 10, top: 'center',
                 type: 'scroll', textStyle: { fontSize: THEME.fontSize }

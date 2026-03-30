@@ -18,7 +18,7 @@
 
         chart.setOption({
             tooltip: { confine: true },
-            aria: { enabled: true, decal: { show: true } },
+            aria: { enabled: true, decal: { show: ns._decalEnabled } },
             series: [{
                 type: 'sunburst',
                 data: data,
