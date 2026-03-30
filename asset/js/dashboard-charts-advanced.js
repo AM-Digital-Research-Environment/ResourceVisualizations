@@ -242,8 +242,8 @@
             tooltip: { trigger: 'axis', confine: true },
             aria: { enabled: true, decal: { show: true } },
             dataZoom: zoom,
-            legend: { bottom: zoom.length ? 45 : 5, textStyle: { fontSize: THEME.fontSize }, type: 'scroll' },
-            grid: { left: 50, right: 20, top: 20, bottom: zoom.length ? 95 : 55 },
+            legend: { bottom: zoom.length ? 50 : 5, textStyle: { fontSize: THEME.fontSize }, type: 'scroll' },
+            grid: { left: 50, right: 20, top: 20, bottom: zoom.length ? 110 : 55 },
             xAxis: {
                 type: 'category', data: data.years,
                 axisLabel: { rotate: data.years.length > 15 ? 45 : 0, fontSize: THEME.fontSize }

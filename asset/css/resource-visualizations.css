@@ -156,6 +156,8 @@
     border-radius: var(--rv-radius);
     padding: 1rem;
     background: var(--rv-bg);
+    overflow: hidden;
+    min-width: 0;
 }
 
 .chart-panel-wide {
@@ -233,6 +235,7 @@
 
 .chart-container {
     width: 100%;
+    max-width: 100%;
     height: 350px;
 }
 

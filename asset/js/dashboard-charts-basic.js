@@ -160,11 +160,17 @@
                 },
                 aria: { enabled: true },
                 series: [{
-                    type: 'wordCloud', shape: 'circle',
+                    type: 'wordCloud',
+                    shape: function (theta) {
+                        // Rectangle polar equation — fills the full container
+                        var cos = Math.abs(Math.cos(theta));
+                        var sin = Math.abs(Math.sin(theta));
+                        return 1 / Math.max(cos, sin);
+                    },
                     sizeRange: [minFont, maxFont],
-                    rotationRange: [-30, 30], rotationStep: 15, gridSize: grid,
+                    rotationRange: [-45, 45], rotationStep: 15, gridSize: grid,
                     drawOutOfBound: false, shrinkToFit: true, layoutAnimation: count <= 100,
-                    width: '95%', height: '95%',
+                    left: 'center', top: 'center', width: '100%', height: '100%',
                     textStyle: {
                         fontFamily: 'sans-serif',
                         color: function () { return COLORS[Math.floor(Math.random() * COLORS.length)]; }
