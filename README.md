@@ -76,6 +76,7 @@ Parent/category items get aggregate dashboards spanning their entire item set. E
 | Group | 22536 | Top groups | Stacked timeline, types, languages, subjects |
 | LCSH Subjects | 3167 | Top LCSH subjects (418) | Stacked timeline, types, languages, roles, heatmap, subjects, subject trends |
 | Tags | 22199 | Top tags (773) | Stacked timeline, types, languages, subjects, subject trends |
+| Research Project | 3346 | Top projects (36) | Stacked timeline, language timeline, types, languages, roles, heatmap, subjects, subject trends |
 
 ### Compare Projects
 
@@ -172,8 +173,16 @@ ResourceVisualizations/
 │   │   ├── knowledge-graph.js                    # Graph + item map
 │   │   ├── dashboard-core.js                     # THEME, COLORS, helpers (window.RV)
 │   │   ├── dashboard-layouts.js                  # Per-resource-type layout configs
-│   │   ├── dashboard-charts-basic.js             # Timeline, pie, bar, word cloud
-│   │   ├── dashboard-charts-advanced.js          # Gantt, heatmap, chord, sankey, sunburst, stacked timeline
+│   │   ├── dashboard-charts-timeline.js          # Timeline (bar by year)
+│   │   ├── dashboard-charts-pie.js               # Pie/donut chart
+│   │   ├── dashboard-charts-bar.js               # Horizontal bar chart (top 20)
+│   │   ├── dashboard-charts-wordcloud.js         # Word cloud with slider
+│   │   ├── dashboard-charts-gantt.js             # Gantt chart (project timelines)
+│   │   ├── dashboard-charts-heatmap.js           # Heatmap (type × language)
+│   │   ├── dashboard-charts-chord.js             # Chord diagram (co-occurrence)
+│   │   ├── dashboard-charts-sankey.js            # Sankey flow diagram
+│   │   ├── dashboard-charts-sunburst.js          # Sunburst hierarchy
+│   │   ├── dashboard-charts-stacked-timeline.js  # Stacked bar by year and type
 │   │   ├── dashboard-charts-beeswarm.js          # Beeswarm scatter (projects by year)
 │   │   ├── dashboard-charts-map.js               # Geographic origins map, mini map
 │   │   ├── dashboard-charts-stacked-area.js      # Subject trends, language timeline
@@ -191,7 +200,13 @@ ResourceVisualizations/
 │       └── item-dashboards/            # Pre-computed dashboard JSON (~2,500 files)
 ├── scripts/
 │   ├── precompute-graphs.py            # Generate knowledge graph + location map JSON
-│   └── precompute-dashboards.py        # Generate dashboard JSON (all entities)
+│   ├── precompute-dashboards.py        # Thin orchestrator — calls the package below
+│   └── precompute/                     # Modular precompute package
+│       ├── config.py                   # Paths, template IDs, item set IDs
+│       ├── db.py                       # MySQL helpers, load_all_data()
+│       ├── aggregators.py              # aggregate_items(), all build_*() functions
+│       ├── generators.py               # generate_sections(), generate_projects(), etc.
+│       └── overviews.py                # generate_overview(), category overviews
 ├── ROADMAP.md                          # Full visualization roadmap
 └── README.md
 ```

@@ -147,6 +147,15 @@
                     'subjectTrends', 'locations'],
             tall:  ['topTags', 'subjects', 'subjectTrends', 'locations']
         },
+        projectOverview: {
+            order: ['topProjects', 'stackedTimeline', 'languageTimeline',
+                    'timeline', 'types', 'languages', 'roles', 'heatmap',
+                    'subjects', 'subjectTrends', 'locations', 'contributors'],
+            wide:  ['topProjects', 'stackedTimeline', 'languageTimeline',
+                    'heatmap', 'subjects', 'subjectTrends', 'locations'],
+            tall:  ['topProjects', 'heatmap', 'subjects', 'subjectTrends',
+                    'locations']
+        },
         researchItem: {
             order: ['timeline', 'types', 'languages', 'subjects',
                     'contributors', 'locations'],
