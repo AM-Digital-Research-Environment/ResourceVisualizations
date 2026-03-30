@@ -81,6 +81,72 @@
             tall:  ['genres', 'heatmap', 'subjects', 'subjectTrends',
                     'locations']
         },
+        languageOverview: {
+            order: ['topLanguages', 'stackedTimeline', 'languageTimeline',
+                    'timeline', 'types', 'roles', 'heatmap', 'subjects',
+                    'subjectTrends', 'locations', 'contributors'],
+            wide:  ['topLanguages', 'stackedTimeline', 'languageTimeline',
+                    'heatmap', 'subjects', 'subjectTrends', 'locations'],
+            tall:  ['topLanguages', 'heatmap', 'subjects', 'subjectTrends',
+                    'locations']
+        },
+        resourceTypeOverview: {
+            order: ['topResourceTypes', 'stackedTimeline', 'timeline',
+                    'languages', 'roles', 'heatmap', 'subjects',
+                    'subjectTrends', 'locations', 'contributors'],
+            wide:  ['topResourceTypes', 'stackedTimeline', 'heatmap',
+                    'subjects', 'subjectTrends', 'locations'],
+            tall:  ['topResourceTypes', 'heatmap', 'subjects',
+                    'subjectTrends', 'locations']
+        },
+        targetAudienceOverview: {
+            order: ['topAudiences', 'stackedTimeline', 'timeline', 'types',
+                    'languages', 'subjects', 'locations', 'contributors'],
+            wide:  ['topAudiences', 'stackedTimeline', 'subjects',
+                    'locations'],
+            tall:  ['topAudiences', 'subjects', 'locations']
+        },
+        personOverview: {
+            order: ['topPersons', 'stackedTimeline', 'timeline', 'types',
+                    'languages', 'roles', 'heatmap', 'subjects',
+                    'subjectTrends', 'locations', 'contributors'],
+            wide:  ['topPersons', 'stackedTimeline', 'heatmap', 'subjects',
+                    'subjectTrends', 'locations'],
+            tall:  ['topPersons', 'heatmap', 'subjects', 'subjectTrends',
+                    'locations']
+        },
+        institutionOverview: {
+            order: ['topInstitutions', 'stackedTimeline', 'timeline', 'types',
+                    'languages', 'roles', 'subjects', 'subjectTrends',
+                    'locations', 'contributors'],
+            wide:  ['topInstitutions', 'stackedTimeline', 'subjects',
+                    'subjectTrends', 'locations'],
+            tall:  ['topInstitutions', 'subjects', 'subjectTrends',
+                    'locations']
+        },
+        groupOverview: {
+            order: ['topGroups', 'stackedTimeline', 'timeline', 'types',
+                    'languages', 'subjects', 'locations', 'contributors'],
+            wide:  ['topGroups', 'stackedTimeline', 'subjects', 'locations'],
+            tall:  ['topGroups', 'subjects', 'locations']
+        },
+        lcshOverview: {
+            order: ['topSubjects', 'stackedTimeline', 'timeline', 'types',
+                    'languages', 'roles', 'heatmap', 'subjects',
+                    'subjectTrends', 'locations', 'contributors'],
+            wide:  ['topSubjects', 'stackedTimeline', 'heatmap', 'subjects',
+                    'subjectTrends', 'locations'],
+            tall:  ['topSubjects', 'heatmap', 'subjects', 'subjectTrends',
+                    'locations']
+        },
+        tagOverview: {
+            order: ['topTags', 'stackedTimeline', 'timeline', 'types',
+                    'languages', 'subjects', 'subjectTrends', 'locations',
+                    'contributors'],
+            wide:  ['topTags', 'stackedTimeline', 'subjects',
+                    'subjectTrends', 'locations'],
+            tall:  ['topTags', 'subjects', 'subjectTrends', 'locations']
+        },
         researchItem: {
             order: ['timeline', 'types', 'languages', 'subjects',
                     'contributors', 'locations'],

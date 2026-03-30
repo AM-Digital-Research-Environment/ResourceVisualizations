@@ -1207,6 +1207,140 @@ def generate_by_item_set(items, links, reverse_links, item_year, geo, item_sets,
     print(f'  {count} dashboards generated')
 
 
+# ── Category overview generator ──────────────────────────────────────
+
+def generate_overview(parent_id, label, set_items, terms, items, links,
+                      reverse_links, item_year, geo, resource_type,
+                      distribution_key, filter_fn=None):
+    """Generate an overview dashboard for a parent/category item.
+
+    Aggregates all research items linked to members of an item set, and
+    builds a distribution bar chart keyed by `distribution_key`.
+
+    Args:
+        parent_id:        Omeka S item ID for the parent item (e.g. 22198 for Genre).
+        label:            Human label for logging.
+        set_items:        List of item IDs in the item set.
+        terms:            Set of property terms used to link research items to set members.
+        distribution_key: Key name for the bar chart data (e.g. 'genres', 'topLanguages').
+        filter_fn:        Optional function(item_id, items) -> bool to filter set members.
+    """
+    members = [sid for sid in set_items if (not filter_fn or filter_fn(sid, items))]
+    if not members:
+        return
+    print(f'\n=== {label} Overview (item {parent_id}) ===')
+
+    all_items = set()
+    member_counts = {}
+    for mid in members:
+        linked = find_items_linking_to(mid, reverse_links, terms)
+        all_items.update(linked)
+        if linked:
+            mtitle = items.get(mid, {}).get('title', f'Item {mid}')
+            member_counts[mtitle] = {'name': mtitle, 'value': len(linked), 'itemId': mid}
+
+    all_items = list(all_items)
+    if not all_items:
+        print(f'  No linked items found')
+        return
+
+    dashboard = aggregate_items(all_items, items, links, item_year, geo)
+    dashboard[distribution_key] = sorted(member_counts.values(), key=lambda x: -x['value'])
+
+    stacked = build_stacked_timeline(all_items, links, items, item_year)
+    if stacked:
+        dashboard['stackedTimeline'] = stacked
+    heatmap = build_heatmap(all_items, links, items)
+    if heatmap:
+        dashboard['heatmap'] = heatmap
+    roles = build_roles(all_items, links, items)
+    if roles:
+        dashboard['roles'] = roles
+    subj_trends = build_subject_trends(all_items, links, items, item_year)
+    if subj_trends:
+        dashboard['subjectTrends'] = subj_trends
+    lang_timeline = build_language_timeline(all_items, links, items, item_year)
+    if lang_timeline:
+        dashboard['languageTimeline'] = lang_timeline
+
+    dashboard['resourceType'] = resource_type
+    save_json(parent_id, dashboard)
+    print(f'  {len(all_items)} items, {len(member_counts)} {distribution_key}')
+
+
+def generate_category_overviews(items, links, reverse_links, item_year, geo, item_sets):
+    """Generate overview dashboards for all category parent items."""
+
+    # Gather all marcrel + creator/contributor terms for person/institution lookups.
+    person_terms = {'dcterms:creator', 'dcterms:contributor'}
+    inst_terms = {'frapo:isFundedBy', 'dcterms:provenance'}
+    for rev in reverse_links.values():
+        for t in rev:
+            if t.startswith('marcrel:'):
+                person_terms.add(t)
+                inst_terms.add(t)
+
+    # Genre (22198) — item set 21, linked via dcterms:format
+    generate_overview(22198, 'Genre', item_sets.get(21, []),
+                      {'dcterms:format'}, items, links, reverse_links,
+                      item_year, geo, 'genreOverview', 'genres')
+
+    # Language (2039) — item set 19, linked via dcterms:language
+    generate_overview(2039, 'Language', item_sets.get(19, []),
+                      {'dcterms:language'}, items, links, reverse_links,
+                      item_year, geo, 'languageOverview', 'topLanguages')
+
+    # Resource Type (22203) — item set 1, linked via dcterms:type
+    generate_overview(22203, 'Resource Type', item_sets.get(1, []),
+                      {'dcterms:type'}, items, links, reverse_links,
+                      item_year, geo, 'resourceTypeOverview', 'topResourceTypes')
+
+    # Target Audience (22479) — item set 3169, linked via dcterms:audience
+    generate_overview(22479, 'Target Audience', item_sets.get(3169, []),
+                      {'dcterms:audience'}, items, links, reverse_links,
+                      item_year, geo, 'targetAudienceOverview', 'topAudiences')
+
+    # Person (22200) — item set 18, linked via marcrel:* + dcterms:creator/contributor
+    generate_overview(22200, 'Person', item_sets.get(18, []),
+                      person_terms, items, links, reverse_links,
+                      item_year, geo, 'personOverview', 'topPersons')
+
+    # Institution (22202) — item set 110, linked via frapo:isFundedBy + provenance + marcrel:*
+    # Filter to actual institutions (foaf:Organization), excluding groups.
+    generate_overview(22202, 'Institution', item_sets.get(110, []),
+                      inst_terms, items, links, reverse_links,
+                      item_year, geo, 'institutionOverview', 'topInstitutions',
+                      filter_fn=lambda iid, it: it.get(iid, {}).get('class_term') == 'foaf:Organization')
+
+    # Group (22536) — also in item set 110 but with group class/template
+    # Groups are organizations too — filter differently if needed. Use same terms.
+    generate_overview(22536, 'Group', item_sets.get(110, []),
+                      inst_terms, items, links, reverse_links,
+                      item_year, geo, 'groupOverview', 'topGroups')
+
+    # LCSH Subjects (3167) — item set 1852, filtered to those with dcterms:type = 3167
+    def is_lcsh(sid, it):
+        for term, label, vrid in links.get(sid, []):
+            if term == 'dcterms:type' and vrid == 3167:
+                return True
+        return False
+    generate_overview(3167, 'LCSH Subject', item_sets.get(1852, []),
+                      {'dcterms:subject'}, items, links, reverse_links,
+                      item_year, geo, 'lcshOverview', 'topSubjects',
+                      filter_fn=is_lcsh)
+
+    # Tag (22199) — item set 1852, filtered to those WITHOUT dcterms:type = 3167
+    def is_tag(sid, it):
+        for term, label, vrid in links.get(sid, []):
+            if term == 'dcterms:type' and vrid == 3167:
+                return False
+        return True
+    generate_overview(22199, 'Tag', item_sets.get(1852, []),
+                      {'dcterms:subject'}, items, links, reverse_links,
+                      item_year, geo, 'tagOverview', 'topTags',
+                      filter_fn=is_tag)
+
+
 # ── Main ──────────────────────────────────────────────────────────────
 
 def main():
@@ -1235,39 +1369,8 @@ def main():
                          set_id=21, term='dcterms:format', label='Genres',
                          resource_type='genre')
 
-    # ── Genre Overview (item 22198 — the "Genre" parent item) ────────────
-    genre_set_items = item_sets.get(21, [])
-    if genre_set_items:
-        print(f'\n=== Genre Overview (item 22198) ===')
-        # Collect ALL research items that link to any genre.
-        all_genre_items = set()
-        genre_counts = {}
-        for gid in genre_set_items:
-            linked = find_items_linking_to(gid, reverse_links, {'dcterms:format'})
-            all_genre_items.update(linked)
-            if linked:
-                gtitle = items.get(gid, {}).get('title', f'Genre {gid}')
-                genre_counts[gtitle] = {'name': gtitle, 'value': len(linked), 'itemId': gid}
-        all_genre_items = list(all_genre_items)
-        if all_genre_items:
-            dashboard = aggregate_items(all_genre_items, items, links, item_year, geo)
-            # Genre distribution bar chart.
-            dashboard['genres'] = sorted(genre_counts.values(), key=lambda x: -x['value'])
-            stacked = build_stacked_timeline(all_genre_items, links, items, item_year)
-            if stacked:
-                dashboard['stackedTimeline'] = stacked
-            heatmap = build_heatmap(all_genre_items, links, items)
-            if heatmap:
-                dashboard['heatmap'] = heatmap
-            roles = build_roles(all_genre_items, links, items)
-            if roles:
-                dashboard['roles'] = roles
-            subj_trends = build_subject_trends(all_genre_items, links, items, item_year)
-            if subj_trends:
-                dashboard['subjectTrends'] = subj_trends
-            dashboard['resourceType'] = 'genreOverview'
-            save_json(22198, dashboard)
-            print(f'  Overview: {len(all_genre_items)} items, {len(genre_counts)} genres')
+    # ── Category overviews (parent items aggregating an entire item set) ──
+    generate_category_overviews(items, links, reverse_links, item_year, geo, item_sets)
 
     # ── Collection Overview (all research items) ─────────────────────────
     research_items = [iid for iid, info in items.items()

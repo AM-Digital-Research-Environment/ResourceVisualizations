@@ -61,6 +61,22 @@ Note: The basic Timeline is automatically hidden when the Stacked Timeline is av
 
 Dashboard layouts are resource-type-aware: each resource template has its own chart order and wide/tall configuration defined in `dashboard-layouts.js`. This prevents layout gaps in the 2-column grid by pairing half-width charts side by side.
 
+### Category Overviews (Item Pages)
+
+Parent/category items get aggregate dashboards spanning their entire item set. Each overview includes a ranked distribution bar chart of the category members plus contextual charts:
+
+| Overview | Item ID | Distribution Chart | Additional Charts |
+|---|---|---|---|
+| Genre | 22198 | Top genres (124) | Stacked timeline, types, languages, roles, heatmap, subjects, subject trends |
+| Language | 2039 | Top languages (28) | Stacked timeline, language timeline, types, roles, heatmap, subjects, subject trends |
+| Resource Type | 22203 | Top types (16) | Stacked timeline, languages, roles, heatmap, subjects, subject trends |
+| Target Audience | 22479 | Top audiences (49) | Stacked timeline, types, languages, subjects |
+| Person | 22200 | Top persons (1,242) | Stacked timeline, types, languages, roles, heatmap, subjects, subject trends |
+| Institution | 22202 | Top institutions (552) | Stacked timeline, types, languages, roles, subjects, subject trends |
+| Group | 22536 | Top groups | Stacked timeline, types, languages, subjects |
+| LCSH Subjects | 3167 | Top LCSH subjects (418) | Stacked timeline, types, languages, roles, heatmap, subjects, subject trends |
+| Tags | 22199 | Top tags (773) | Stacked timeline, types, languages, subjects, subject trends |
+
 ### Compare Projects
 
 Side-by-side comparison of two projects with paired charts (stacked timeline, resource types, languages, subjects) and overlap statistics (shared subject percentage, shared subject badges). Accessible as a resource page block.
