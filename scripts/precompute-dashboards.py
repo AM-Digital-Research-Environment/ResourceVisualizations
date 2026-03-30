@@ -1232,7 +1232,42 @@ def main():
                          set_id=19, term='dcterms:language', label='Languages',
                          exclude_keys=['languages'])
     generate_by_item_set(items, links, reverse_links, item_year, geo, item_sets,
-                         set_id=21, term='dcterms:format', label='Genres')
+                         set_id=21, term='dcterms:format', label='Genres',
+                         resource_type='genre')
+
+    # ── Genre Overview (item 22198 — the "Genre" parent item) ────────────
+    genre_set_items = item_sets.get(21, [])
+    if genre_set_items:
+        print(f'\n=== Genre Overview (item 22198) ===')
+        # Collect ALL research items that link to any genre.
+        all_genre_items = set()
+        genre_counts = {}
+        for gid in genre_set_items:
+            linked = find_items_linking_to(gid, reverse_links, {'dcterms:format'})
+            all_genre_items.update(linked)
+            if linked:
+                gtitle = items.get(gid, {}).get('title', f'Genre {gid}')
+                genre_counts[gtitle] = {'name': gtitle, 'value': len(linked), 'itemId': gid}
+        all_genre_items = list(all_genre_items)
+        if all_genre_items:
+            dashboard = aggregate_items(all_genre_items, items, links, item_year, geo)
+            # Genre distribution bar chart.
+            dashboard['genres'] = sorted(genre_counts.values(), key=lambda x: -x['value'])
+            stacked = build_stacked_timeline(all_genre_items, links, items, item_year)
+            if stacked:
+                dashboard['stackedTimeline'] = stacked
+            heatmap = build_heatmap(all_genre_items, links, items)
+            if heatmap:
+                dashboard['heatmap'] = heatmap
+            roles = build_roles(all_genre_items, links, items)
+            if roles:
+                dashboard['roles'] = roles
+            subj_trends = build_subject_trends(all_genre_items, links, items, item_year)
+            if subj_trends:
+                dashboard['subjectTrends'] = subj_trends
+            dashboard['resourceType'] = 'genreOverview'
+            save_json(22198, dashboard)
+            print(f'  Overview: {len(all_genre_items)} items, {len(genre_counts)} genres')
 
     # ── Collection Overview (all research items) ─────────────────────────
     research_items = [iid for iid, info in items.items()

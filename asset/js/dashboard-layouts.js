@@ -66,6 +66,21 @@
             wide:  ['coSubjects', 'locations'],
             tall:  ['coSubjects', 'locations']
         },
+        genre: {
+            order: ['timeline', 'types', 'languages', 'subjects',
+                    'contributors', 'locations'],
+            wide:  ['subjects', 'locations'],
+            tall:  ['subjects', 'locations']
+        },
+        genreOverview: {
+            order: ['genres', 'stackedTimeline', 'timeline', 'types',
+                    'languages', 'roles', 'heatmap', 'subjects',
+                    'subjectTrends', 'locations', 'contributors'],
+            wide:  ['genres', 'stackedTimeline', 'heatmap', 'subjects',
+                    'subjectTrends', 'locations'],
+            tall:  ['genres', 'heatmap', 'subjects', 'subjectTrends',
+                    'locations']
+        },
         researchItem: {
             order: ['timeline', 'types', 'languages', 'subjects',
                     'contributors', 'locations'],
@@ -77,7 +92,7 @@
     ns.DEFAULT_LAYOUT = {
         order: ['selfLocation', 'stackedTimeline', 'languageTimeline',
                 'timeline', 'gantt', 'beeswarm', 'types', 'languages',
-                'roles', 'heatmap', 'subjects', 'subjectTrends', 'sunburst',
+                'roles', 'genres', 'heatmap', 'subjects', 'subjectTrends', 'sunburst',
                 'treemap', 'locations', 'geoFlows', 'chord', 'collabNetwork',
                 'contributorNetwork', 'affiliationNetwork', 'contributors',
                 'coAuthors', 'coSubjects', 'projects', 'sankey'],
