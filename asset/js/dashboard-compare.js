@@ -152,6 +152,9 @@
         return container;
     }
 
+    /** Pending chart inits — deferred until DOM is ready. */
+    var pendingCharts = [];
+
     function buildChartSide(key, label, data, siteBase, tall) {
         var panel = document.createElement('div');
         panel.className = 'chart-panel compare-chart-panel';
@@ -182,15 +185,22 @@
         el.setAttribute('data-chart', key);
         panel.appendChild(el);
 
-        // Defer chart init so the DOM element has dimensions
-        setTimeout(function () {
-            if (ns.CHART_MAP && ns.CHART_MAP[key]) {
-                var chart = ns.CHART_MAP[key](el, chartData, siteBase);
-                if (chart) ns.attachToolbar(panel, chart);
-            }
-        }, 0);
+        // Queue chart init — will be flushed after all panels are in the DOM.
+        pendingCharts.push({ el: el, key: key, data: chartData, siteBase: siteBase, panel: panel });
 
         return panel;
+    }
+
+    function flushPendingCharts() {
+        requestAnimationFrame(function () {
+            pendingCharts.forEach(function (p) {
+                if (ns.CHART_MAP && ns.CHART_MAP[p.key]) {
+                    var chart = ns.CHART_MAP[p.key](p.el, p.data, p.siteBase);
+                    if (chart) ns.attachToolbar(p.panel, chart);
+                }
+            });
+            pendingCharts = [];
+        });
     }
 
     /* ------------------------------------------------------------------ */
@@ -298,10 +308,14 @@
             content.appendChild(statsDiv);
 
             // Chart pairs
+            pendingCharts = [];
             COMPARE_CHARTS.forEach(function (cfg) {
                 var pair = buildChartPair(cfg.key, cfg.label, leftData, rightData, siteBase, cfg.tall);
                 content.appendChild(pair);
             });
+
+            // Init charts now that all elements are in the DOM.
+            flushPendingCharts();
         }
     }
 
