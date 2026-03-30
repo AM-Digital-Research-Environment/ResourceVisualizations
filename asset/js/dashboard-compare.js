@@ -302,15 +302,32 @@
                 return;
             }
 
-            // Stats
+            // Build unified copies so both sides use consistent colors.
+            var unify = ns.unifyForComparison;
+            var uLeft = leftData ? JSON.parse(JSON.stringify(leftData)) : null;
+            var uRight = rightData ? JSON.parse(JSON.stringify(rightData)) : null;
+
+            if (uLeft && uRight && unify) {
+                // Unify entry-based charts (bar, pie): same name order = same color index.
+                ['types', 'languages', 'subjects'].forEach(function (key) {
+                    var order = unify.buildUnifiedOrder(uLeft, uRight, key);
+                    uLeft = unify.reorderEntries(uLeft, key, order);
+                    uRight = unify.reorderEntries(uRight, key, order);
+                });
+
+                // Unify stacked charts: same series order = same color index.
+                unify.unifyStackedSeries(uLeft, uRight, 'stackedTimeline');
+            }
+
+            // Stats (use original data for overlap computation)
             var statsDiv = document.createElement('div');
             statsDiv.innerHTML = buildStatsPanel(leftData, rightData);
             content.appendChild(statsDiv);
 
-            // Chart pairs
+            // Chart pairs (use unified copies)
             pendingCharts = [];
             COMPARE_CHARTS.forEach(function (cfg) {
-                var pair = buildChartPair(cfg.key, cfg.label, leftData, rightData, siteBase, cfg.tall);
+                var pair = buildChartPair(cfg.key, cfg.label, uLeft, uRight, siteBase, cfg.tall);
                 content.appendChild(pair);
             });
 
