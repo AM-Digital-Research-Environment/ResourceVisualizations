@@ -57,7 +57,7 @@
         chartKeys.forEach(function (key) {
             var el = container.querySelector('[data-chart="' + key + '"]');
             if (el && data[key] && ns.CHART_MAP && ns.CHART_MAP[key]) {
-                var chart = ns.CHART_MAP[key](el, data[key], siteBase);
+                var chart = ns.CHART_MAP[key](el, data[key], siteBase, data);
                 if (chart) {
                     charts.push(chart);
                     ns.attachToolbar(el.closest('.chart-panel'), chart);

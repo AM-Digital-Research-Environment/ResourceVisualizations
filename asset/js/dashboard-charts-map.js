@@ -52,7 +52,7 @@
 
     /* -- Geographic origins map -- */
 
-    ns.charts.buildMap = function (el, data, siteBase) {
+    ns.charts.buildMap = function (el, data, siteBase, allData) {
         if (!data || !data.length || typeof maplibregl === 'undefined') return null;
 
         el.style.borderRadius = '6px';
@@ -127,20 +127,105 @@
                 if (loc.items && loc.items.length) locationItems[loc.name] = loc.items;
             });
 
+            // --- GeoFlows overlay (origin → current location) ---
+            var geoFlows = allData && allData.geoFlows;
+            var hasFlows = geoFlows && geoFlows.links && geoFlows.links.length > 0;
+            var currentColor = COLORS[2];
+
+            if (hasFlows) {
+                var flowFeatures = geoFlows.links.map(function (l) {
+                    return {
+                        type: 'Feature',
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: [[l.fromLon, l.fromLat], [l.toLon, l.toLat]]
+                        },
+                        properties: {
+                            from: l.from, to: l.to, value: l.value,
+                            width: Math.max(1, Math.min(6, Math.sqrt(l.value)))
+                        }
+                    };
+                });
+
+                map.addSource('flows', {
+                    type: 'geojson',
+                    data: { type: 'FeatureCollection', features: flowFeatures }
+                });
+
+                // Flow lines rendered below origin points.
+                map.addLayer({
+                    id: 'flow-lines',
+                    type: 'line',
+                    source: 'flows',
+                    paint: {
+                        'line-color': THEME.accent,
+                        'line-width': ['get', 'width'],
+                        'line-opacity': 0.35
+                    }
+                }, 'clusters'); // insert before clusters layer
+
+                // Current-location dots.
+                var seenCurrents = {};
+                var currentFeatures = [];
+                geoFlows.links.forEach(function (l) {
+                    var key = l.toLat + ',' + l.toLon;
+                    if (!seenCurrents[key]) {
+                        seenCurrents[key] = true;
+                        currentFeatures.push({
+                            type: 'Feature',
+                            geometry: { type: 'Point', coordinates: [l.toLon, l.toLat] },
+                            properties: { name: l.to }
+                        });
+                    }
+                });
+
+                map.addSource('currents', {
+                    type: 'geojson',
+                    data: { type: 'FeatureCollection', features: currentFeatures }
+                });
+
+                map.addLayer({
+                    id: 'current-dots',
+                    type: 'circle',
+                    source: 'currents',
+                    paint: {
+                        'circle-radius': 7,
+                        'circle-color': currentColor,
+                        'circle-stroke-width': 2,
+                        'circle-stroke-color': '#fff',
+                        'circle-opacity': 0.85
+                    }
+                });
+
+                map.addLayer({
+                    id: 'current-labels',
+                    type: 'symbol',
+                    source: 'currents',
+                    layout: { 'text-field': '{name}', 'text-size': 11, 'text-offset': [0, 1.8], 'text-anchor': 'top' },
+                    paint: { 'text-color': THEME.text, 'text-halo-color': THEME.border, 'text-halo-width': 1.5 }
+                });
+            }
+
+            // --- Popup management (single popup at a time) ---
             var activePopup = null;
-            map.on('click', 'points', function (e) {
+            function showPopup(lngLat, html) {
                 if (activePopup) activePopup.remove();
+                activePopup = new maplibregl.Popup({ offset: 12, maxWidth: '320px', className: 'rv-map-popup' })
+                    .setLngLat(lngLat)
+                    .setHTML(html)
+                    .addTo(map);
+                return activePopup;
+            }
+
+            map.on('click', 'points', function (e) {
                 var props = e.features[0].properties;
                 var locItems = locationItems[props.name] || [];
                 var perPage = 8;
 
-                activePopup = new maplibregl.Popup({ offset: 12, maxWidth: '320px', className: 'rv-map-popup' })
-                    .setLngLat(e.lngLat)
-                    .setHTML(buildMapPopup(props, locItems, 0, perPage, siteBase))
-                    .addTo(map);
+                showPopup(e.lngLat, buildMapPopup(props, locItems, 0, perPage, siteBase));
 
                 function attachPageHandlers() {
-                    var el = activePopup.getElement();
+                    var el = activePopup && activePopup.getElement();
                     if (!el) return;
                     el.querySelectorAll('[data-page]').forEach(function (btn) {
                         btn.addEventListener('click', function (evt) {
@@ -153,6 +238,25 @@
                 }
                 attachPageHandlers();
             });
+
+            if (hasFlows) {
+                map.on('click', 'flow-lines', function (e) {
+                    var p = e.features[0].properties;
+                    showPopup(e.lngLat,
+                        '<div class="rv-popup-content"><strong>' + p.from + '</strong> \u2192 <strong>' + p.to + '</strong><br/>' + p.value + ' items</div>');
+                });
+
+                map.on('click', 'current-dots', function (e) {
+                    var p = e.features[0].properties;
+                    showPopup(e.lngLat,
+                        '<div class="rv-popup-content"><strong>' + p.name + '</strong><br/><em>Current location</em></div>');
+                });
+
+                ['flow-lines', 'current-dots'].forEach(function (layerId) {
+                    map.on('mouseenter', layerId, function () { map.getCanvas().style.cursor = 'pointer'; });
+                    map.on('mouseleave', layerId, function () { map.getCanvas().style.cursor = ''; });
+                });
+            }
 
             map.on('click', 'clusters', function (e) {
                 var clusterId = e.features[0].properties.cluster_id;
@@ -167,13 +271,35 @@
             map.on('mouseenter', 'clusters', function () { map.getCanvas().style.cursor = 'pointer'; });
             map.on('mouseleave', 'clusters', function () { map.getCanvas().style.cursor = ''; });
 
-            if (features.length > 1) {
-                var bounds = new maplibregl.LngLatBounds();
+            // --- Fit bounds ---
+            var bounds = new maplibregl.LngLatBounds();
+            if (features.length) {
                 features.forEach(function (f) { bounds.extend(f.geometry.coordinates); });
-                map.fitBounds(bounds, { padding: 40, maxZoom: 6 });
-            } else if (features.length === 1) {
-                map.setCenter(features[0].geometry.coordinates);
-                map.setZoom(4);
+            }
+            if (hasFlows) {
+                geoFlows.links.forEach(function (l) {
+                    bounds.extend([l.toLon, l.toLat]);
+                });
+            }
+            if (!bounds.isEmpty()) {
+                if (features.length === 1 && !hasFlows) {
+                    map.setCenter(features[0].geometry.coordinates);
+                    map.setZoom(4);
+                } else {
+                    map.fitBounds(bounds, { padding: 40, maxZoom: 6 });
+                }
+            }
+
+            // --- Legend ---
+            if (hasFlows) {
+                var legend = document.createElement('div');
+                legend.className = 'rv-map-legend';
+                legend.innerHTML =
+                    '<div class="rv-map-legend-row"><span class="rv-map-legend-dot" style="background:' + THEME.accent + '"></span> Place of Origin</div>' +
+                    '<div class="rv-map-legend-row"><span class="rv-map-legend-dot" style="background:' + currentColor + '"></span> Current Location</div>' +
+                    '<div class="rv-map-legend-row"><span class="rv-map-legend-line" style="background:' + THEME.accent + '"></span> Flow</div>';
+                el.style.position = 'relative';
+                el.appendChild(legend);
             }
         });
 

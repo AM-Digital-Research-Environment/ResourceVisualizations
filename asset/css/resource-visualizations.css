@@ -349,11 +349,58 @@ button.rv-toolbar-btn:hover,
 /* Consistent close button for ALL MapLibre popups in the module. */
 .resource-vis-block .maplibregl-popup-close-button,
 .rv-item-map-panel .maplibregl-popup-close-button {
-    font-size: 16px;
+    font-size: 18px;
+    font-weight: bold;
     width: 24px;
     height: 24px;
     line-height: 24px;
     padding: 0;
+    color: #555;
+    background: transparent;
+    border: none;
+    border-radius: 3px;
+}
+
+.resource-vis-block .maplibregl-popup-close-button:hover,
+.rv-item-map-panel .maplibregl-popup-close-button:hover {
+    color: #000;
+    background: rgba(0, 0, 0, 0.08);
+}
+
+/* Map legend */
+.rv-map-legend {
+    position: absolute;
+    bottom: 30px;
+    left: 10px;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    z-index: 2;
+    pointer-events: none;
+}
+
+.rv-map-legend-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rv-map-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.2);
+    flex-shrink: 0;
+}
+
+.rv-map-legend-line {
+    width: 16px;
+    height: 2px;
+    flex-shrink: 0;
+    opacity: 0.6;
 }
 
 .rv-map-popup {
@@ -651,6 +698,15 @@ button.rv-toolbar-btn:hover,
     color: #ccc;
 }
 
+.rv-dark-mode .maplibregl-popup-close-button {
+    color: #ccc;
+}
+
+.rv-dark-mode .maplibregl-popup-close-button:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+}
+
 .rv-dark-mode .rv-map-popup .maplibregl-popup-content {
     background: #2a2a2a;
     color: #ddd;
@@ -658,6 +714,11 @@ button.rv-toolbar-btn:hover,
 
 .rv-dark-mode .rv-map-popup .maplibregl-popup-tip {
     border-top-color: #2a2a2a;
+}
+
+.rv-dark-mode .rv-map-legend {
+    background: rgba(42, 42, 42, 0.92);
+    color: #ddd;
 }
 
 .rv-dark-mode .rv-popup-items a {
