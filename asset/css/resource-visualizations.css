@@ -564,20 +564,22 @@ button.rv-toolbar-btn:hover,
 
 /* Chart pair rows — always 2 columns for side-by-side comparison */
 .compare-chart-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
     gap: 1rem;
     margin-bottom: 1.25rem;
 }
 
-.compare-chart-panel {
+.compare-chart-row > .compare-chart-panel {
     min-width: 0;
     max-width: 100%;
     overflow: hidden;
+    width: auto;
 }
 
 .compare-chart-panel .chart-container {
     width: 100%;
+    max-width: 100%;
 }
 
 .compare-content .rv-no-data {
