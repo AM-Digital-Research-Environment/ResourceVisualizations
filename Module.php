@@ -43,5 +43,8 @@ class Module extends AbstractModule
         $view->headScript()->appendFile(
             'https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js'
         );
+        $view->headScript()->appendFile(
+            $view->assetUrl('js/dashboard-core.js', 'ResourceVisualizations')
+        );
     }
 }

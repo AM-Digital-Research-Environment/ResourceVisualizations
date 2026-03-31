@@ -12,7 +12,6 @@ if (empty($items)) {
     return;
 }
 
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-core.js', 'ResourceVisualizations'));
 $this->headScript()->appendFile($this->assetUrl('js/dashboard-layouts.js', 'ResourceVisualizations'));
 $this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-timeline.js', 'ResourceVisualizations'));
 $this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-pie.js', 'ResourceVisualizations'));
