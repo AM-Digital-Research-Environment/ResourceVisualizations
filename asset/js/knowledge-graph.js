@@ -206,11 +206,23 @@
         row.className = 'rv-kg-slider';
 
         var lbl = document.createElement('label');
-        var span = document.createElement('span');
-        span.className = 'rv-kg-slider-label';
-        span.textContent = label;
-        lbl.appendChild(span);
 
+        // Top row: label text + current value, side by side.
+        var topRow = document.createElement('span');
+        topRow.className = 'rv-kg-slider-label';
+
+        var labelText = document.createElement('span');
+        labelText.textContent = label;
+        topRow.appendChild(labelText);
+
+        var val = document.createElement('span');
+        val.className = 'rv-kg-slider-value';
+        val.textContent = value + suffix;
+        topRow.appendChild(val);
+
+        lbl.appendChild(topRow);
+
+        // Second row: full-width slider.
         var input = document.createElement('input');
         input.type = 'range';
         input.min = min;
@@ -218,13 +230,9 @@
         input.value = value;
         lbl.appendChild(input);
 
-        var val = document.createElement('span');
-        val.className = 'rv-kg-slider-value';
-        val.textContent = value + suffix;
-        lbl.appendChild(val);
-
         row.appendChild(lbl);
 
+        // Third row: description.
         if (description) {
             var desc = document.createElement('div');
             desc.className = 'rv-kg-slider-desc';
@@ -379,6 +387,7 @@
                 tooltip: {
                     trigger: 'item',
                     confine: true,
+                    extraCssText: 'word-spacing:normal;letter-spacing:normal;white-space:normal;font-family:sans-serif;line-height:1.5;',
                     formatter: function (p) {
                         if (p.dataType === 'node') {
                             var c = data.categories[p.data.category];
