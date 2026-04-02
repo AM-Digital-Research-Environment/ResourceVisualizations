@@ -97,8 +97,258 @@
     }
 
     /* ------------------------------------------------------------------ */
+    /*  Filter panel                                                       */
+    /* ------------------------------------------------------------------ */
+
+    /** True when any shared edge carries IDF metadata (precomputed data). */
+    function hasFilterData(data) {
+        for (var i = 0; i < data.edges.length; i++) {
+            if (data.edges[i].isShared && data.edges[i].idf !== undefined) return true;
+        }
+        return false;
+    }
+
+    /** Build the collapsible slider panel.  Returns {el, onChange}. */
+    function buildFilterPanel(data) {
+        var stats = data.stats || {};
+        var hasShared = false;
+        for (var i = 0; i < data.nodes.length; i++) {
+            if (data.nodes[i].strength !== undefined) { hasShared = true; break; }
+        }
+
+        var maxFreq = stats.maxFreqPct || 100;
+        var maxStr  = stats.maxStrength || 10;
+
+        // Outer wrapper
+        var wrap = document.createElement('div');
+        wrap.className = 'rv-kg-filters';
+
+        // Toggle button
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'rv-btn rv-kg-filters-toggle';
+        btn.setAttribute('aria-expanded', 'false');
+        btn.setAttribute('aria-label', 'Toggle graph filters');
+        btn.title = 'Filters';
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>';
+        wrap.appendChild(btn);
+
+        // Panel (hidden by default)
+        var panel = document.createElement('div');
+        panel.className = 'rv-kg-filters-panel';
+        panel.hidden = true;
+        wrap.appendChild(panel);
+
+        btn.addEventListener('click', function () {
+            var open = panel.hidden;
+            panel.hidden = !open;
+            btn.setAttribute('aria-expanded', String(open));
+            btn.classList.toggle('rv-btn-active', open);
+        });
+
+        // State for slider values
+        var state = {
+            maxCommonality: Math.ceil(maxFreq),
+            minStrength: 0,
+            maxNodes: data.nodes.length,
+        };
+        var callbacks = [];
+
+        function fireChange() {
+            for (var i = 0; i < callbacks.length; i++) callbacks[i](state);
+        }
+
+        // ── Max commonality slider ──
+        var s1 = makeSlider(
+            'Max. commonality',
+            'Hide connections through resources shared by too many items',
+            1, Math.ceil(maxFreq), state.maxCommonality, '%'
+        );
+        panel.appendChild(s1.el);
+        s1.onInput(function (v) { state.maxCommonality = v; fireChange(); });
+
+        // ── Min strength slider ──
+        if (hasShared) {
+            // Round up for slider max so the entire range is reachable.
+            var strMax = Math.ceil(maxStr);
+            if (strMax < 1) strMax = 1;
+            var s2 = makeSlider(
+                'Min. connection strength',
+                'Only show shared items with strong distinctive links',
+                0, strMax, 0, ''
+            );
+            panel.appendChild(s2.el);
+            s2.onInput(function (v) { state.minStrength = v; fireChange(); });
+        }
+
+        // ── Max neighbours slider ──
+        var totalNodes = data.nodes.length;
+        if (totalNodes > 10) {
+            var s3 = makeSlider(
+                'Max. neighbours',
+                'Limit the number of visible nodes',
+                5, totalNodes, totalNodes, ''
+            );
+            panel.appendChild(s3.el);
+            s3.onInput(function (v) { state.maxNodes = v; fireChange(); });
+        }
+
+        return {
+            el: wrap,
+            onChange: function (cb) { callbacks.push(cb); },
+            state: state,
+        };
+    }
+
+    /** Create a single labelled range slider.  Returns {el, onInput}. */
+    function makeSlider(label, description, min, max, value, suffix) {
+        var row = document.createElement('div');
+        row.className = 'rv-kg-slider';
+
+        var lbl = document.createElement('label');
+        var span = document.createElement('span');
+        span.className = 'rv-kg-slider-label';
+        span.textContent = label;
+        lbl.appendChild(span);
+
+        var input = document.createElement('input');
+        input.type = 'range';
+        input.min = min;
+        input.max = max;
+        input.value = value;
+        lbl.appendChild(input);
+
+        var val = document.createElement('span');
+        val.className = 'rv-kg-slider-value';
+        val.textContent = value + suffix;
+        lbl.appendChild(val);
+
+        row.appendChild(lbl);
+
+        if (description) {
+            var desc = document.createElement('div');
+            desc.className = 'rv-kg-slider-desc';
+            desc.textContent = description;
+            row.appendChild(desc);
+        }
+
+        var cbs = [];
+        input.addEventListener('input', function () {
+            var v = Number(input.value);
+            val.textContent = v + suffix;
+            for (var i = 0; i < cbs.length; i++) cbs[i](v);
+        });
+
+        return { el: row, onInput: function (cb) { cbs.push(cb); } };
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Filtering logic                                                    */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * Apply slider filters to the full graph data and return a filtered copy.
+     *
+     * Pipeline:
+     * 1. Keep all direct (non-shared) edges.
+     * 2. Keep shared edges where freqPct <= maxCommonality.
+     * 3. For each shared node, recompute effective strength from surviving
+     *    edges; drop node if strength < minStrength.
+     * 4. Remove orphaned edges (edges pointing to removed nodes).
+     * 5. Cap at maxNodes (keep center + highest-strength shared + all direct).
+     */
+    function filterGraph(allNodes, allEdges, state) {
+        var maxC = state.maxCommonality;
+        var minS = state.minStrength;
+        var maxN = state.maxNodes;
+
+        // Step 1-2: filter edges by commonality.
+        var edges = [];
+        for (var i = 0; i < allEdges.length; i++) {
+            var e = allEdges[i];
+            if (e.isShared) {
+                if ((e.freqPct || 0) <= maxC) edges.push(e);
+            } else {
+                edges.push(e);
+            }
+        }
+
+        // Step 3: recompute strength for shared nodes from surviving edges.
+        var nodeStrength = {};  // node id → effective strength
+        for (i = 0; i < edges.length; i++) {
+            var ed = edges[i];
+            if (ed.isShared) {
+                nodeStrength[ed.source] = (nodeStrength[ed.source] || 0) + (ed.idf || 0);
+            }
+        }
+
+        // Build set of kept node IDs.
+        var keptIds = {};
+        var sharedNodes = [];
+        var nonSharedNodes = [];
+
+        for (i = 0; i < allNodes.length; i++) {
+            var nd = allNodes[i];
+            if (nd.isCenter) {
+                keptIds[nd.id] = true;
+                continue;
+            }
+            if (nd.strength !== undefined) {
+                // Shared item — check effective strength.
+                var eff = nodeStrength[nd.id] || 0;
+                if (eff >= minS) {
+                    sharedNodes.push({ node: nd, eff: eff });
+                }
+            } else {
+                nonSharedNodes.push(nd);
+                keptIds[nd.id] = true;
+            }
+        }
+
+        // Sort shared nodes by effective strength descending.
+        sharedNodes.sort(function (a, b) { return b.eff - a.eff; });
+
+        // Step 5: cap total nodes.
+        var remaining = maxN - 1 - nonSharedNodes.length; // -1 for center
+        if (remaining < 0) remaining = 0;
+        for (i = 0; i < sharedNodes.length && i < remaining; i++) {
+            keptIds[sharedNodes[i].node.id] = true;
+        }
+
+        // Collect filtered nodes.
+        var nodes = [];
+        for (i = 0; i < allNodes.length; i++) {
+            if (keptIds[allNodes[i].id]) nodes.push(allNodes[i]);
+        }
+
+        // Step 4: remove orphaned edges.
+        var filteredEdges = [];
+        for (i = 0; i < edges.length; i++) {
+            if (keptIds[edges[i].source] && keptIds[edges[i].target]) {
+                filteredEdges.push(edges[i]);
+            }
+        }
+
+        return { nodes: nodes, edges: filteredEdges };
+    }
+
+    /* ------------------------------------------------------------------ */
     /*  ECharts rendering                                                  */
     /* ------------------------------------------------------------------ */
+
+    /** Map an IDF-weighted edge to a visual width in [minW, maxW]. */
+    function edgeWidth(e, maxStr) {
+        if (!e.isShared || !maxStr) return 1.5;
+        var t = Math.min((e.idf || 0) / maxStr, 1);
+        return 0.6 + t * 2.4; // 0.6 – 3.0
+    }
+
+    /** Map an IDF-weighted edge to an opacity in [minO, maxO]. */
+    function edgeOpacity(e, maxStr) {
+        if (!e.isShared || !maxStr) return 0.6;
+        var t = Math.min((e.idf || 0) / maxStr, 1);
+        return 0.15 + t * 0.55; // 0.15 – 0.70
+    }
 
     function renderChart(container, data, siteBase) {
         // Add URLs to nodes.
@@ -109,83 +359,113 @@
         });
 
         var chart = ns.initChart(container);
-        var n = data.nodes.length;
+        var stats = data.stats || {};
+        var maxStr = stats.maxStrength || 1;
+        var enableFilters = hasFilterData(data);
 
         data.categories.forEach(function (cat, i) {
             cat.itemStyle = { color: COLORS[i % COLORS.length] };
         });
 
-        var option = {
-            aria: { enabled: true },
-            tooltip: {
-                trigger: 'item',
-                confine: true,
-                formatter: function (p) {
-                    if (p.dataType === 'node') {
-                        var c = data.categories[p.data.category];
-                        var t = '<strong>' + echarts.format.encodeHTML(p.name) + '</strong><br/>'
-                            + '<span style="color:' + COLORS[p.data.category % COLORS.length] + '">'
-                            + echarts.format.encodeHTML(c ? c.name : '') + '</span>';
-                        if (p.data.url) t += '<br/><span style="font-size:11px;color:#888">Click to open</span>';
-                        return t;
-                    }
-                    return p.dataType === 'edge' ? echarts.format.encodeHTML(p.data.name || '') : '';
-                }
-            },
-            legend: {
-                data: data.categories.map(function (c) { return c.name; }),
-                bottom: 10, textStyle: { fontSize: THEME.fontSize }, type: 'scroll'
-            },
-            animationDuration: 300,
-            animationEasingUpdate: 'cubicOut',
-            series: [{
-                type: 'graph', layout: 'force',
-                data: data.nodes.map(function (nd) {
-                    var sh = !nd.isCenter && nd.symbolSize <= 16;
-                    return {
-                        id: nd.id, name: nd.name, category: nd.category, url: nd.url || null,
-                        symbolSize: nd.symbolSize,
-                        label: {
-                            show: !!nd.isCenter, fontSize: nd.isCenter ? THEME.fontSizeTitle : THEME.fontSize,
-                            fontWeight: nd.isCenter ? 'bold' : 'normal',
-                            width: 150, overflow: 'break'
-                        },
-                        emphasis: { label: { show: true, fontSize: 12, fontWeight: 'bold', width: 180, overflow: 'break' } },
-                        itemStyle: nd.isCenter
-                            ? { borderColor: '#333', borderWidth: 3, shadowBlur: 8, shadowColor: 'rgba(0,0,0,0.2)' }
-                            : sh ? { opacity: 0.85 } : { borderColor: '#fff', borderWidth: 1 }
-                    };
-                }),
-                links: data.edges.map(function (e) {
-                    return {
-                        source: e.source, target: e.target, name: e.name,
-                        lineStyle: {
-                            color: e.isShared ? '#d0d0d0' : '#999',
-                            type: e.isShared ? 'dashed' : 'solid',
-                            width: e.isShared ? 0.8 : 1.5,
-                            curveness: 0.15,
-                            opacity: e.isShared ? 0.35 : 0.6
-                        }
-                    };
-                }),
-                categories: data.categories,
-                force: {
-                    repulsion: n > 60 ? 600 : n > 30 ? 450 : 300,
-                    gravity: n > 60 ? 0.05 : 0.08,
-                    edgeLength: n > 60 ? [40, 250] : [60, 200],
-                    friction: 0.85,
-                    layoutAnimation: false
-                },
-                roam: true, draggable: true, cursor: 'pointer',
-                emphasis: { focus: 'adjacency', lineStyle: { width: 2.5, opacity: 0.9 } },
-                blur: { itemStyle: { opacity: 0.15 }, lineStyle: { opacity: 0.08 } },
-                label: { position: 'right', formatter: function (p) { return ns.truncateLabel(p.name, THEME.labelMaxLen); } },
-                lineStyle: { opacity: 0.5, width: 1.2 },
-                scaleLimit: { min: 0.2, max: 5 }
-            }]
-        };
+        // Keep full copies for filtering.
+        var allNodes = data.nodes.slice();
+        var allEdges = data.edges.slice();
 
-        chart.setOption(option);
+        /** Build an ECharts option from a (possibly filtered) node/edge set. */
+        function buildOption(nodes, edges) {
+            var n = nodes.length;
+            return {
+                aria: { enabled: true },
+                tooltip: {
+                    trigger: 'item',
+                    confine: true,
+                    formatter: function (p) {
+                        if (p.dataType === 'node') {
+                            var c = data.categories[p.data.category];
+                            var t = '<strong>' + echarts.format.encodeHTML(p.name) + '</strong><br/>'
+                                + '<span style="color:' + COLORS[p.data.category % COLORS.length] + '">'
+                                + echarts.format.encodeHTML(c ? c.name : '') + '</span>';
+                            if (p.data.freqPct !== undefined && p.data.freqPct !== null) {
+                                t += '<br/><span style="font-size:11px;color:#888">Shared by '
+                                    + p.data.freqPct + '% of items</span>';
+                            }
+                            if (p.data.strength !== undefined) {
+                                t += '<br/><span style="font-size:11px;color:#888">'
+                                    + p.data.sharedCount + ' shared link' + (p.data.sharedCount > 1 ? 's' : '')
+                                    + ' (strength ' + p.data.strength + ')</span>';
+                            }
+                            if (p.data.url) t += '<br/><span style="font-size:11px;color:#888">Click to open</span>';
+                            return t;
+                        }
+                        if (p.dataType === 'edge') {
+                            var lbl = echarts.format.encodeHTML(p.data.name || '');
+                            if (p.data.isShared && p.data.freqPct !== undefined) {
+                                lbl += '<br/><span style="font-size:11px;color:#888">Resource shared by '
+                                    + p.data.freqPct + '% of items</span>';
+                            }
+                            return lbl;
+                        }
+                        return '';
+                    }
+                },
+                legend: {
+                    data: data.categories.map(function (c) { return c.name; }),
+                    bottom: 10, textStyle: { fontSize: THEME.fontSize }, type: 'scroll'
+                },
+                animationDuration: 300,
+                animationEasingUpdate: 'cubicOut',
+                series: [{
+                    type: 'graph', layout: 'force',
+                    data: nodes.map(function (nd) {
+                        var sh = !nd.isCenter && nd.symbolSize <= 16;
+                        return {
+                            id: nd.id, name: nd.name, category: nd.category, url: nd.url || null,
+                            symbolSize: nd.symbolSize,
+                            freqPct: nd.freqPct, strength: nd.strength, sharedCount: nd.sharedCount,
+                            label: {
+                                show: !!nd.isCenter, fontSize: nd.isCenter ? THEME.fontSizeTitle : THEME.fontSize,
+                                fontWeight: nd.isCenter ? 'bold' : 'normal',
+                                width: 150, overflow: 'break'
+                            },
+                            emphasis: { label: { show: true, fontSize: 12, fontWeight: 'bold', width: 180, overflow: 'break' } },
+                            itemStyle: nd.isCenter
+                                ? { borderColor: '#333', borderWidth: 3, shadowBlur: 8, shadowColor: 'rgba(0,0,0,0.2)' }
+                                : sh ? { opacity: 0.85 } : { borderColor: '#fff', borderWidth: 1 }
+                        };
+                    }),
+                    links: edges.map(function (e) {
+                        return {
+                            source: e.source, target: e.target, name: e.name,
+                            isShared: !!e.isShared, freqPct: e.freqPct, idf: e.idf,
+                            lineStyle: {
+                                color: e.isShared ? '#d0d0d0' : '#999',
+                                type: e.isShared ? 'dashed' : 'solid',
+                                width: edgeWidth(e, maxStr),
+                                curveness: 0.15,
+                                opacity: edgeOpacity(e, maxStr)
+                            }
+                        };
+                    }),
+                    categories: data.categories,
+                    force: {
+                        repulsion: n > 60 ? 600 : n > 30 ? 450 : 300,
+                        gravity: n > 60 ? 0.05 : 0.08,
+                        edgeLength: n > 60 ? [40, 250] : [60, 200],
+                        friction: 0.85,
+                        layoutAnimation: false
+                    },
+                    roam: true, draggable: true, cursor: 'pointer',
+                    emphasis: { focus: 'adjacency', lineStyle: { width: 2.5, opacity: 0.9 } },
+                    blur: { itemStyle: { opacity: 0.15 }, lineStyle: { opacity: 0.08 } },
+                    label: { position: 'right', formatter: function (p) { return ns.truncateLabel(p.name, THEME.labelMaxLen); } },
+                    lineStyle: { opacity: 0.5, width: 1.2 },
+                    scaleLimit: { min: 0.2, max: 5 }
+                }]
+            };
+        }
+
+        // Initial render with all data.
+        chart.setOption(buildOption(allNodes, allEdges));
 
         chart.on('click', function (p) {
             if (p.dataType === 'node' && p.data.url) window.location.href = p.data.url;
@@ -196,8 +476,24 @@
 
         var block = container.closest('.knowledge-graph-block');
         if (block) {
-            // Add save button to the toolbar inside the card.
             var toolbar = block.querySelector('.knowledge-graph-toolbar');
+
+            // ── Filter panel ──
+            if (enableFilters && toolbar) {
+                var filters = buildFilterPanel(data);
+                toolbar.insertBefore(filters.el, toolbar.firstChild);
+
+                var filterTimer;
+                filters.onChange(function (state) {
+                    clearTimeout(filterTimer);
+                    filterTimer = setTimeout(function () {
+                        var filtered = filterGraph(allNodes, allEdges, state);
+                        chart.setOption(buildOption(filtered.nodes, filtered.edges), true);
+                    }, 80);
+                });
+            }
+
+            // ── Save button ──
             if (toolbar) {
                 var saveBtn = document.createElement('button');
                 saveBtn.type = 'button';
