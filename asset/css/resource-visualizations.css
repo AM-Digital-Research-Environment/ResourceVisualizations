@@ -133,14 +133,47 @@
     font-weight: 600;
 }
 
-/* Slider + value sit together on the second row. */
+/* Slider sits on its own row, full width. */
 .rv-kg-slider input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
     display: block;
     width: 100%;
-    height: 4px;
-    margin: 0;
-    accent-color: var(--rv-accent);
+    height: 6px;
+    margin: 0.35rem 0 0;
+    padding: 0;
+    border: none;
+    border-radius: 3px;
+    background: var(--rv-border);
+    outline: none;
     cursor: pointer;
+}
+
+.rv-kg-slider input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--rv-accent);
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+}
+
+.rv-kg-slider input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--rv-accent);
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+}
+
+.rv-kg-slider input[type="range"]::-moz-range-track {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--rv-border);
 }
 
 .rv-kg-slider-value {
