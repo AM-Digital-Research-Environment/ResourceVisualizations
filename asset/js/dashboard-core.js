@@ -142,9 +142,20 @@
     /** Build an ECharts theme object from the resolved THEME tokens. */
     ns.buildEchartsTheme = function () {
         var t = ns.THEME;
-        var axis = {
+        // Category / time axes (usually the x-axis): keep the baseline + ticks
+        // but NO split lines — vertical gridlines read as cluttered graph paper.
+        var catAxis = {
             axisLine:  { show: true, lineStyle: { color: t.grid } },
             axisTick:  { show: true, lineStyle: { color: t.grid } },
+            axisLabel: { color: t.textMuted },
+            splitLine: { show: false },
+            splitArea: { show: false }
+        };
+        // Value axes (usually the y-axis): drop the axis line, show only faint
+        // horizontal split lines as subtle reading guides.
+        var valAxis = {
+            axisLine:  { show: false },
+            axisTick:  { show: false },
             axisLabel: { color: t.textMuted },
             splitLine: { show: true, lineStyle: { color: t.gridLight } },
             splitArea: { show: false }
@@ -166,10 +177,10 @@
                 borderColor: t.grid,
                 textStyle: { color: t.text }
             },
-            categoryAxis: axis,
-            valueAxis: axis,
-            logAxis: axis,
-            timeAxis: axis,
+            categoryAxis: catAxis,
+            valueAxis: valAxis,
+            logAxis: valAxis,
+            timeAxis: catAxis,
             line: { lineStyle: { width: 2 } },
             pie: { itemStyle: { borderColor: t.border, borderWidth: 2 } },
             scatter: { itemStyle: { borderColor: t.border, borderWidth: 1 } },
