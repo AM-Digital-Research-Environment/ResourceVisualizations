@@ -211,50 +211,76 @@ ResourceVisualizations/
 └── README.md
 ```
 
-## Configuration
+## Theming — follows the DRE theme
 
-### THEME Design Tokens
+This module is styled to match, and stay visually consistent with, the Africa
+Multiple **Digital Research Environment (DRE) theme**:
 
-`dashboard-core.js` defines a single `THEME` object shared by all modules (including `knowledge-graph.js`) via the `window.RV` namespace. All design values flow from this config:
+> **https://github.com/AM-Digital-Research-Environment/DRE-theme**
 
-```javascript
-var THEME = {
-    darkModeEnabled: false,  // Set to true to enable auto dark mode
-    accent: '#22817b',
-    accentDark: '#4db6ac',
-    accentLight: '#b2dfdb',
-    fontSize: 11,
-    fontSizeEmphasis: 13,
-    labelMaxLen: 30,
-    barMaxWidth: 24,
-    barMaxWidthWide: 40
-};
-```
+It does **not** define its own colours. Every surface, border, text colour,
+accent, radius and shadow is taken from the DRE theme's **CSS custom properties
+(design tokens)** — `--surface`, `--ink`, `--primary`, `--border`, `--radius-*`,
+`--shadow-*`, … — and the chart colours are read from those same tokens at
+runtime.
 
-### CSS Custom Properties
+Because the theme re-defines its tokens for dark mode, the module
+**automatically follows the active light / dark theme** — including the theme's
+live toggle (`body[data-theme="dark"|"light"]`) and the system preference
+(`prefers-color-scheme`). No configuration is required.
 
-Override in your theme for consistent styling:
+> [!IMPORTANT]
+> **Always reference the DRE theme's variables — never hard-code a colour.**
+> - In **CSS**, use the `--rv-*` aliases declared at the top of
+>   `asset/css/resource-visualizations.css`; they map straight onto the theme
+>   tokens.
+> - In **JavaScript**, resolve colours with `ns.cssColor('--token', fallback)`
+>   (see `asset/js/dashboard-core.js`).
+>
+> The `fallback` is used **only** when the module is dropped into a non-DRE
+> theme that lacks the token; whenever the DRE theme is present its token wins.
+> This is what keeps the module consistent with the theme and dark-mode aware.
+> Both files start with a "design contract" comment restating this rule.
 
-```css
-:root {
-    --rv-bg: #fafafa;
-    --rv-border: #e0e0e0;
-    --rv-radius: 8px;
-    --rv-heading-color: #333;
-    --rv-text-color: #666;
-    --rv-accent: #22817b;
-}
-```
+### How light / dark works
 
-### Dark Mode (Disabled by Default)
+| Layer | Mechanism |
+|---|---|
+| CSS chrome (panels, buttons, sliders, popups, legends, cards) | The `--rv-*` aliases resolve theme tokens live, so they flip with `body[data-theme]` / `prefers-color-scheme` with **zero JS**. |
+| ECharts charts | `dashboard-core.js` builds an ECharts theme from the tokens and re-applies it live with `chart.setTheme()` (ECharts 6) whenever the theme changes. |
+| MapLibre maps | Basemap switches between CartoDB Positron (light) and Dark Matter (dark); maps rebuild with the new basemap + marker colours on toggle. |
 
-The module includes full dark mode infrastructure:
+The active theme is watched in `dashboard-core.js` (`ns.refresh()`) via a
+`MutationObserver` on `body[data-theme]` plus a `prefers-color-scheme` listener.
 
-- **ECharts**: Auto-detects `prefers-color-scheme` and uses `setTheme('dark')` (ECharts 6)
-- **MapLibre**: Switches basemap from CartoDB Positron to Dark Matter
-- **CSS**: `.rv-dark-mode` class overrides all custom properties
+### CSS tokens used (alias → DRE theme token)
 
-To enable, set `THEME.darkModeEnabled = true` in `dashboard-core.js`. The CSS dark mode activates automatically via media query.
+| Module alias (`--rv-*`) | DRE theme token(s) |
+|---|---|
+| `--rv-bg`, `--rv-bg-raised`, `--rv-bg-sunken`, `--rv-overlay` | `--surface`, `--surface-raised`, `--surface-sunken`, `--surface-overlay` |
+| `--rv-border`, `--rv-border-light`, `--rv-border-strong` | `--border`, `--border-light`, `--border-strong` |
+| `--rv-heading-color`, `--rv-text-strong`, `--rv-text-color` | `--ink-strong`, `--ink`, `--ink-light` |
+| `--rv-accent`, `--rv-accent-hover`, `--rv-accent-contrast` | `--primary`, `--primary-hover`, `--primary-contrast` |
+| `--rv-radius`, `--rv-radius-sm` | `--radius-lg`, `--radius-sm` |
+| `--rv-shadow`, `--rv-shadow-sm`, `--rv-focus-ring` | `--shadow-lg`, `--shadow-sm`, `--ring-focus` |
+
+### Chart tokens used (`THEME` key → DRE theme token)
+
+`dashboard-core.js`'s shared `THEME` object is populated from these tokens on
+load and on every theme change:
+
+| `THEME` key | DRE theme token | Used for |
+|---|---|---|
+| `accent` | `--primary` | map markers, network hubs, flow lines, accents |
+| `text` / `heading` | `--ink` / `--ink-strong` | chart text, titles |
+| `textMuted` | `--ink-light` | axis labels, secondary text |
+| `border` | `--surface` | segment gaps, marker outlines |
+| `grid` / `gridLight` | `--border` / `--border-light` | axis lines, split lines |
+
+The 20-colour categorical palette (`COLORS`) for multi-series charts is kept
+theme-independent: the brand token set has only six colours, and compare-mode
+relies on a stable colour-by-index mapping. The brand identity is carried by
+`THEME.accent` (= `--primary`).
 
 ## Dependencies
 

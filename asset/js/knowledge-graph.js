@@ -438,8 +438,8 @@
                             },
                             emphasis: { label: { show: true, fontSize: 12, fontWeight: 'bold', width: 180, overflow: 'break' } },
                             itemStyle: nd.isCenter
-                                ? { borderColor: '#333', borderWidth: 3, shadowBlur: 8, shadowColor: 'rgba(0,0,0,0.2)' }
-                                : sh ? { opacity: 0.85 } : { borderColor: '#fff', borderWidth: 1 }
+                                ? { borderColor: THEME.text, borderWidth: 3, shadowBlur: 8, shadowColor: 'rgba(0,0,0,0.2)' }
+                                : sh ? { opacity: 0.85 } : { borderWidth: 1 }  // node border (= --surface) from theme
                         };
                     }),
                     links: edges.map(function (e) {
@@ -447,7 +447,7 @@
                             source: e.source, target: e.target, name: e.name,
                             isShared: !!e.isShared, freqPct: e.freqPct, idf: e.idf,
                             lineStyle: {
-                                color: e.isShared ? '#d0d0d0' : '#999',
+                                color: e.isShared ? THEME.grid : THEME.textMuted,
                                 type: e.isShared ? 'dashed' : 'solid',
                                 width: edgeWidth(e, maxStr),
                                 curveness: 0.15,
@@ -473,15 +473,19 @@
             };
         }
 
-        // Initial render with all data.
-        chart.setOption(buildOption(allNodes, allEdges));
+        // Initial render with all data. Track what's currently displayed so the
+        // theme engine can re-apply structural (node/edge) colours on a live
+        // light/dark toggle — see dashboard-core ns.refresh().
+        var currentNodes = allNodes, currentEdges = allEdges;
+        chart.setOption(buildOption(currentNodes, currentEdges));
+        chart._rvRebuild = function () {
+            chart.setOption(buildOption(currentNodes, currentEdges), true);
+        };
 
         chart.on('click', function (p) {
             if (p.dataType === 'node' && p.data.url) window.location.href = p.data.url;
         });
-
-        var timer;
-        window.addEventListener('resize', function () { clearTimeout(timer); timer = setTimeout(function () { chart.resize(); }, 100); });
+        // Window resizing is handled globally in dashboard-core.js.
 
         var block = container.closest('.knowledge-graph-block');
         if (block) {
@@ -497,7 +501,9 @@
                     clearTimeout(filterTimer);
                     filterTimer = setTimeout(function () {
                         var filtered = filterGraph(allNodes, allEdges, state);
-                        chart.setOption(buildOption(filtered.nodes, filtered.edges), true);
+                        currentNodes = filtered.nodes;
+                        currentEdges = filtered.edges;
+                        chart.setOption(buildOption(currentNodes, currentEdges), true);
                     }, 80);
                 });
             }
@@ -511,7 +517,7 @@
                 saveBtn.title = 'Save as image';
                 saveBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
                 saveBtn.addEventListener('click', function () {
-                    var url = chart.getDataURL({ pixelRatio: 2, backgroundColor: '#fff' });
+                    var url = chart.getDataURL({ pixelRatio: 2, backgroundColor: ns.exportBg() });
                     var a = document.createElement('a');
                     a.href = url;
                     a.download = 'knowledge-graph.png';
@@ -555,47 +561,54 @@
 
         var all = origins.concat(current);
 
-        var map = new maplibregl.Map({
-            container: el,
-            style: ns.getBasemapStyle(),
-            center: [all[0].lon, all[0].lat],
-            zoom: 3,
-            attributionControl: false,
-            scrollZoom: false,
-        });
-        map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
-        map.addControl(new maplibregl.ScaleControl({ maxWidth: 80, unit: 'metric' }), 'bottom-left');
+        function create() {
+            var map = new maplibregl.Map({
+                container: el,
+                style: ns.getBasemapStyle(),
+                center: [all[0].lon, all[0].lat],
+                zoom: 3,
+                attributionControl: false,
+                scrollZoom: false,
+            });
+            map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
+            map.addControl(new maplibregl.ScaleControl({ maxWidth: 80, unit: 'metric' }), 'bottom-left');
 
-        map.on('load', function () {
-            // Origin markers (teal).
-            origins.forEach(function (loc) {
-                var popupHtml = '<strong>' + loc.name + '</strong><br/>'
-                    + '<span style="color:' + THEME.accent + '">Origin</span>';
-                if (siteBase) popupHtml += '<br/><a href="' + siteBase + '/item/' + loc.itemId + '" style="font-size:12px">View location</a>';
-                new maplibregl.Marker({ color: THEME.accent })
-                    .setLngLat([loc.lon, loc.lat])
-                    .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML(popupHtml))
-                    .addTo(map);
+            map.on('load', function () {
+                // Origin markers (brand accent).
+                origins.forEach(function (loc) {
+                    var popupHtml = '<strong>' + loc.name + '</strong><br/>'
+                        + '<span style="color:' + THEME.accent + '">Origin</span>';
+                    if (siteBase) popupHtml += '<br/><a href="' + siteBase + '/item/' + loc.itemId + '" style="font-size:12px">View location</a>';
+                    new maplibregl.Marker({ color: THEME.accent })
+                        .setLngLat([loc.lon, loc.lat])
+                        .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML(popupHtml))
+                        .addTo(map);
+                });
+
+                // Current location markers.
+                current.forEach(function (loc) {
+                    var popupHtml = '<strong>' + loc.name + '</strong><br/>'
+                        + '<span style="color:' + COLORS[1] + '">Current location</span>';
+                    if (siteBase) popupHtml += '<br/><a href="' + siteBase + '/item/' + loc.itemId + '" style="font-size:12px">View location</a>';
+                    new maplibregl.Marker({ color: COLORS[1] })
+                        .setLngLat([loc.lon, loc.lat])
+                        .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML(popupHtml))
+                        .addTo(map);
+                });
+
+                // Fit bounds to all markers.
+                if (all.length > 1) {
+                    var bounds = new maplibregl.LngLatBounds();
+                    all.forEach(function (loc) { bounds.extend([loc.lon, loc.lat]); });
+                    map.fitBounds(bounds, { padding: 50, maxZoom: 8 });
+                }
             });
 
-            // Current location markers (orange).
-            current.forEach(function (loc) {
-                var popupHtml = '<strong>' + loc.name + '</strong><br/>'
-                    + '<span style="color:' + COLORS[1] + '">Current location</span>';
-                if (siteBase) popupHtml += '<br/><a href="' + siteBase + '/item/' + loc.itemId + '" style="font-size:12px">View location</a>';
-                new maplibregl.Marker({ color: COLORS[1] })
-                    .setLngLat([loc.lon, loc.lat])
-                    .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML(popupHtml))
-                    .addTo(map);
-            });
-
-            // Fit bounds to all markers.
-            if (all.length > 1) {
-                var bounds = new maplibregl.LngLatBounds();
-                all.forEach(function (loc) { bounds.extend([loc.lon, loc.lat]); });
-                map.fitBounds(bounds, { padding: 50, maxZoom: 8 });
-            }
-        });
+            // Re-create with the new basemap + marker colours when the theme toggles.
+            ns.trackMap(map, create);
+            return map;
+        }
+        create();
     }
 
     /* ------------------------------------------------------------------ */

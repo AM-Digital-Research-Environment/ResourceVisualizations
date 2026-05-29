@@ -49,8 +49,8 @@
                     color: THEME.border,
                     formatter: function (p) { return truncateLabel(p.name, 30); }
                 },
+                // borderColor (cell gaps) comes from the theme (= --surface).
                 itemStyle: {
-                    borderColor: '#fff',
                     borderWidth: 2,
                     gapWidth: 1
                 },

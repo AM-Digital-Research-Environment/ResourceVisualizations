@@ -77,8 +77,7 @@
                         itemId: nd.itemId,
                         itemStyle: isSelf
                             ? { color: THEME.accent, borderColor: THEME.text, borderWidth: 3 }
-                            : { color: catColor, borderColor: THEME.border, borderWidth: 1,
-                                opacity: 0.9 },
+                            : { color: catColor, borderWidth: 1, opacity: 0.9 },
                         label: {
                             show: isSelf || n <= 12,
                             fontSize: isSelf ? THEME.fontSizeEmphasis : THEME.fontSize,

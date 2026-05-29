@@ -53,23 +53,17 @@
         html += '</div>';
         container.innerHTML = html;
 
-        var charts = [];
         chartKeys.forEach(function (key) {
             var el = container.querySelector('[data-chart="' + key + '"]');
             if (el && data[key] && ns.CHART_MAP && ns.CHART_MAP[key]) {
                 var chart = ns.CHART_MAP[key](el, data[key], siteBase, data);
                 if (chart) {
-                    charts.push(chart);
                     ns.attachToolbar(el.closest('.chart-panel'), chart);
                 }
             }
         });
-
-        var timer;
-        window.addEventListener('resize', function () {
-            clearTimeout(timer);
-            timer = setTimeout(function () { charts.forEach(function (c) { c.resize(); }); }, 100);
-        });
+        // Window resizing + light/dark theme changes are handled globally in
+        // dashboard-core.js (ns.refresh / the global resize handler).
     }
 
     /* ------------------------------------------------------------------ */

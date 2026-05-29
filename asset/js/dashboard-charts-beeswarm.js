@@ -63,10 +63,11 @@
             return {
                 value: [d.value, y],
                 symbolSize: symbolSize,
+                // borderColor (= --surface) supplied by the theme so the dot
+                // outline matches the panel in light/dark.
                 itemStyle: {
                     color: COLORS[catIdx[d.category] % COLORS.length],
                     opacity: 0.85,
-                    borderColor: '#fff',
                     borderWidth: 1
                 },
                 _label: d.label,

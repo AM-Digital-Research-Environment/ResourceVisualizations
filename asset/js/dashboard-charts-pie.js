@@ -29,7 +29,9 @@
             series: [{
                 type: 'pie', radius: ['35%', '65%'], center: ['40%', '50%'],
                 avoidLabelOverlap: true,
-                itemStyle: { borderRadius: 4, borderColor: THEME.border, borderWidth: 2 },
+                // borderColor comes from the theme (= --surface) so slice gaps
+                // match the panel in light/dark; see dashboard-core buildEchartsTheme.
+                itemStyle: { borderRadius: 4, borderWidth: 2 },
                 label: { show: false },
                 emphasis: { label: { show: true, fontSize: THEME.fontSizeEmphasis, fontWeight: 'bold' } },
                 data: entries.map(function (e, i) {

@@ -1,20 +1,95 @@
 /**
  * Resource Visualizations — shared styles.
  *
- * Uses CSS custom properties so themes can override colors and sizing.
+ * DESIGN CONTRACT — follow the DRE theme.
+ * ----------------------------------------------------------------------------
+ * This module is styled to match the Africa Multiple "Digital Research
+ * Environment" Omeka S theme:
+ *   https://github.com/AM-Digital-Research-Environment/DRE-theme
+ *
+ * Every colour, surface, border, radius, shadow and spacing value is taken
+ * from the theme's CSS custom properties (design tokens) rather than being
+ * hard-coded. The theme defines those tokens on :root (light) and re-defines
+ * them under `body[data-theme="dark"]` and `@media (prefers-color-scheme:dark)`,
+ * so by *referencing* them the module automatically follows the active light /
+ * dark theme — including the live theme toggle — with no extra JS.
+ *
+ * The `--rv-*` aliases below are the ONLY place this module names a colour.
+ * They are declared on `body` (not :root) on purpose: the theme flips its
+ * tokens at `body[data-theme=...]`, and declaring the aliases on `body` lets
+ * each alias resolve the *active* token from the body's own cascade.
+ *
+ * The hard-coded values in `var(--token, fallback)` are fallbacks for when the
+ * module is used in a theme that does NOT provide the DRE tokens. When the DRE
+ * theme is present its token always wins, so the fallback is ignored.
+ *
+ * ►► When adding new styles, ALWAYS reference a `--rv-*` alias (or a DRE theme
+ *    token directly). Never introduce a raw hex / rgb colour. ◄◄
  */
 
 /* ------------------------------------------------------------------ */
-/*  Custom properties                                                  */
+/*  Design tokens — aliases onto the DRE theme variables               */
 /* ------------------------------------------------------------------ */
 
-:root {
-    --rv-bg: #fafafa;
-    --rv-border: #e0e0e0;
-    --rv-radius: 8px;
-    --rv-heading-color: #333;
-    --rv-text-color: #666;
-    --rv-accent: #22817b;
+body {
+    /* Surfaces */
+    --rv-bg:              var(--surface, #fafafa);          /* cards, panels      */
+    --rv-bg-raised:       var(--surface-raised, #ffffff);   /* hovered / floating */
+    --rv-bg-sunken:       var(--surface-sunken, #f0f0f0);   /* wells, chips       */
+    --rv-overlay:         var(--surface-overlay, rgba(255, 255, 255, 0.92));
+
+    /* Borders */
+    --rv-border:          var(--border, #e0e0e0);
+    --rv-border-light:    var(--border-light, #f0f0f0);
+    --rv-border-strong:   var(--border-strong, #c4c4c4);
+
+    /* Text */
+    --rv-heading-color:   var(--ink-strong, #333333);
+    --rv-text-strong:     var(--ink, #444444);
+    --rv-text-color:      var(--ink-light, #666666);
+
+    /* Brand accent (Uni-Grün via the theme) */
+    --rv-accent:          var(--primary, #22817b);
+    --rv-accent-hover:    var(--primary-hover, #1a655f);
+    --rv-accent-contrast: var(--primary-contrast, #ffffff);
+
+    /* Radii, shadows, focus — straight from the theme's token set */
+    --rv-radius:          var(--radius-lg, 8px);
+    --rv-radius-sm:       var(--radius-sm, 6px);
+    --rv-shadow:          var(--shadow-lg, 0 4px 16px rgba(0, 0, 0, 0.12));
+    --rv-shadow-sm:       var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.12));
+    --rv-focus-ring:      var(--ring-focus, 0 0 0 3px rgba(34, 129, 123, 0.32));
+}
+
+/*
+ * Dark fallbacks for NON-DRE host themes only. When the DRE theme is active it
+ * already supplies dark values for --surface / --border / --ink-* / --primary,
+ * so `var(--token, …)` resolves to the theme token and these fallbacks are
+ * never used. They simply keep the module usable (and dark-aware) if dropped
+ * into a theme that lacks the DRE token set but honours prefers-color-scheme.
+ */
+@media (prefers-color-scheme: dark) {
+    body {
+        --rv-bg:            var(--surface, #1e1e1e);
+        --rv-bg-raised:     var(--surface-raised, #2a2a2a);
+        --rv-bg-sunken:     var(--surface-sunken, #161616);
+        --rv-overlay:       var(--surface-overlay, rgba(42, 42, 42, 0.92));
+
+        --rv-border:        var(--border, #3a3a3a);
+        --rv-border-light:  var(--border-light, #333333);
+        --rv-border-strong: var(--border-strong, #4a4a4a);
+
+        --rv-heading-color: var(--ink-strong, #e0e0e0);
+        --rv-text-strong:   var(--ink, #dddddd);
+        --rv-text-color:    var(--ink-light, #aaaaaa);
+
+        --rv-accent:          var(--primary, #4db6ac);
+        --rv-accent-hover:    var(--primary-hover, #6ec7be);
+        --rv-accent-contrast: var(--primary-contrast, #1e1e1e);
+
+        --rv-shadow:    var(--shadow-lg, 0 4px 16px rgba(0, 0, 0, 0.5));
+        --rv-shadow-sm: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.45));
+    }
 }
 
 /* ------------------------------------------------------------------ */
@@ -64,7 +139,7 @@
     z-index: 9999;
     margin: 0;
     padding: 1rem;
-    background: #fff;
+    background: var(--rv-bg);
 }
 
 .knowledge-graph-block.rv-fullscreen .knowledge-graph-container {
@@ -86,7 +161,7 @@
 
 .rv-kg-filters-toggle.rv-btn-active {
     background: var(--rv-accent);
-    color: #fff;
+    color: var(--rv-accent-contrast);
     border-color: var(--rv-accent);
 }
 
@@ -100,7 +175,7 @@
     background: var(--rv-bg);
     border: 1px solid var(--rv-border);
     border-radius: var(--rv-radius);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--rv-shadow);
     z-index: 20;
 }
 
@@ -155,8 +230,8 @@
     height: 16px;
     border-radius: 50%;
     background: var(--rv-accent);
-    border: 2px solid #fff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--rv-bg);
+    box-shadow: var(--rv-shadow-sm);
     cursor: pointer;
 }
 
@@ -165,8 +240,8 @@
     height: 16px;
     border-radius: 50%;
     background: var(--rv-accent);
-    border: 2px solid #fff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--rv-bg);
+    box-shadow: var(--rv-shadow-sm);
     cursor: pointer;
 }
 
@@ -376,13 +451,13 @@ button.rv-toolbar-btn,
     min-width: 0;
     padding: 0;
     border: 1px solid var(--rv-border);
-    border-radius: var(--rv-radius, 4px);
+    border-radius: var(--rv-radius-sm);
     background: var(--rv-bg);
     cursor: pointer;
     font-size: 1rem;
     color: var(--rv-text-color);
     line-height: 1;
-    transition: background 0.15s, color 0.15s;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -393,14 +468,23 @@ button.rv-btn:hover,
 button.rv-toolbar-btn:hover,
 .rv-btn:hover,
 .rv-toolbar-btn:hover {
-    background: #fff;
+    background: var(--rv-bg-raised);
     color: var(--rv-accent);
+    border-color: var(--rv-accent);
+}
+
+button.rv-btn:focus-visible,
+button.rv-toolbar-btn:focus-visible,
+.rv-btn:focus-visible,
+.rv-toolbar-btn:focus-visible {
+    outline: none;
+    box-shadow: var(--rv-focus-ring);
     border-color: var(--rv-accent);
 }
 
 .rv-toolbar-btn-active {
     background: var(--rv-accent) !important;
-    color: #fff !important;
+    color: var(--rv-accent-contrast) !important;
     border-color: var(--rv-accent) !important;
 }
 
@@ -461,6 +545,35 @@ button.rv-toolbar-btn:hover,
 /*  Map popups                                                         */
 /* ------------------------------------------------------------------ */
 
+/* Theme the MapLibre popup surface so it matches light / dark like the rest
+   of the module (MapLibre's stylesheet defaults to a white card). */
+.resource-vis-block .maplibregl-popup-content,
+.rv-item-map-panel .maplibregl-popup-content {
+    background: var(--rv-bg);
+    color: var(--rv-text-strong);
+    box-shadow: var(--rv-shadow);
+}
+
+.resource-vis-block .maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.rv-item-map-panel .maplibregl-popup-anchor-top .maplibregl-popup-tip {
+    border-bottom-color: var(--rv-bg);
+}
+
+.resource-vis-block .maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.rv-item-map-panel .maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
+    border-top-color: var(--rv-bg);
+}
+
+.resource-vis-block .maplibregl-popup-anchor-left .maplibregl-popup-tip,
+.rv-item-map-panel .maplibregl-popup-anchor-left .maplibregl-popup-tip {
+    border-right-color: var(--rv-bg);
+}
+
+.resource-vis-block .maplibregl-popup-anchor-right .maplibregl-popup-tip,
+.rv-item-map-panel .maplibregl-popup-anchor-right .maplibregl-popup-tip {
+    border-left-color: var(--rv-bg);
+}
+
 /* Consistent close button for ALL MapLibre popups in the module. */
 .resource-vis-block .maplibregl-popup-close-button,
 .rv-item-map-panel .maplibregl-popup-close-button {
@@ -470,7 +583,7 @@ button.rv-toolbar-btn:hover,
     height: 24px;
     line-height: 24px;
     padding: 0;
-    color: #555;
+    color: var(--rv-text-color);
     background: transparent;
     border: none;
     border-radius: 3px;
@@ -478,8 +591,8 @@ button.rv-toolbar-btn:hover,
 
 .resource-vis-block .maplibregl-popup-close-button:hover,
 .rv-item-map-panel .maplibregl-popup-close-button:hover {
-    color: #000;
-    background: rgba(0, 0, 0, 0.08);
+    color: var(--rv-heading-color);
+    background: var(--rv-bg-sunken);
 }
 
 /* Map legend */
@@ -487,12 +600,13 @@ button.rv-toolbar-btn:hover,
     position: absolute;
     bottom: 30px;
     left: 10px;
-    background: rgba(255, 255, 255, 0.92);
+    background: var(--rv-overlay);
+    color: var(--rv-text-strong);
     border-radius: 4px;
     padding: 6px 10px;
     font-size: 0.78rem;
     line-height: 1.6;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    box-shadow: var(--rv-shadow-sm);
     z-index: 2;
     pointer-events: none;
 }
@@ -507,7 +621,7 @@ button.rv-toolbar-btn:hover,
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    border: 1px solid rgba(0,0,0,0.2);
+    border: 1px solid var(--rv-border-strong);
     flex-shrink: 0;
 }
 
@@ -538,7 +652,7 @@ button.rv-toolbar-btn:hover,
 }
 
 .rv-popup-count {
-    color: var(--rv-text-color, #666);
+    color: var(--rv-text-color);
     font-size: 0.8rem;
 }
 
@@ -552,7 +666,7 @@ button.rv-toolbar-btn:hover,
 
 .rv-popup-items li {
     padding: 0.2rem 0;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--rv-border-light);
 }
 
 .rv-popup-items li:last-child {
@@ -560,7 +674,7 @@ button.rv-toolbar-btn:hover,
 }
 
 .rv-popup-items a {
-    color: var(--rv-accent, #22817b);
+    color: var(--rv-accent);
     text-decoration: none;
     font-size: 0.82rem;
 }
@@ -576,34 +690,35 @@ button.rv-toolbar-btn:hover,
     gap: 0.5rem;
     margin: 0.4rem 0;
     font-size: 0.8rem;
-    color: var(--rv-text-color, #666);
+    color: var(--rv-text-color);
 }
 
 .rv-popup-pagination button {
-    background: #fff;
-    border: 1px solid var(--rv-border, #e0e0e0);
+    background: var(--rv-bg-raised);
+    border: 1px solid var(--rv-border);
     border-radius: 3px;
     cursor: pointer;
     padding: 0.2rem 0.5rem;
     font-size: 0.9rem;
     line-height: 1;
     min-width: 28px;
+    color: var(--rv-text-strong);
 }
 
 .rv-popup-pagination button:hover {
-    background: var(--rv-bg, #fafafa);
+    background: var(--rv-bg-sunken);
 }
 
 .rv-popup-location-link {
     display: block;
     margin-top: 0.3rem;
     font-size: 0.78rem;
-    color: var(--rv-text-color, #666);
+    color: var(--rv-text-color);
     text-decoration: none;
 }
 
 .rv-popup-location-link:hover {
-    color: var(--rv-accent, #22817b);
+    color: var(--rv-accent);
 }
 
 /* ------------------------------------------------------------------ */
@@ -644,8 +759,9 @@ button.rv-toolbar-btn:hover,
 }
 
 .compare-select:focus {
-    outline: 2px solid var(--rv-accent);
-    outline-offset: -1px;
+    outline: none;
+    border-color: var(--rv-accent);
+    box-shadow: var(--rv-focus-ring);
 }
 
 .compare-vs {
@@ -757,96 +873,6 @@ button.rv-toolbar-btn:hover,
 
 .compare-content .rv-no-data {
     padding: 2rem 0;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Dark mode (activated by .rv-dark-mode class on <html>, not media   */
-/*  query — gated by THEME.darkModeEnabled in JS)                      */
-/* ------------------------------------------------------------------ */
-
-.rv-dark-mode {
-    --rv-bg: #1e1e1e;
-    --rv-border: #3a3a3a;
-    --rv-heading-color: #e0e0e0;
-    --rv-text-color: #aaa;
-    --rv-accent: #4db6ac;
-}
-
-.rv-dark-mode .knowledge-graph-block.rv-fullscreen {
-    background: #121212;
-}
-
-.rv-dark-mode .rv-kg-filters-panel {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-}
-
-.rv-dark-mode .rv-kg-filters-toggle.rv-btn-active {
-    background: var(--rv-accent);
-    color: #1e1e1e;
-}
-
-.rv-dark-mode .rv-btn {
-    background: #2a2a2a;
-    border-color: #444;
-    color: #bbb;
-}
-
-.rv-dark-mode .rv-btn:hover {
-    background: #333;
-    color: var(--rv-accent);
-}
-
-.rv-dark-mode .rv-popup-items li {
-    border-bottom-color: #333;
-}
-
-.rv-dark-mode .rv-popup-pagination button {
-    background: #2a2a2a;
-    border-color: #444;
-    color: #ccc;
-}
-
-.rv-dark-mode .rv-popup-pagination button:hover {
-    background: #333;
-}
-
-.rv-dark-mode .compare-select {
-    background: #2a2a2a;
-    border-color: #444;
-    color: #ddd;
-}
-
-.rv-dark-mode .compare-badge {
-    background: #2a2a2a;
-    border-color: #444;
-    color: #ccc;
-}
-
-.rv-dark-mode .maplibregl-popup-close-button {
-    color: #ccc;
-}
-
-.rv-dark-mode .maplibregl-popup-close-button:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.12);
-}
-
-.rv-dark-mode .rv-map-popup .maplibregl-popup-content {
-    background: #2a2a2a;
-    color: #ddd;
-}
-
-.rv-dark-mode .rv-map-popup .maplibregl-popup-tip {
-    border-top-color: #2a2a2a;
-}
-
-.rv-dark-mode .rv-map-legend {
-    background: rgba(42, 42, 42, 0.92);
-    color: #ddd;
-}
-
-.rv-dark-mode .rv-popup-items a {
-    color: var(--rv-accent);
 }
 
 /* ------------------------------------------------------------------ */

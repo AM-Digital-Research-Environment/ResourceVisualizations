@@ -3,12 +3,34 @@
  *
  * Initialises the window.RV namespace and exposes THEME, COLORS,
  * and helper functions used by all chart modules.
+ *
+ * THEMING — follows the DRE theme.
+ * ----------------------------------------------------------------------------
+ * Chart colours are NOT hard-coded here; they are read at runtime from the
+ * Africa Multiple "Digital Research Environment" theme's CSS custom properties
+ * (design tokens):
+ *   https://github.com/AM-Digital-Research-Environment/DRE-theme
+ *
+ * `readTheme()` resolves the theme tokens (--primary, --ink, --surface, …) into
+ * the shared THEME object and builds an ECharts theme from them. Because the
+ * theme re-defines those tokens for dark mode (on `body[data-theme="dark"]`
+ * and `@media (prefers-color-scheme: dark)`), the module follows the active
+ * light / dark theme — including the live theme toggle, watched below via a
+ * MutationObserver — by re-reading the tokens and calling `chart.setTheme()`
+ * (ECharts 6) on every live chart and rebuilding every map.
+ *
+ * ►► Resolve colours through `ns.cssColor('--token', fallback)` — never add a
+ *    raw hex value that won't react to the theme. ◄◄
  */
 (function () {
     'use strict';
 
     var ns = window.RV = window.RV || {};
 
+    // Categorical palette for multi-series charts. Kept theme-independent: the
+    // DRE token set has a 6-colour brand family but charts need up to 20 stable,
+    // mutually-distinct hues, and compare-mode relies on a fixed colour-by-index
+    // mapping. The brand identity is carried by THEME.accent (= --primary).
     ns.COLORS = [
         '#22817b', '#e07c3e', '#6b5b95', '#d4a574', '#2c5f7c',
         '#c5504d', '#4a8c6f', '#8b6f47', '#7c5295', '#cc8963',
@@ -16,15 +38,21 @@
         '#d87e7a', '#6fb08e', '#a68e6d', '#9e7bb8', '#e0a88a'
     ];
 
+    // Shared design tokens. Colour values are placeholders here; readTheme()
+    // overwrites them in place (so modules that captured `ns.THEME` see updates)
+    // from the DRE theme's CSS variables on load and on every theme change.
     ns.THEME = {
-        darkModeEnabled: false,
-        accent: '#22817b',
-        accentDark: '#4db6ac',
-        accentLight: '#b2dfdb',
-        gradientEnd: '#b2dfdb',
-        text: '#333',
-        textMuted: '#666',
-        border: '#fff',
+        accent: '#22817b',        // ← --primary
+        accentDark: '#1a655f',    // ← --primary-hover
+        accentLight: '#b2dfdb',   // ← --primary-muted
+        gradientEnd: '#b2dfdb',   // ← --primary-muted (bar/area gradient tail)
+        text: '#333',             // ← --ink (primary chart text)
+        textMuted: '#666',        // ← --ink-light (axis labels, secondary)
+        heading: '#222',          // ← --ink-strong
+        border: '#fff',           // ← --surface (segment gaps, marker strokes)
+        grid: '#e0e0e0',          // ← --border (axis lines)
+        gridLight: '#f0f0f0',     // ← --border-light (split lines)
+        surface: '#fafafa',       // ← --surface (export background)
         fontSize: 11,
         fontSizeTitle: 14,
         fontSizeEmphasis: 13,
@@ -33,18 +61,166 @@
         barMaxWidthWide: 40
     };
 
-    /* -- Dark mode detection (gated by THEME.darkModeEnabled) -- */
+    ns._allCharts = [];   // tracked ECharts instances
+    ns._allMaps = [];     // tracked MapLibre maps: { map, rebuild }
+    ns._echartsTheme = null;
+    ns._darkMode = false;
 
-    var _darkQuery = ns.THEME.darkModeEnabled && window.matchMedia
-        ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-    ns._darkMode = _darkQuery ? _darkQuery.matches : false;
-    ns._allCharts = [];
+    /* ------------------------------------------------------------------ */
+    /*  Theme-token resolution                                             */
+    /* ------------------------------------------------------------------ */
 
-    /** Init an ECharts instance with the correct theme, tracking for dark mode. */
+    // Hidden probe + canvas, used to resolve CSS custom properties (which may
+    // be oklch()/color-mix() in the DRE theme) into a concrete, canvas- and
+    // MapLibre-safe colour string in the *currently active* theme.
+    var _probe = null;
+    var _canvas = null;
+
+    function getProbe() {
+        if (!_probe) {
+            _probe = document.createElement('span');
+            _probe.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:0;height:0;pointer-events:none';
+            (document.body || document.documentElement).appendChild(_probe);
+        }
+        return _probe;
+    }
+
+    /**
+     * Resolve a CSS custom property to a concrete colour string.
+     * @param {string} name  e.g. '--primary'
+     * @param {string} fallback  used when the host theme lacks the token
+     */
+    ns.cssColor = function (name, fallback) {
+        fallback = fallback || '#000';
+        try {
+            var probe = getProbe();
+            probe.style.color = '';
+            probe.style.color = 'var(' + name + ', ' + fallback + ')';
+            var resolved = getComputedStyle(probe).color;
+            if (!resolved) return fallback;
+            // Normalise to rgb/hex via canvas so oklch()/color-mix() values are
+            // accepted by both the ECharts canvas and MapLibre's colour parser.
+            _canvas = _canvas || document.createElement('canvas').getContext('2d');
+            _canvas.fillStyle = '#000';
+            _canvas.fillStyle = resolved;
+            return _canvas.fillStyle;
+        } catch (e) {
+            return fallback;
+        }
+    };
+
+    /** Whether the active theme is dark: body[data-theme] wins, else system. */
+    ns.isDark = function () {
+        var attr = document.body && document.body.getAttribute('data-theme');
+        if (attr === 'dark') return true;
+        if (attr === 'light') return false;
+        return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    };
+
+    /** Read DRE theme tokens into THEME (in place) and rebuild the ECharts theme. */
+    ns.readTheme = function () {
+        ns._darkMode = ns.isDark();
+        var t = ns.THEME;
+        var c = ns.cssColor;
+
+        t.accent      = c('--primary', '#22817b');
+        t.accentDark  = c('--primary-hover', '#1a655f');
+        t.accentLight = c('--primary-muted', '#b2dfdb');
+        t.gradientEnd = c('--primary-muted', '#b2dfdb');
+        t.text        = c('--ink', ns._darkMode ? '#e0e0e0' : '#333333');
+        t.textMuted   = c('--ink-light', ns._darkMode ? '#aaaaaa' : '#666666');
+        t.heading     = c('--ink-strong', ns._darkMode ? '#f0f0f0' : '#222222');
+        t.border      = c('--surface', ns._darkMode ? '#1e1e1e' : '#ffffff');
+        t.surface     = t.border;
+        t.grid        = c('--border', ns._darkMode ? '#3a3a3a' : '#e0e0e0');
+        t.gridLight   = c('--border-light', ns._darkMode ? '#333333' : '#f0f0f0');
+
+        ns._echartsTheme = ns.buildEchartsTheme();
+        return t;
+    };
+
+    /** Build an ECharts theme object from the resolved THEME tokens. */
+    ns.buildEchartsTheme = function () {
+        var t = ns.THEME;
+        var axis = {
+            axisLine:  { show: true, lineStyle: { color: t.grid } },
+            axisTick:  { show: true, lineStyle: { color: t.grid } },
+            axisLabel: { color: t.textMuted },
+            splitLine: { show: true, lineStyle: { color: t.gridLight } },
+            splitArea: { show: false }
+        };
+        return {
+            color: ns.COLORS,
+            backgroundColor: 'transparent',   // let the panel --surface show through
+            textStyle: { color: t.text },
+            title: {
+                textStyle: { color: t.heading },
+                subtextStyle: { color: t.textMuted }
+            },
+            legend: {
+                textStyle: { color: t.text },
+                pageTextStyle: { color: t.textMuted }
+            },
+            tooltip: {
+                backgroundColor: ns.cssColor('--surface-raised', t.surface),
+                borderColor: t.grid,
+                textStyle: { color: t.text }
+            },
+            categoryAxis: axis,
+            valueAxis: axis,
+            logAxis: axis,
+            timeAxis: axis,
+            line: { lineStyle: { width: 2 } },
+            pie: { itemStyle: { borderColor: t.border, borderWidth: 2 } },
+            scatter: { itemStyle: { borderColor: t.border, borderWidth: 1 } },
+            graph: {
+                itemStyle: { borderColor: t.border },
+                lineStyle: { color: t.grid },
+                label: { color: t.text }
+            },
+            treemap: {
+                itemStyle: { borderColor: t.border },
+                breadcrumb: { itemStyle: { color: t.gridLight, textStyle: { color: t.text } } }
+            },
+            sunburst: { itemStyle: { borderColor: t.border, borderWidth: 1 } },
+            sankey: {
+                label: { color: t.text },
+                lineStyle: { color: 'source', opacity: 0.4 }
+            },
+            visualMap: { textStyle: { color: t.text } },
+            timeline: {
+                lineStyle: { color: t.grid },
+                label: { color: t.textMuted },
+                controlStyle: { color: t.textMuted, borderColor: t.grid }
+            }
+        };
+    };
+
+    /* ------------------------------------------------------------------ */
+    /*  Chart / map lifecycle                                              */
+    /* ------------------------------------------------------------------ */
+
+    /** Init an ECharts instance using the current theme, tracking it for re-theming. */
     ns.initChart = function (el) {
-        var chart = echarts.init(el, ns._darkMode ? 'dark' : null);
+        if (!ns._echartsTheme) ns.readTheme();
+        var chart = echarts.init(el, ns._echartsTheme);
         ns._allCharts.push(chart);
         return chart;
+    };
+
+    /**
+     * Track a MapLibre map for re-theming. `rebuild` is a zero-arg closure that
+     * re-creates the map (with the current basemap + theme colours) into the
+     * same container; it is invoked on theme change.
+     */
+    ns.trackMap = function (map, rebuild) {
+        ns._allMaps.push({ map: map, rebuild: rebuild });
+        return map;
+    };
+
+    /** Background colour to use when exporting a chart as a PNG. */
+    ns.exportBg = function () {
+        return ns.cssColor('--surface', ns._darkMode ? '#1e1e1e' : '#ffffff');
     };
 
     /** Get the appropriate basemap style URL for the current color scheme. */
@@ -53,6 +229,49 @@
             ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
             : 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
     };
+
+    /** Remove disposed charts from the tracking array. */
+    ns.pruneCharts = function () {
+        ns._allCharts = ns._allCharts.filter(function (c) { return !c.isDisposed(); });
+    };
+
+    /**
+     * Re-apply the active theme to every live chart and map. Triggered when the
+     * DRE theme toggles between light and dark (or the system preference does).
+     */
+    ns.refresh = function () {
+        ns.readTheme();
+        ns.pruneCharts();
+
+        // ECharts 6: switch the instance theme live. Graph-type charts re-apply
+        // their structural (per-node/edge) colours via _rvRebuild; the rest get
+        // their current option re-applied with notMerge so setTheme can't discard
+        // it (the documented caveat after multiple merge-mode setOption calls).
+        ns._allCharts.forEach(function (c) {
+            try {
+                if (typeof c._rvRebuild === 'function') {
+                    c.setTheme(ns._echartsTheme);
+                    c._rvRebuild();
+                } else {
+                    var opt = c.getOption();
+                    c.setTheme(ns._echartsTheme);
+                    c.setOption(opt, { notMerge: true });
+                }
+            } catch (e) { /* keep going */ }
+        });
+
+        // MapLibre: rebuild each map so it picks up the new basemap + colours.
+        var maps = ns._allMaps.slice();
+        ns._allMaps = [];
+        maps.forEach(function (entry) {
+            try { if (entry.map && entry.map.remove) entry.map.remove(); } catch (e) { /* noop */ }
+            try { if (typeof entry.rebuild === 'function') entry.rebuild(); } catch (e) { /* noop */ }
+        });
+    };
+
+    /* ------------------------------------------------------------------ */
+    /*  Helpers                                                            */
+    /* ------------------------------------------------------------------ */
 
     /** Build a dataZoom config (slider + scroll) for timeline-type charts. */
     ns.buildDataZoom = function (count) {
@@ -66,7 +285,7 @@
     /** Truncate a string with ellipsis if it exceeds maxLen. */
     ns.truncateLabel = function (str, maxLen) {
         if (!str) return '';
-        return str.length > maxLen ? str.substring(0, maxLen) + '\u2026' : str;
+        return str.length > maxLen ? str.substring(0, maxLen) + '…' : str;
     };
 
     /** Convert either format to array of { name, value, itemId? }. */
@@ -93,11 +312,6 @@
     /* -- Global decal toggle state -- */
 
     ns._decalEnabled = false;
-
-    /** Remove disposed charts from the tracking array. */
-    ns.pruneCharts = function () {
-        ns._allCharts = ns._allCharts.filter(function (c) { return !c.isDisposed(); });
-    };
 
     /** Toggle decal patterns on all tracked ECharts instances (skips charts flagged _noDecal). */
     ns.toggleDecals = function () {
@@ -134,7 +348,7 @@
             var btn = e.target.closest('[data-action]');
             if (!btn) return;
             if (btn.dataset.action === 'save') {
-                var url = chart.getDataURL({ pixelRatio: 2, backgroundColor: '#fff' });
+                var url = chart.getDataURL({ pixelRatio: 2, backgroundColor: ns.exportBg() });
                 var a = document.createElement('a');
                 a.href = url;
                 a.download = (panel.querySelector('h4').textContent || 'chart').trim() + '.png';
@@ -151,18 +365,60 @@
         initChart: ns.initChart, truncateLabel: ns.truncateLabel
     };
 
-    /* -- Dark mode listener -- */
+    /* ------------------------------------------------------------------ */
+    /*  Theme watchers + global resize                                     */
+    /* ------------------------------------------------------------------ */
 
-    if (_darkQuery) {
-        if (ns._darkMode) document.documentElement.classList.add('rv-dark-mode');
-        _darkQuery.addEventListener('change', function () {
-            ns._darkMode = _darkQuery.matches;
-            document.documentElement.classList.toggle('rv-dark-mode', ns._darkMode);
-            ns.pruneCharts();
-            var theme = ns._darkMode ? 'dark' : 'default';
-            ns._allCharts.forEach(function (c) {
-                c.setTheme(theme);
-            });
-        });
+    var _refreshTimer;
+    function scheduleRefresh() {
+        clearTimeout(_refreshTimer);
+        _refreshTimer = setTimeout(function () {
+            if (ns.isDark() !== ns._darkMode) ns.refresh();
+        }, 60);
     }
+
+    // Body-dependent setup. This script is injected in <head>, so <body> may not
+    // exist yet (the colour probe and the MutationObserver both need it). Defer
+    // until the DOM is ready; charts/maps also init on DOMContentLoaded, and
+    // initChart() lazily resolves the theme as a safety net.
+    function setupThemeWatchers() {
+        // Resolve tokens now that <body> exists, so the probe inherits the active
+        // body[data-theme] cascade and the first chart renders in the right theme.
+        ns.readTheme();
+
+        // The DRE theme toggle sets `data-theme` on <body> (and updates it on
+        // system changes when no manual choice is stored). Watching that single
+        // attribute covers both the manual toggle and the system-preference path.
+        if (window.MutationObserver) {
+            new MutationObserver(scheduleRefresh).observe(document.body, {
+                attributes: true, attributeFilter: ['data-theme']
+            });
+        }
+        // Fallback for host themes that rely solely on the media query.
+        if (window.matchMedia) {
+            var mq = window.matchMedia('(prefers-color-scheme: dark)');
+            var onMqChange = function () {
+                if (!(document.body && document.body.getAttribute('data-theme'))) scheduleRefresh();
+            };
+            if (mq.addEventListener) mq.addEventListener('change', onMqChange);
+            else if (mq.addListener) mq.addListener(onMqChange);
+        }
+    }
+
+    if (document.body) {
+        setupThemeWatchers();
+    } else {
+        document.addEventListener('DOMContentLoaded', setupThemeWatchers, { once: true });
+    }
+
+    // Single global resize handler for all tracked charts + maps.
+    var _resizeTimer;
+    window.addEventListener('resize', function () {
+        clearTimeout(_resizeTimer);
+        _resizeTimer = setTimeout(function () {
+            ns.pruneCharts();
+            ns._allCharts.forEach(function (c) { try { c.resize(); } catch (e) {} });
+            ns._allMaps.forEach(function (m) { try { m.map.resize(); } catch (e) {} });
+        }, 100);
+    });
 })();

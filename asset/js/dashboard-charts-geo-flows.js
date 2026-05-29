@@ -19,6 +19,9 @@
         if (!data || !data.links || data.links.length < 1) return;
         if (typeof maplibregl === 'undefined') return;
 
+        // Wrapped so the theme engine can rebuild the map (new basemap + theme
+        // colours) on a live light/dark toggle — see dashboard-core ns.refresh().
+        function create() {
         var map = new maplibregl.Map({
             container: el,
             style: ns.getBasemapStyle(),
@@ -161,6 +164,10 @@
             });
             map.fitBounds(bounds, { padding: 40, maxZoom: 8 });
         });
+
+            ns.trackMap(map, create);
+        }
+        create();
 
         // MapLibre map — no ECharts instance returned.
         return null;

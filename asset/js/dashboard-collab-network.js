@@ -44,7 +44,7 @@
                         isSelf: isSelf, itemId: nd.itemId,
                         itemStyle: isSelf
                             ? { color: THEME.accent, borderColor: THEME.text, borderWidth: 3 }
-                            : { color: COLORS[(i - 1) % COLORS.length], borderColor: THEME.border, borderWidth: 1 },
+                            : { color: COLORS[(i - 1) % COLORS.length], borderWidth: 1 },
                         label: {
                             show: isSelf || n <= 10,
                             fontSize: isSelf ? THEME.fontSizeEmphasis : THEME.fontSize,

@@ -56,6 +56,10 @@
         if (!data || !data.length || typeof maplibregl === 'undefined') return null;
 
         el.style.borderRadius = '6px';
+
+        // Wrapped so the theme engine can rebuild the map (new basemap + theme
+        // colours) on a live light/dark toggle — see dashboard-core ns.refresh().
+        function create() {
         var map = new maplibregl.Map({
             container: el,
             style: getBasemapStyle(),
@@ -292,6 +296,9 @@
 
             // --- Legend ---
             if (hasFlows) {
+                // Avoid stacking legends if the map is rebuilt on a theme change.
+                var existingLegend = el.querySelector('.rv-map-legend');
+                if (existingLegend) existingLegend.remove();
                 var legend = document.createElement('div');
                 legend.className = 'rv-map-legend';
                 legend.innerHTML =
@@ -303,7 +310,10 @@
             }
         });
 
+        ns.trackMap(map, create);
         return { resize: function () { map.resize(); } };
+        }
+        return create();
     };
 
     /* -- Self-location mini map -- */
@@ -311,6 +321,8 @@
     ns.charts.buildMiniMap = function (el, data) {
         if (!data || !data.lat || typeof maplibregl === 'undefined') return null;
         el.style.borderRadius = '6px';
+
+        function create() {
         var map = new maplibregl.Map({
             container: el,
             style: getBasemapStyle(),
@@ -326,6 +338,9 @@
             .setLngLat([data.lon, data.lat])
             .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML('<strong>' + (data.name || '') + '</strong>'))
             .addTo(map);
+        ns.trackMap(map, create);
         return { resize: function () { map.resize(); } };
+        }
+        return create();
     };
 })();
