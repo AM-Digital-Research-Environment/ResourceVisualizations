@@ -30,11 +30,11 @@
             aria: { enabled: true },
             grid: { left: 120, right: 60, top: 10, bottom: 80 },
             xAxis: {
-                type: 'category', data: data.cols, splitArea: { show: true },
+                type: 'category', data: data.cols,
                 axisLabel: { rotate: 35, fontSize: THEME.fontSize, formatter: function (v) { return truncateLabel(v, 15); } }
             },
             yAxis: {
-                type: 'category', data: data.rows, splitArea: { show: true },
+                type: 'category', data: data.rows,
                 axisLabel: { fontSize: THEME.fontSize, formatter: function (v) { return truncateLabel(v, 15); } }
             },
             visualMap: {

@@ -70,23 +70,49 @@
     /*  Theme-token resolution                                             */
     /* ------------------------------------------------------------------ */
 
-    // Hidden probe + canvas, used to resolve CSS custom properties (which may
-    // be oklch()/color-mix() in the DRE theme) into a concrete, canvas- and
-    // MapLibre-safe colour string in the *currently active* theme.
+    // Hidden probe + 1px canvas, used to resolve CSS custom properties — which
+    // are oklch()/color-mix() in the DRE theme — into a plain sRGB string in the
+    // *currently active* theme. This matters: zrender (ECharts) and MapLibre both
+    // FAIL to parse oklch()/oklab(), so handing them the raw token makes text and
+    // shapes fall back to wrong colours. We must rasterise to rgb() ourselves.
     var _probe = null;
-    var _canvas = null;
+    var _ctx = null;
 
     function getProbe() {
         if (!_probe) {
             _probe = document.createElement('span');
             _probe.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:0;height:0;pointer-events:none';
-            (document.body || document.documentElement).appendChild(_probe);
         }
+        // Keep the probe parented to <body> so it inherits the active
+        // body[data-theme] cascade (it may be created before <body> exists).
+        var host = document.body || document.documentElement;
+        if (host && _probe.parentNode !== host) host.appendChild(_probe);
         return _probe;
     }
 
     /**
-     * Resolve a CSS custom property to a concrete colour string.
+     * Rasterise any browser-parseable CSS colour (incl. oklch()/oklab()/
+     * color-mix()) to a plain rgb()/rgba() string that zrender and MapLibre
+     * can parse.
+     */
+    ns.toRGB = function (color) {
+        if (!_ctx) {
+            var cv = document.createElement('canvas');
+            cv.width = cv.height = 1;
+            _ctx = cv.getContext('2d', { willReadFrequently: true });
+        }
+        _ctx.clearRect(0, 0, 1, 1);
+        _ctx.fillStyle = '#000';
+        _ctx.fillStyle = color;            // browser parses oklch/color-mix here
+        _ctx.fillRect(0, 0, 1, 1);
+        var d = _ctx.getImageData(0, 0, 1, 1).data;
+        if (d[3] === 0) return 'rgba(0,0,0,0)';
+        if (d[3] === 255) return 'rgb(' + d[0] + ',' + d[1] + ',' + d[2] + ')';
+        return 'rgba(' + d[0] + ',' + d[1] + ',' + d[2] + ',' + (d[3] / 255).toFixed(3) + ')';
+    };
+
+    /**
+     * Resolve a CSS custom property to a plain rgb()/rgba() colour string.
      * @param {string} name  e.g. '--primary'
      * @param {string} fallback  used when the host theme lacks the token
      */
@@ -97,13 +123,7 @@
             probe.style.color = '';
             probe.style.color = 'var(' + name + ', ' + fallback + ')';
             var resolved = getComputedStyle(probe).color;
-            if (!resolved) return fallback;
-            // Normalise to rgb/hex via canvas so oklch()/color-mix() values are
-            // accepted by both the ECharts canvas and MapLibre's colour parser.
-            _canvas = _canvas || document.createElement('canvas').getContext('2d');
-            _canvas.fillStyle = '#000';
-            _canvas.fillStyle = resolved;
-            return _canvas.fillStyle;
+            return ns.toRGB(resolved || fallback) || fallback;
         } catch (e) {
             return fallback;
         }
@@ -142,22 +162,16 @@
     /** Build an ECharts theme object from the resolved THEME tokens. */
     ns.buildEchartsTheme = function () {
         var t = ns.THEME;
-        // Category / time axes (usually the x-axis): keep the baseline + ticks
-        // but NO split lines — vertical gridlines read as cluttered graph paper.
-        var catAxis = {
-            axisLine:  { show: true, lineStyle: { color: t.grid } },
-            axisTick:  { show: true, lineStyle: { color: t.grid } },
+        // One clean axis style for every axis type. No split lines and no split
+        // areas anywhere: charts read cleanly on the panel surface and bar charts
+        // (value axis on the x-axis) no longer get vertical "graph paper" lines.
+        // ECharts keeps the baseline on category axes and hides it on value axes
+        // by default, which is exactly the clean look we want.
+        var axis = {
+            axisLine:  { lineStyle: { color: t.grid } },
+            axisTick:  { lineStyle: { color: t.grid } },
             axisLabel: { color: t.textMuted },
             splitLine: { show: false },
-            splitArea: { show: false }
-        };
-        // Value axes (usually the y-axis): drop the axis line, show only faint
-        // horizontal split lines as subtle reading guides.
-        var valAxis = {
-            axisLine:  { show: false },
-            axisTick:  { show: false },
-            axisLabel: { color: t.textMuted },
-            splitLine: { show: true, lineStyle: { color: t.gridLight } },
             splitArea: { show: false }
         };
         return {
@@ -177,10 +191,10 @@
                 borderColor: t.grid,
                 textStyle: { color: t.text }
             },
-            categoryAxis: catAxis,
-            valueAxis: valAxis,
-            logAxis: valAxis,
-            timeAxis: catAxis,
+            categoryAxis: axis,
+            valueAxis: axis,
+            logAxis: axis,
+            timeAxis: axis,
             line: { lineStyle: { width: 2 } },
             pie: { itemStyle: { borderColor: t.border, borderWidth: 2 } },
             scatter: { itemStyle: { borderColor: t.border, borderWidth: 1 } },
@@ -194,6 +208,7 @@
                 breadcrumb: { itemStyle: { color: t.gridLight, textStyle: { color: t.text } } }
             },
             sunburst: { itemStyle: { borderColor: t.border, borderWidth: 1 } },
+            heatmap: { itemStyle: { borderColor: t.border, borderWidth: 1 } },
             sankey: {
                 label: { color: t.text },
                 lineStyle: { color: 'source', opacity: 0.4 }
