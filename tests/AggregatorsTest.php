@@ -194,5 +194,48 @@ check($kgShared, 'KG: shared edge carries isShared/idf metadata');
 check(isset($g['stats']['maxStrength'], $g['stats']['maxFreqPct']), 'KG: stats present');
 check(KG::buildItemMap(1, $kgLinks, []) === null, 'KG buildItemMap null without geo');
 
+// --- buildCalendarHeatmap (acquisition cadence by created date) ---
+$calItems = [
+    1 => ['created' => '2024-01-05'], 2 => ['created' => '2024-01-05'],
+    3 => ['created' => '2024-02-10'], 4 => ['created' => ''],
+];
+check(A::buildCalendarHeatmap([1, 2, 3, 4], $calItems) === [['2024-01-05', 2], ['2024-02-10', 1]], 'buildCalendarHeatmap groups by day');
+check(A::buildCalendarHeatmap([4], $calItems) === null, 'buildCalendarHeatmap null when no created dates');
+
+// --- buildBoxplot (items-per-project per section; <2 boxes => null) ---
+$bpSections = [10 => ['title' => 'Sec A'], 20 => ['title' => 'Sec B']];
+$bpChildren = [10 => [100, 101], 20 => [200], 100 => [1, 2, 3], 101 => [4, 5], 200 => [6]];
+check(A::buildBoxplot($bpSections, $bpChildren) === [['name' => 'Sec A', 'values' => [3, 2]], ['name' => 'Sec B', 'values' => [1]]], 'buildBoxplot one box per section');
+check(A::buildBoxplot([10 => ['title' => 'Sec A']], $bpChildren) === null, 'buildBoxplot null with <2 boxes');
+
+// --- buildTimeChord (per-year subject co-occurrence) ---
+$tcItems = [
+    1 => ['title' => 'I1'], 2 => ['title' => 'I2'], 3 => ['title' => 'I3'], 4 => ['title' => 'I4'],
+    10 => ['title' => 'S1'], 11 => ['title' => 'S2'], 12 => ['title' => 'S3'],
+];
+$tcLinks = [
+    1 => [['dcterms:subject', 'S', 10], ['dcterms:subject', 'S', 11]],
+    2 => [['dcterms:subject', 'S', 10], ['dcterms:subject', 'S', 11]],
+    3 => [['dcterms:subject', 'S', 11], ['dcterms:subject', 'S', 12]],
+    4 => [['dcterms:subject', 'S', 11], ['dcterms:subject', 'S', 12]],
+];
+$tcYear = [1 => '2019', 2 => '2019', 3 => '2020', 4 => '2020'];
+$tc = A::buildTimeChord([1, 2, 3, 4], $tcLinks, $tcItems, $tcYear);
+check($tc !== null && count($tc['buckets']) === 2 && $tc['years'] === ['2019', '2020'], 'buildTimeChord 2 year buckets');
+check($tc !== null && $tc['buckets'][0]['year'] === '2019' && count($tc['buckets'][0]['links']) >= 1, 'buildTimeChord bucket carries chord links');
+
+// --- buildWhatsNew (windows off max-created + top projects) ---
+$wnItems = [
+    1 => ['title' => 'New1', 'created' => '2024-12-01', 'template_id' => 10],
+    2 => ['title' => 'New2', 'created' => '2024-11-15', 'template_id' => 10],
+    3 => ['title' => 'Old',  'created' => '2023-01-01', 'template_id' => 10],
+    50 => ['title' => 'Proj', 'created' => '2020-01-01', 'template_id' => 5],
+];
+$wn = A::buildWhatsNew($wnItems, [50 => [1, 2, 3]]);
+check($wn !== null && $wn['reference'] === '2024-12-01', 'buildWhatsNew reference = max created');
+$w3 = $wn['windows'][0];
+check($w3['months'] === 3 && $w3['count'] === 2, 'buildWhatsNew 3-month window has 2 recent items');
+check(count($w3['topProjects']) === 1 && $w3['topProjects'][0]['itemId'] === 50 && $w3['topProjects'][0]['value'] === 2, 'buildWhatsNew top project counts recent items');
+
 echo $failures ? "\n$failures FAILURE(S)\n" : "\nALL PHP AGGREGATOR TESTS PASS\n";
 exit($failures ? 1 : 0);

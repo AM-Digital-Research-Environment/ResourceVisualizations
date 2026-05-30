@@ -55,6 +55,9 @@ class DashboardAssets extends AbstractHelper
         'js/dashboard-charts-choropleth.js',
         'js/dashboard-charts-radar.js',
         'js/dashboard-charts-communities.js',
+        'js/dashboard-charts-calendar.js',
+        'js/dashboard-charts-boxplot.js',
+        'js/dashboard-charts-time-chord.js',
         'js/dashboard-registry.js',
     ];
 
@@ -68,6 +71,7 @@ class DashboardAssets extends AbstractHelper
         'explorer'    => ['js/dashboard.js', 'js/dashboard-explorer.js'],
         'compare'     => ['js/dashboard-compare-unify.js', 'js/dashboard-compare.js'],
         'communities' => ['js/dashboard-communities.js'],
+        'whatsNew'    => ['js/dashboard-whats-new.js'],
     ];
 
     /**

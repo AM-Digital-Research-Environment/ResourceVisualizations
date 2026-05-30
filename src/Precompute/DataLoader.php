@@ -37,7 +37,7 @@ final class DataLoader
         $items = [];
         $rows = $this->query(
             'SELECT r.id, r.title, r.resource_template_id,'
-            . " CONCAT(v.prefix, ':', rc.local_name) AS class_term, rc.label AS class_label"
+            . " CONCAT(v.prefix, ':', rc.local_name) AS class_term, rc.label AS class_label, r.created"
             . ' FROM resource r'
             . ' LEFT JOIN resource_class rc ON r.resource_class_id = rc.id'
             . ' LEFT JOIN vocabulary v ON rc.vocabulary_id = v.id'
@@ -52,6 +52,7 @@ final class DataLoader
                 'template_id' => $r[2] !== null ? (int) $r[2] : null,
                 'class_term' => $classTerm,
                 'class_label' => $r[4] !== null ? (string) $r[4] : '',
+                'created' => ($r[5] !== null && $r[5] !== '') ? substr((string) $r[5], 0, 10) : '',
             ];
         }
         $log('  ' . count($items) . ' items');

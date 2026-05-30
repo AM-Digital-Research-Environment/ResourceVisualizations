@@ -137,6 +137,7 @@ final class Runner
         $this->generateCollectionOverview();
         $this->generateCommunities();
         $this->generatePublications();
+        $this->generateWhatsNew();
         $this->generateKnowledgeGraphs();
 
         $this->log('Done. ' . $this->fileCount . ' files written.');
@@ -184,6 +185,12 @@ final class Runner
         }
         if ($v = Aggregators::buildChoropleth($itemIds, $this->links, $this->countryIndex)) {
             $dashboard['choropleth'] = $v;
+        }
+        if ($v = Aggregators::buildCalendarHeatmap($itemIds, $this->items)) {
+            $dashboard['calendar'] = $v;
+        }
+        if ($v = Aggregators::buildTimeChord($itemIds, $this->links, $this->items, $this->itemYear)) {
+            $dashboard['timeChord'] = $v;
         }
     }
 
@@ -634,6 +641,22 @@ final class Runner
         if ($beeswarm) {
             $extra['beeswarm'] = $beeswarm;
         }
+        if ($bx = Aggregators::buildBoxplot($sections, $this->childrenOf)) {
+            $extra['boxplot'] = $bx;
+        }
+        $allProjItems = [];
+        foreach ($projectIds as $pid) {
+            foreach ($this->childrenOf[$pid] ?? [] as $iid) {
+                $allProjItems[$iid] = true;
+            }
+        }
+        $allProjItems = array_keys($allProjItems);
+        if ($cal = Aggregators::buildCalendarHeatmap($allProjItems, $this->items)) {
+            $extra['calendar'] = $cal;
+        }
+        if ($tc = Aggregators::buildTimeChord($allProjItems, $this->links, $this->items, $this->itemYear)) {
+            $extra['timeChord'] = $tc;
+        }
         return $extra;
     }
 
@@ -674,6 +697,16 @@ final class Runner
         }
         if ($v = Aggregators::buildChoropleth($researchItems, $this->links, $this->countryIndex)) {
             $dashboard['choropleth'] = $v;
+        }
+        if ($v = Aggregators::buildCalendarHeatmap($researchItems, $this->items)) {
+            $dashboard['calendar'] = $v;
+        }
+        if ($v = Aggregators::buildTimeChord($researchItems, $this->links, $this->items, $this->itemYear)) {
+            $dashboard['timeChord'] = $v;
+        }
+        $sections = $this->itemsWhere(fn ($info) => ($info['class_term'] ?? '') === 'frapo:ResearchGroup');
+        if ($v = Aggregators::buildBoxplot($sections, $this->childrenOf)) {
+            $dashboard['boxplot'] = $v;
         }
         $dashboard['resourceType'] = 'section';
         $this->save('collection-overview', $dashboard);
@@ -748,6 +781,24 @@ final class Runner
      * NOT committed to the repo; the front-end falls back to the live REST API
      * until this has run at least once.
      */
+    private function generateWhatsNew(): void
+    {
+        $this->log('=== What\'s New ===');
+        $projects = $this->itemsWhere(fn ($info) => ($info['template_id'] ?? null) === self::TEMPLATE_PROJECTS);
+        $projectChildren = [];
+        foreach ($projects as $pid => $_) {
+            $kids = $this->childrenOf[$pid] ?? [];
+            if ($kids) {
+                $projectChildren[$pid] = $kids;
+            }
+        }
+        $whatsNew = Aggregators::buildWhatsNew($this->items, $projectChildren);
+        if ($whatsNew) {
+            file_put_contents($this->outputDir . '/whats-new.json', json_encode($whatsNew, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            $this->log('  whats-new.json: reference ' . $whatsNew['reference'] . ', ' . count($whatsNew['windows']) . ' windows');
+        }
+    }
+
     private function generateKnowledgeGraphs(): void
     {
         $this->log('=== Knowledge Graphs ===');

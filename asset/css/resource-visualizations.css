@@ -841,6 +841,75 @@ button.rv-toolbar-btn:focus-visible,
     min-height: 120px;
 }
 
+/* What's New */
+.whats-new-windows {
+    margin-bottom: 1.25rem;
+}
+
+.whats-new-heading {
+    margin: 1.5rem 0 0.75rem;
+    color: var(--rv-heading-color);
+}
+
+.whats-new-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.6rem;
+}
+
+.whats-new-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--rv-border);
+    border-radius: var(--rv-radius-sm);
+    background: var(--rv-bg-raised);
+    text-decoration: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.whats-new-card:hover {
+    border-color: var(--rv-accent);
+    box-shadow: var(--rv-shadow-sm);
+}
+
+.whats-new-card-title {
+    color: var(--rv-heading-color);
+    font-weight: 600;
+    font-size: 0.9rem;
+    line-height: 1.3;
+}
+
+.whats-new-card-date {
+    color: var(--rv-text-color);
+    font-size: 0.78rem;
+}
+
+/* Sibling-items sparkline (item pages) */
+.sibling-sparkline-block {
+    margin: 1rem 0;
+}
+
+.sibling-sparkline-head h4 {
+    margin: 0 0 0.4rem;
+    color: var(--rv-heading-color);
+    font-size: 0.95rem;
+}
+
+.sibling-sparkline-link {
+    cursor: pointer;
+}
+
+.sibling-sparkline-link:hover {
+    color: var(--rv-accent);
+}
+
+.sibling-sparkline-chart {
+    height: 150px;
+    width: 100%;
+}
+
 /* Stats cards */
 .compare-stats {
     display: grid !important;

@@ -23,6 +23,10 @@ Automatically rendered below the knowledge graph when an item has geographic dat
 
 Coordinates are resolved from linked Location items with `geo:lat`/`geo:long`. 2,898 items have location map data.
 
+### Sibling-items Sparkline (Item Pages)
+
+For a research item that belongs to a project, a compact sparkline of the project's **items-per-year** with the current item's year marked — context for where the item sits in its project's timeline. A **resource page block** (Admin > Sites > [site] > Theme > Configure resource pages); it resolves the parent project + the project's precomputed timeline client-side and hides itself when not applicable.
+
 ### Visualizations Dashboard (Item Pages)
 
 Contextual charts adapted per entity type. All chart elements are clickable, linking to the corresponding Omeka S item page. 2,551 dashboards pre-computed across all entity types.
@@ -60,6 +64,8 @@ Contextual charts adapted per entity type. All chart elements are clickable, lin
 | Sankey (contributor > project > type) | x | x | | | | | | | |
 
 Note: The basic Timeline is automatically hidden when the Stacked Timeline is available (since it's redundant).
+
+The collection / section / project overviews additionally carry an **acquisition calendar** (items added per day), a **box plot** of items-per-project across research sections, and a **time-aware chord** (subject co-occurrence with a year slider / play button).
 
 Dashboard layouts are resource-type-aware: each resource template has its own chart order and wide/tall configuration defined in `dashboard-layouts.js`. This prevents layout gaps in the 2-column grid by pairing half-width charts side by side.
 
@@ -105,6 +111,10 @@ A bibliographic analytics view over every `fabio:`-classed publication (articles
 - a **keyword co-occurrence** chord over `dcterms:subject`.
 
 Authors matched to Person records and subjects matched to Authority/LCSH records are clickable through to their pages. The same **By Resource Template** chart also appears on person and organisation dashboards, and a person's authored publications now surface on their own dashboard.
+
+### What's New
+
+A recent-additions feed with a **3 / 6 / 12-month** window selector and a "most active projects" bar. Added as a **site-page block** (Admin > Sites > [site] > Pages), it loads `asset/data/item-dashboards/whats-new.json`. "Now" is the latest item-creation date in the corpus, so it stays meaningful regardless of when the data was imported.
 
 ### Item Set Dashboard
 

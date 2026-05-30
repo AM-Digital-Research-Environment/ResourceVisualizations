@@ -1,0 +1,28 @@
+<?php
+/**
+ * What's New page block.
+ *
+ * Recent additions + most-active projects, with a 3/6/12-month window selector.
+ * Loads the precomputed whats-new.json. Rendered by asset/js/dashboard-whats-new.js.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var \Omeka\Api\Representation\SitePageBlockRepresentation $block
+ */
+
+// Site-page block (Module.php does not run on page controllers), so request the
+// CDN + core prelude and the What's New controller.
+$this->dashboardAssets(['cdn' => true, 'controller' => 'whatsNew']);
+
+$siteSlug = $this->currentSite()->slug();
+?>
+
+<div class="resource-vis-block whats-new-block">
+    <div class="whats-new-container"
+         data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
+         data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">
+        <div class="rv-loading">
+            <div class="rv-spinner"></div>
+            <span><?= $this->translate('Loading recent additions…') ?></span>
+        </div>
+    </div>
+</div>

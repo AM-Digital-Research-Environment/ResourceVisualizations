@@ -10,6 +10,7 @@ return [
             'publications' => Site\BlockLayout\Publications::class,
             'projectExplorer' => Site\BlockLayout\ProjectExplorer::class,
             'compareEntity' => Site\BlockLayout\CompareEntity::class,
+            'whatsNew' => Site\BlockLayout\WhatsNew::class,
         ],
     ],
     'resource_page_block_layouts' => [
@@ -17,6 +18,7 @@ return [
             'knowledgeGraph' => Site\ResourcePageBlockLayout\KnowledgeGraph::class,
             'itemSetDashboard' => Site\ResourcePageBlockLayout\ItemSetDashboard::class,
             'linkedItemsDashboard' => Site\ResourcePageBlockLayout\LinkedItemsDashboard::class,
+            'siblingItemsSparkline' => Site\ResourcePageBlockLayout\SiblingItemsSparkline::class,
         ],
     ],
     'view_manager' => [

@@ -1,0 +1,29 @@
+<?php
+/**
+ * Sibling Items Sparkline resource page block.
+ *
+ * On a research item that belongs to a project, shows the project's
+ * items-per-year as a compact sparkline with the current item's year marked.
+ * Resolution happens client-side via the REST API + the project's precomputed
+ * dashboard timeline; the block stays hidden when not applicable.
+ *
+ * CDN + core (window.RV) are injected by Module.php on item pages, exactly as
+ * for the Knowledge Graph block.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var \Omeka\Api\Representation\ItemRepresentation $resource
+ */
+
+$this->headScript()->appendFile($this->assetUrl('js/sibling-sparkline.js', 'ResourceVisualizations'));
+
+$siteSlug = $this->currentSite()->slug();
+?>
+
+<div class="resource-vis-block sibling-sparkline-block" hidden>
+    <div class="sibling-sparkline-container"
+         data-item-id="<?= $resource->id() ?>"
+         data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
+         data-api-base="<?= $this->escapeHtmlAttr($this->basePath() . '/api') ?>"
+         data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">
+    </div>
+</div>

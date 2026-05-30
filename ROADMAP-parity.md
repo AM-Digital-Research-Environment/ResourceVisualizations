@@ -45,7 +45,10 @@ This revision was rewritten after re-verifying **both** codebases against their 
 | **Phase 8** — Publications suite | ✅ Done | Unblocked once `fabio:` bibliographic records landed (~172). Publications site-page block: by-template breakdown, top venues/authors, co-author network (matched persons vs. external), keyword co-occurrence. Plus a reusable `templates` breakdown across entity dashboards; people dashboards now surface `bibo:authorList` publications. **Dashboards are now PHP-only — the Python dashboard pipeline was removed.** |
 | **Phase 4.1** — Project Explorer | ✅ Done | Site-page block: a project selector retunes the full project dashboard, reusing `ns.renderInto` + the existing `projects-index.json`; `?project=` deep-link. |
 | **Phase 5** — Generalized Compare | ✅ Done | Compare any entity type (projects/people/institutions/subjects/languages) via a `CompareEntity` block with an in-page type switcher; per-type charts + overlap + overlaid A/B radar. New `people/institutions/subjects/languages-index.json` emitters; `CompareProjects` kept (locked to projects). |
-| Phase 4.2 / 6 / 7 | ⏳ Planned | What's New, photo views, sibling sparkline. |
+| **Phase 2.3–2.5** — Calendar / Box Plot / Time-chord | ✅ Done | Acquisition calendar, items-per-project box plot, and a year-sliding subject chord (ECharts `timeline`) on the collection/projects/section/project overviews; `created` map added to `DataLoader`. |
+| **Phase 4.2** — What's New | ✅ Done | Recent-additions feed (3/6/12-month windows off max-`created`) + most-active-projects bar; `whats-new.json` + site-page block. |
+| **Phase 7.1** — Sibling sparkline | ✅ Done | Resource-page block: a research item's project cadence with the item's year marked (REST-API + the project's precomputed timeline; no precompute change). |
+| Phase 6 | ⏳ Planned | Photo browsing (masonry / map / timeline) — deferred. |
 
 All changes are precompute-and-static; regenerating dashboards populates the new keys. JS/PHP wiring is syntax- and consistency-checked; every new aggregator is unit-validated with mock data (and the choropleth point-in-polygon against the real GeoJSON, the Louvain split on a 2-cluster graph).
 
@@ -76,16 +79,16 @@ Verified against the dashboard's `src/routes/` and `src/lib/components/charts/` 
 | **Discursive Communities network** (Louvain clustering + PageRank anchors) | `/network` tab 5, `NetworkGraph.svelte` | missing | **Phase 3** |
 | **Generalized cross-entity Compare** (any type, live selection) | `/compare/[type]`, `EntityCompare` | ✅ **Done** (CompareEntity block) | **Phase 5** |
 | **Project Explorer** (one selector retunes ~12 charts) | `/project-explorer` | ✅ **Done** | **Phase 4** |
-| **What's New** (recent-items feed + top recent projects) | `/whats-new` | missing | **Phase 4** |
+| **What's New** (recent-items feed + top recent projects) | `/whats-new` | ✅ **Done** | **Phase 4** |
 | **Photo browsing** (masonry / map / timeline for image-heavy sets) | `/collections/[slug]` | missing | **Phase 6** |
-| **Calendar Heatmap** (cadence by day/month/year) | `CalendarHeatmap.svelte` | missing | **Phase 2** |
+| **Calendar Heatmap** (cadence by day/month/year) | `CalendarHeatmap.svelte` | ✅ **Done** | **Phase 2** |
 | **Choropleth Map** (country fill) | `ChoroplethMap.svelte` | missing | **Phase 2** |
-| **Radar Chart** (entity profile, 5–7 axes) | `RadarChart.svelte` | missing | **Phase 2** |
-| **Box Plot** (distribution) | `BoxPlot.svelte` | missing | **Phase 2** |
-| **Time-aware Chord** (chord + year slider) | `TimeAwareChord.svelte` | missing | **Phase 2** |
+| **Radar Chart** (entity profile, 5–7 axes) | `RadarChart.svelte` | ✅ **Done** | **Phase 2** |
+| **Box Plot** (distribution) | `BoxPlot.svelte` | ✅ **Done** | **Phase 2** |
+| **Time-aware Chord** (chord + year slider) | `TimeAwareChord.svelte` | ✅ **Done** | **Phase 2** |
 | **Gantt on Projects overview** | `/projects` | only on Section overview | **Phase 1** |
 | **Beeswarm on Projects overview** | `/projects` | only on Section overview | **Phase 1** |
-| **Sibling-items sparkline** (item detail) | `SiblingItemsSparkline.svelte` | missing | **Phase 7** |
+| **Sibling-items sparkline** (item detail) | `SiblingItemsSparkline.svelte` | ✅ **Done** | **Phase 7** |
 | **Publications analytics** (co-author net, keyword chord, faceted browse, export) | `/publications` | no source data | **Phase 8 (gated)** |
 | **Semantic Embeddings scatter** | `/semantic-map`, `SemanticScatter.svelte` | missing | **Descoped** |
 | **Similar-items strip** (item detail) | `SimilarItemsStrip.svelte` | missing | **Descoped** (needs embeddings) |
