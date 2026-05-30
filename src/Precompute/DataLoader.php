@@ -11,8 +11,11 @@ use Doctrine\DBAL\Connection;
  * connection (so it reuses Omeka's configured MySQL credentials; no separate
  * variables, no `docker compose exec`).
  *
- * Returns the same eight structures the Python pipeline builds:
- *   items, links, reverseLinks, childrenOf, itemYear, temporal, geo, itemSets.
+ * Returns the structures the dashboards need:
+ *   items, links, reverseLinks, childrenOf, itemYear, temporal, geo, itemSets,
+ *   plus templateLabels (resource-template id => label) and literals
+ *   (bibliographic literal values keyed by item then term) for the Publications
+ *   suite.
  */
 final class DataLoader
 {
@@ -25,7 +28,7 @@ final class DataLoader
         return $this->connection->executeQuery($sql, $params)->fetchAllNumeric();
     }
 
-    /** @return array{items:array,links:array,reverseLinks:array,childrenOf:array,itemYear:array,temporal:array,geo:array,itemSets:array} */
+    /** @return array{items:array,links:array,reverseLinks:array,childrenOf:array,itemYear:array,temporal:array,geo:array,itemSets:array,templateLabels:array,literals:array} */
     public function load(?callable $log = null): array
     {
         $log ??= static function (string $m): void {};
@@ -152,6 +155,30 @@ final class DataLoader
         }
         $log('  ' . count($itemSets) . ' item sets');
 
+        $log('Loading resource template labels…');
+        $templateLabels = [];
+        $rows = $this->query('SELECT id, label FROM resource_template');
+        foreach ($rows as $r) {
+            $templateLabels[(int) $r[0]] = ($r[1] !== null && $r[1] !== '') ? (string) $r[1] : ('Template ' . (int) $r[0]);
+        }
+        $log('  ' . count($templateLabels) . ' templates');
+
+        $log('Loading bibliographic literals…');
+        $literals = [];
+        $rows = $this->query(
+            "SELECT v.resource_id, CONCAT(vo.prefix, ':', p.local_name), v.value"
+            . ' FROM value v'
+            . ' JOIN property p ON v.property_id = p.id'
+            . ' JOIN vocabulary vo ON p.vocabulary_id = vo.id'
+            . " WHERE CONCAT(vo.prefix, ':', p.local_name) IN"
+            . "   ('bibo:authorList', 'bibo:editorList', 'dcterms:isPartOf', 'dcterms:publisher')"
+            . " AND v.value_resource_id IS NULL AND v.value IS NOT NULL AND v.value != ''"
+        );
+        foreach ($rows as $r) {
+            $literals[(int) $r[0]][(string) $r[1]][] = (string) $r[2];
+        }
+        $log('  ' . count($literals) . ' items with bibliographic literals');
+
         return [
             'items' => $items,
             'links' => $links,
@@ -161,6 +188,8 @@ final class DataLoader
             'temporal' => $temporal,
             'geo' => $geo,
             'itemSets' => $itemSets,
+            'templateLabels' => $templateLabels,
+            'literals' => $literals,
         ];
     }
 }

@@ -102,5 +102,69 @@ $c123 = [$byName['Subject 1'], $byName['Subject 2'], $byName['Subject 3']];
 $c456 = [$byName['Subject 4'], $byName['Subject 5'], $byName['Subject 6']];
 check(count(array_unique($c123)) === 1 && count(array_unique($c456)) === 1 && $c123[0] !== $c456[0], 'communities: {1,2,3} vs {4,5,6} split');
 
+// --- buildTemplates (resource-template breakdown) ---
+$tplItems = [
+    1 => ['title' => 'A', 'template_id' => 10],
+    2 => ['title' => 'B', 'template_id' => 10],
+    3 => ['title' => 'C', 'template_id' => 11],
+];
+$tplLabels = [10 => 'Research Items', 11 => 'Article'];
+check(A::buildTemplates([1, 2, 3], $tplItems, $tplLabels) === [['name' => 'Research Items', 'value' => 2], ['name' => 'Article', 'value' => 1]], 'buildTemplates groups by template label');
+check(A::buildTemplates([1, 2], $tplItems, $tplLabels) === null, 'buildTemplates null when single template (monotone)');
+
+// --- buildTopLiteral (venues) ---
+$pubLits = [
+    1 => ['dcterms:isPartOf' => ['Antipode']],
+    2 => ['dcterms:isPartOf' => ['Antipode']],
+    3 => ['dcterms:isPartOf' => ['Society']],
+];
+check(A::buildTopLiteral([1, 2, 3], $pubLits, 'dcterms:isPartOf') === [['name' => 'Antipode', 'value' => 2], ['name' => 'Society', 'value' => 1]], 'buildTopLiteral counts venue literals');
+check(A::buildTopLiteral([1, 2, 3], $pubLits, 'dcterms:publisher') === null, 'buildTopLiteral null when term absent');
+
+// --- buildTopAuthors (literal + matched person union) ---
+$authItems = [100 => ['title' => 'Daley, Patricia', 'template_id' => 4]];
+$authLinks = [
+    1 => [['bibo:authorList', 'Author', 100]],
+    2 => [['bibo:authorList', 'Author', 100]],
+];
+$authLits = [
+    1 => ['bibo:authorList' => ['Kimari, Wangui']],
+    2 => ['bibo:authorList' => ['Kimari, Wangui']],
+];
+check(A::buildTopAuthors([1, 2], $authLinks, $authLits, $authItems) === [
+    ['name' => 'Daley, Patricia', 'value' => 2, 'matched' => true, 'itemId' => 100],
+    ['name' => 'Kimari, Wangui', 'value' => 2, 'matched' => false],
+], 'buildTopAuthors unions matched persons + literal names');
+
+// --- buildCoAuthorNetwork (2-cluster split, literal authors unmatched) ---
+$coLits = [];
+$pid = 200;
+for ($k = 0; $k < 5; $k++) { $coLits[$pid++] = ['bibo:authorList' => ['A', 'B', 'C']]; }
+for ($k = 0; $k < 5; $k++) { $coLits[$pid++] = ['bibo:authorList' => ['D', 'E', 'F']]; }
+for ($k = 0; $k < 2; $k++) { $coLits[$pid++] = ['bibo:authorList' => ['C', 'D']]; }
+$coNet = A::buildCoAuthorNetwork(array_keys($coLits), [], $coLits, []);
+check($coNet !== null && count($coNet['nodes']) === 6, 'coAuthorNetwork: 6 author nodes');
+check($coNet !== null && count($coNet['communities']) === 2, 'coAuthorNetwork: 2 communities split');
+$coAllUnmatched = true;
+foreach (($coNet['nodes'] ?? []) as $nd) { if (!empty($nd['matched'])) { $coAllUnmatched = false; } }
+check($coAllUnmatched, 'coAuthorNetwork: literal authors are unmatched');
+
+// --- buildCoAuthorNetwork (matched person carries itemId) ---
+$mLinks = [
+    300 => [['bibo:authorList', 'Author', 100]],
+    301 => [['bibo:authorList', 'Author', 100]],
+    302 => [['bibo:authorList', 'Author', 100]],
+];
+$mLits = [
+    300 => ['bibo:authorList' => ['X', 'Y']],
+    301 => ['bibo:authorList' => ['X', 'Y']],
+    302 => ['bibo:authorList' => ['X', 'Y']],
+];
+$mItems = [100 => ['title' => 'Linked Person', 'template_id' => 4]];
+$mNet = A::buildCoAuthorNetwork([300, 301, 302], $mLinks, $mLits, $mItems);
+$lp = null;
+foreach (($mNet['nodes'] ?? []) as $nd) { if ($nd['name'] === 'Linked Person') { $lp = $nd; } }
+check($lp !== null && $lp['matched'] === true && ($lp['itemId'] ?? null) === 100, 'coAuthorNetwork: linked author marked matched with itemId');
+
 echo $failures ? "\n$failures FAILURE(S)\n" : "\nALL PHP AGGREGATOR TESTS PASS\n";
 exit($failures ? 1 : 0);

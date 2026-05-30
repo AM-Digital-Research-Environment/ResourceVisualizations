@@ -45,6 +45,7 @@
                         if (p.dataType === 'node') {
                             return '<strong>' + echarts.format.encodeHTML(p.name) + '</strong>'
                                 + '<br/>' + p.data.value + ' items'
+                                + (p.data.matched ? '<br/><em>matched person</em>' : '')
                                 + '<br/><em>community ' + (p.data.community + 1) + '</em>';
                         }
                         if (p.dataType === 'edge') {
@@ -67,9 +68,9 @@
                     scaleLimit: { min: 0.3, max: 5 },
                     data: data.nodes.map(function (nd) {
                         var size = 8 + Math.sqrt((nd.rank || 0) / maxRank) * 38;
-                        return {
+                        var node = {
                             name: nd.name, value: nd.value, itemId: nd.itemId,
-                            community: nd.community,
+                            community: nd.community, matched: nd.matched,
                             category: catIndex[nd.community] != null ? catIndex[nd.community] : 0,
                             symbolSize: size,
                             label: {
@@ -77,6 +78,10 @@
                                 formatter: function (p) { return truncateLabel(p.name, THEME.labelMaxLen); }
                             }
                         };
+                        if (nd.matched) {
+                            node.itemStyle = { borderColor: THEME.accent || THEME.text, borderWidth: 2.5 };
+                        }
+                        return node;
                     }),
                     links: data.links.map(function (l) {
                         return {

@@ -16,14 +16,14 @@
 
     ns.LAYOUTS = {
         organisation: {
-            order: ['timeline', 'types', 'languages', 'roles', 'radar',
+            order: ['timeline', 'types', 'templates', 'languages', 'roles', 'radar',
                     'contributors', 'subjects', 'collabNetwork',
                     'affiliationNetwork', 'locations'],
             wide:  ['subjects', 'collabNetwork', 'affiliationNetwork', 'locations'],
             tall:  ['subjects', 'collabNetwork', 'affiliationNetwork', 'locations']
         },
         person: {
-            order: ['timeline', 'types', 'languages', 'roles', 'radar',
+            order: ['timeline', 'types', 'templates', 'languages', 'roles', 'radar',
                     'coAuthors', 'subjects', 'contributorNetwork', 'locations'],
             wide:  ['subjects', 'contributorNetwork', 'locations'],
             tall:  ['subjects', 'contributorNetwork', 'locations']
@@ -112,7 +112,7 @@
         },
         personOverview: {
             order: ['topPersons', 'stackedTimeline', 'timeline', 'types',
-                    'languages', 'roles', 'heatmap', 'subjects',
+                    'templates', 'languages', 'roles', 'heatmap', 'subjects',
                     'subjectTrends', 'locations', 'choropleth', 'contributors'],
             wide:  ['topPersons', 'stackedTimeline', 'heatmap', 'subjects',
                     'subjectTrends', 'locations', 'choropleth'],
@@ -121,7 +121,7 @@
         },
         institutionOverview: {
             order: ['topInstitutions', 'stackedTimeline', 'timeline', 'types',
-                    'languages', 'roles', 'subjects', 'subjectTrends',
+                    'templates', 'languages', 'roles', 'subjects', 'subjectTrends',
                     'locations', 'choropleth', 'contributors'],
             wide:  ['topInstitutions', 'stackedTimeline', 'subjects',
                     'subjectTrends', 'locations', 'choropleth'],
@@ -171,6 +171,15 @@
                     'contributors', 'locations'],
             wide:  ['subjects', 'contributors', 'locations'],
             tall:  ['subjects', 'locations']
+        },
+        publications: {
+            order: ['templates', 'stackedTimeline', 'timeline', 'types',
+                    'topVenues', 'topAuthors', 'coAuthorNetwork', 'chord',
+                    'languages', 'subjects', 'subjectTrends', 'locations'],
+            wide:  ['stackedTimeline', 'coAuthorNetwork', 'chord', 'subjects',
+                    'subjectTrends', 'locations'],
+            tall:  ['coAuthorNetwork', 'chord', 'subjects', 'subjectTrends',
+                    'locations']
         }
     };
 

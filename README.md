@@ -88,6 +88,17 @@ Side-by-side comparison of two projects with paired charts (stacked timeline, re
 
 A collection-wide subject co-occurrence network: subjects that appear together across items are clustered into communities (Louvain) and sized by influence (PageRank), each community a distinct colour. Added as a **site-page block** (Admin > Sites > [site] > Pages), it loads `asset/data/communities/discursive.json`. Defaults to LCSH-only subjects to cut free-text-tag noise. Click any subject to open its page.
 
+### Publications
+
+A bibliographic analytics view over every `fabio:`-classed publication (articles, books, chapters, working papers, …). Added as a **site-page block** (Admin > Sites > [site] > Pages), it loads `asset/data/item-dashboards/publications.json` and shows:
+
+- a **by-resource-template** breakdown (Article vs. Book vs. Chapter …) and publications per year;
+- **top venues** (`dcterms:isPartOf`) and **top authors** (`bibo:authorList`, unifying literal names with linked Person records);
+- a **co-author network** — authors who appear together on a publication, clustered into collaboration communities (Louvain), with authors that match a Person record **ringed** to distinguish them from external names;
+- a **keyword co-occurrence** chord over `dcterms:subject`.
+
+Authors matched to Person records and subjects matched to Authority/LCSH records are clickable through to their pages. The same **By Resource Template** chart also appears on person and organisation dashboards, and a person's authored publications now surface on their own dashboard.
+
 ### Item Set Dashboard
 
 Inline dashboard for item set pages with server-side aggregation.
@@ -129,41 +140,24 @@ Visualizations load from pre-computed JSON files in the module's `asset/data/` d
 
 > The dashboard JSON regenerates this way; the per-item **Knowledge Graphs** are still produced by the Python script below.
 
-### Regenerate from the command line (Python)
+### Regenerate the knowledge graphs (Python)
 
-The original pipeline still works for local/CI use by querying the Omeka S MySQL database.
+The **dashboards** are PHP-only now (the admin button above). The only remaining Python script produces the per-item **knowledge graphs** (`asset/data/knowledge-graphs/`), which have not been ported — when a graph file is missing the front-end falls back to a lighter live REST-API graph.
 
 #### Requirements
 
 - Python 3
-- `pip install -r scripts/requirements.txt` — `PyMySQL` (DB access) and `networkx` (Discursive Communities; PageRank is pure-Python, so **scipy is not needed**)
+- `pip install -r scripts/requirements.txt` — `PyMySQL` (DB access)
 
 #### Database connection
 
 Two transports, selected automatically (see `scripts/precompute/db.py`):
 
 - **Local Docker** (default) — shells into a local `db` container via `docker compose exec`. The omeka-s-docker directory must be adjacent to this module, or set `OMEKA_DOCKER_DIR`.
-- **Direct MySQL** — set `DB_HOST` (plus `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME` as needed) to connect with `pymysql` instead. Use this to run the precompute **inside the Omeka container** (`DB_HOST=db`) or **over a VPN** to a reachable MySQL — no local Docker stack required.
-
-```bash
-# Direct connection (inside the container or over VPN):
-DB_HOST=db DB_USER=omeka DB_PASS=… python3 scripts/precompute-dashboards.py
-```
-
-#### Knowledge Graphs
-
-Generates one JSON file per item (~6,000 files), including embedded location map data for items with spatial/provenance links:
+- **Direct MySQL** — set `DB_HOST` (plus `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME` as needed) to connect with `pymysql` instead — inside the Omeka container (`DB_HOST=db`) or over a VPN.
 
 ```bash
 python3 scripts/precompute-graphs.py
-```
-
-#### Dashboards (all entity types)
-
-Generates dashboard JSON for sections, projects, people, institutions, locations, subjects, languages, resource types, and genres (~2,500 files):
-
-```bash
-python3 scripts/precompute-dashboards.py
 ```
 
 #### After Regenerating
@@ -233,15 +227,15 @@ ResourceVisualizations/
 │       │   └── discursive.json         # Subject co-occurrence + Louvain communities
 │       ├── knowledge-graphs/           # Pre-computed graph JSON (~6,000 files)
 │       └── item-dashboards/            # Pre-computed dashboard JSON (~2,500 files)
+├── src/Precompute/                     # PHP dashboard precompute (admin "Regenerate now")
+│   ├── DataLoader.php                  # Items/links/literals via Omeka\Connection
+│   ├── Aggregators.php                 # aggregateItems(), all build*() (unit-tested)
+│   └── Runner.php                      # Entities, overviews, publications
 ├── scripts/
-│   ├── precompute-graphs.py            # Generate knowledge graph + location map JSON
-│   ├── precompute-dashboards.py        # Thin orchestrator — calls the package below
-│   └── precompute/                     # Modular precompute package
+│   ├── precompute-graphs.py            # Knowledge-graph JSON (the only remaining Python)
+│   └── precompute/
 │       ├── config.py                   # Paths, template IDs, item set IDs
-│       ├── db.py                       # MySQL helpers, load_all_data()
-│       ├── aggregators.py              # aggregate_items(), all build_*() functions
-│       ├── generators.py               # generate_sections(), generate_projects(), etc.
-│       └── overviews.py                # generate_overview(), category overviews
+│       └── db.py                       # MySQL helpers for precompute-graphs.py
 ├── ROADMAP.md                          # Full visualization roadmap
 └── README.md
 ```

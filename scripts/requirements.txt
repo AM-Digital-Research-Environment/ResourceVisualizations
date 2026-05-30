@@ -1,11 +1,11 @@
-# Precompute dependencies.
+# Precompute dependency for scripts/precompute-graphs.py (knowledge-graph JSON).
 #
 #   pip install -r scripts/requirements.txt
 #
-# pymysql   — direct MySQL connection (set DB_HOST to use it instead of the
-#             default `docker compose exec`); lets the precompute run inside the
-#             Omeka container or over a VPN.
-# networkx  — Louvain community detection for the Discursive Communities graph
-#             (PageRank is a pure-Python power iteration, so scipy is NOT needed).
+# pymysql — direct MySQL connection (set DB_HOST to use it instead of the
+#           default `docker compose exec`); lets the knowledge-graph precompute
+#           run inside the Omeka container or over a VPN.
+#
+# The dashboards no longer use Python — they regenerate inside Omeka via the
+# admin "Regenerate now" button (pure PHP, src/Precompute/).
 PyMySQL>=1.1
-networkx>=3.2

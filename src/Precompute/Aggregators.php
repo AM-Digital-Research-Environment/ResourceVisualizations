@@ -1255,4 +1255,268 @@ final class Aggregators
 
         return ['nodes' => $nodes, 'links' => $outLinks, 'communities' => $communitiesList];
     }
+
+    /* ------------------------------------------------------------------ */
+    /*  Publications / resource-template dimension                         */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * Distribution of items by resource template (Article, Book, …). Returns
+     * null when fewer than two distinct templates are present, so it auto-hides
+     * on single-template entities (e.g. one whose items are all Research Items).
+     * Feeds buildPieChart.
+     *
+     * @return list<array{name:string,value:int}>|null
+     */
+    public static function buildTemplates(array $itemIds, array $items, array $templateLabels): ?array
+    {
+        $counts = [];
+        foreach ($itemIds as $iid) {
+            $tid = $items[$iid]['template_id'] ?? null;
+            if ($tid === null) {
+                continue;
+            }
+            $counts[$tid] = ($counts[$tid] ?? 0) + 1;
+        }
+        if (count($counts) < 2) {
+            return null;
+        }
+        $out = [];
+        foreach ($counts as $tid => $c) {
+            $out[] = ['name' => $templateLabels[$tid] ?? ('Template ' . $tid), 'value' => $c];
+        }
+        return self::sortByValueDesc($out);
+    }
+
+    /**
+     * Top literal values of a property across items (e.g. dcterms:isPartOf
+     * venue names). Feeds buildBarChart.
+     *
+     * @return list<array{name:string,value:int}>|null
+     */
+    public static function buildTopLiteral(array $itemIds, array $literals, string $term, int $topN = 20): ?array
+    {
+        $counts = [];
+        foreach ($itemIds as $iid) {
+            foreach ($literals[$iid][$term] ?? [] as $val) {
+                $val = trim((string) $val);
+                if ($val === '') {
+                    continue;
+                }
+                $counts[$val] = ($counts[$val] ?? 0) + 1;
+            }
+        }
+        if (!$counts) {
+            return null;
+        }
+        $out = [];
+        foreach ($counts as $name => $c) {
+            $out[] = ['name' => (string) $name, 'value' => $c];
+        }
+        return array_slice(self::sortByValueDesc($out), 0, $topN);
+    }
+
+    /**
+     * Top authors across publications, unioning literal bibo:authorList names
+     * with Person-linked authors (resolved to their titles). Each row carries a
+     * `matched` flag (true = a linked Person entity) and, when matched, an
+     * itemId. Feeds buildBarChart.
+     *
+     * @return list<array{name:string,value:int,matched:bool,itemId?:int}>|null
+     */
+    public static function buildTopAuthors(array $itemIds, array $links, array $literals, array $items, int $topN = 20): ?array
+    {
+        $counts = [];
+        $matched = [];
+        $itemIdOf = [];
+        foreach ($itemIds as $iid) {
+            $seen = [];
+            foreach ($links[$iid] ?? [] as [$term, $label, $vrid]) {
+                if ($term !== 'bibo:authorList') {
+                    continue;
+                }
+                $title = trim((string) ($items[$vrid]['title'] ?? ''));
+                if ($title === '' || isset($seen[$title])) {
+                    continue;
+                }
+                $seen[$title] = true;
+                $counts[$title] = ($counts[$title] ?? 0) + 1;
+                $matched[$title] = true;
+                $itemIdOf[$title] = $vrid;
+            }
+            foreach ($literals[$iid]['bibo:authorList'] ?? [] as $name) {
+                $name = trim((string) $name);
+                if ($name === '' || isset($seen[$name])) {
+                    continue;
+                }
+                $seen[$name] = true;
+                $counts[$name] = ($counts[$name] ?? 0) + 1;
+                $matched[$name] ??= false;
+            }
+        }
+        if (!$counts) {
+            return null;
+        }
+        $out = [];
+        foreach ($counts as $name => $c) {
+            $name = (string) $name;
+            $row = ['name' => $name, 'value' => $c, 'matched' => $matched[$name] ?? false];
+            if (!empty($matched[$name]) && isset($itemIdOf[$name])) {
+                $row['itemId'] = $itemIdOf[$name];
+            }
+            $out[] = $row;
+        }
+        return array_slice(self::sortByValueDesc($out), 0, $topN);
+    }
+
+    /**
+     * Co-author network: authors co-occurring on the same publication, as a
+     * force graph in the {nodes, links, communities} shape buildCommunities
+     * consumes. Authors come from both literal bibo:authorList names and
+     * Person-linked authors; nodes carry a `matched` flag (true = linked Person)
+     * so the front-end can mark matched persons distinctly. Communities use the
+     * same Louvain + weighted-PageRank as the subject graph.
+     *
+     * @return array{nodes:list<array>,links:list<array>,communities:list<array>}|null
+     */
+    public static function buildCoAuthorNetwork(array $itemIds, array $links, array $literals, array $items, int $minCooccurrence = 1, int $maxNodes = 60): ?array
+    {
+        // Map each distinct author name to an integer node id so the integer-
+        // keyed louvain()/weightedPagerank() helpers apply unchanged.
+        $nameId = [];
+        $idName = [];
+        $matched = [];
+        $personId = [];
+        $next = 0;
+        $ensure = static function (string $name) use (&$nameId, &$idName, &$matched, &$next): int {
+            if (!isset($nameId[$name])) {
+                $nameId[$name] = $next;
+                $idName[$next] = $name;
+                $matched[$next] = false;
+                $next++;
+            }
+            return $nameId[$name];
+        };
+
+        $pairCounts = [];
+        $nodeCounts = [];
+        foreach ($itemIds as $iid) {
+            $authors = [];
+            foreach ($links[$iid] ?? [] as [$term, $label, $vrid]) {
+                if ($term !== 'bibo:authorList') {
+                    continue;
+                }
+                $title = trim((string) ($items[$vrid]['title'] ?? ''));
+                if ($title === '') {
+                    continue;
+                }
+                $aid = $ensure($title);
+                $matched[$aid] = true;
+                $personId[$aid] = $vrid;
+                $authors[$aid] = true;
+            }
+            foreach ($literals[$iid]['bibo:authorList'] ?? [] as $name) {
+                $name = trim((string) $name);
+                if ($name === '') {
+                    continue;
+                }
+                $authors[$ensure($name)] = true;
+            }
+            $authors = array_keys($authors);
+            foreach ($authors as $a) {
+                $nodeCounts[$a] = ($nodeCounts[$a] ?? 0) + 1;
+            }
+            $n = count($authors);
+            for ($i = 0; $i < $n; $i++) {
+                for ($j = $i + 1; $j < $n; $j++) {
+                    $a = $authors[$i];
+                    $b = $authors[$j];
+                    if ($a > $b) {
+                        [$a, $b] = [$b, $a];
+                    }
+                    $pairCounts[$a . ',' . $b] = ($pairCounts[$a . ',' . $b] ?? 0) + 1;
+                }
+            }
+        }
+
+        $adj = [];
+        $deg = [];
+        $edges = 0;
+        foreach ($pairCounts as $key => $w) {
+            if ($w < $minCooccurrence) {
+                continue;
+            }
+            [$a, $b] = array_map('intval', explode(',', $key));
+            $adj[$a][$b] = $w;
+            $adj[$b][$a] = $w;
+            $deg[$a] = ($deg[$a] ?? 0) + $w;
+            $deg[$b] = ($deg[$b] ?? 0) + $w;
+            $edges++;
+        }
+        if (count($adj) < 3 || $edges < 2) {
+            return null;
+        }
+
+        $m = array_sum($deg) / 2.0;
+        $rawComm = self::louvain($adj, $deg, $m);
+        $relabel = [];
+        $nextC = 0;
+        $commOf = [];
+        foreach ($rawComm as $node => $c) {
+            if (!isset($relabel[$c])) {
+                $relabel[$c] = $nextC++;
+            }
+            $commOf[$node] = $relabel[$c];
+        }
+
+        $pr = self::weightedPagerank($adj, $deg);
+        $rankNodes = array_keys($adj);
+        usort($rankNodes, static fn ($x, $y) => ($pr[$y] ?? 0) <=> ($pr[$x] ?? 0));
+        $ranked = array_slice($rankNodes, 0, $maxNodes);
+        $topSet = array_flip($ranked);
+
+        $nodes = [];
+        foreach ($ranked as $nd) {
+            $node = [
+                'name' => $idName[$nd], 'value' => $nodeCounts[$nd] ?? 0,
+                'community' => $commOf[$nd] ?? 0, 'rank' => round($pr[$nd] ?? 0, 6),
+                'matched' => $matched[$nd] ?? false,
+            ];
+            if (!empty($matched[$nd]) && isset($personId[$nd])) {
+                $node['itemId'] = $personId[$nd];
+            }
+            $nodes[] = $node;
+        }
+
+        $outLinks = [];
+        foreach ($pairCounts as $key => $w) {
+            if ($w < $minCooccurrence) {
+                continue;
+            }
+            [$a, $b] = array_map('intval', explode(',', $key));
+            if (isset($topSet[$a], $topSet[$b])) {
+                $outLinks[] = ['source' => $idName[$a], 'target' => $idName[$b], 'value' => $w];
+            }
+        }
+
+        $summary = [];
+        foreach ($ranked as $nd) {
+            $ci = $commOf[$nd] ?? 0;
+            if (!isset($summary[$ci])) {
+                $summary[$ci] = ['id' => $ci, 'size' => 0, 'anchor' => null, '_rank' => -1.0];
+            }
+            $summary[$ci]['size']++;
+            if (($pr[$nd] ?? 0) > $summary[$ci]['_rank']) {
+                $summary[$ci]['_rank'] = $pr[$nd] ?? 0;
+                $summary[$ci]['anchor'] = $idName[$nd] ?? null;
+            }
+        }
+        $communitiesList = [];
+        foreach ($summary as $s) {
+            $communitiesList[] = ['id' => $s['id'], 'size' => $s['size'], 'anchor' => $s['anchor']];
+        }
+        usort($communitiesList, static fn ($a, $b) => $b['size'] <=> $a['size']);
+
+        return ['nodes' => $nodes, 'links' => $outLinks, 'communities' => $communitiesList];
+    }
 }

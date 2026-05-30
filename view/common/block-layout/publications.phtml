@@ -1,0 +1,30 @@
+<?php
+/**
+ * Publications page block.
+ *
+ * Bibliographic analytics across every fabio:-classed publication. Loads the
+ * precomputed publications.json and renders via the standard dashboard
+ * orchestrator (resourceType 'publications').
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var \Omeka\Api\Representation\SitePageBlockRepresentation $block
+ */
+
+// Site-page block (Module.php does not run on page controllers), so request the
+// CDN + core prelude too. Single source of truth: DashboardAssets view helper.
+$this->dashboardAssets(['cdn' => true]);
+
+$siteSlug = $this->currentSite()->slug();
+?>
+
+<div class="resource-vis-block dashboard-block">
+    <div class="dashboard-async-container"
+         data-item-id="publications"
+         data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
+         data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">
+        <div class="rv-loading">
+            <div class="rv-spinner"></div>
+            <span><?= $this->translate('Loading publications…') ?></span>
+        </div>
+    </div>
+</div>

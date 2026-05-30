@@ -108,11 +108,13 @@ asset/data/
 └── item-dashboards/        # One per entity with data (~2 500 files)
 ```
 
-Precompute scripts in `scripts/`:
-- `precompute-graphs.py` — knowledge graph JSON for all items
-- `precompute-dashboards.py` — dashboard JSON for all entity types
+The **dashboards** regenerate inside Omeka via the admin "Regenerate now" button — a
+pure-PHP engine under `src/Precompute/` (`DataLoader` → `Aggregators` → `Runner`) that
+reuses Omeka's own database connection. No Python, shell access, or extra credentials.
 
-Both use `docker compose exec` to query MySQL directly. No Omeka S API or PHP needed.
+The only remaining script is `scripts/precompute-graphs.py`, which still produces the
+per-item **knowledge graph** JSON (not yet ported; the front-end falls back to a live
+REST-API graph when a file is missing).
 
 ### Omeka S data summary
 
@@ -153,12 +155,10 @@ asset/js/
 
 ## Regeneration
 
-After data changes, regenerate:
+After data changes:
 
-```bash
-python3 scripts/precompute-graphs.py
-python3 scripts/precompute-dashboards.py
-```
+- **Dashboards** — click **Admin → Modules → Resource Visualizations → "Regenerate now"** (pure PHP, in-Omeka).
+- **Knowledge graphs** — `python3 scripts/precompute-graphs.py` (the only remaining Python step).
 
 Then update the module in the container:
 

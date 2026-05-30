@@ -42,21 +42,14 @@ This revision was rewritten after re-verifying **both** codebases against their 
 | **Phase 3** — Discursive Communities | ✅ Done | `build_discursive_communities` (subject co-occurrence + networkx Louvain + pure-Python PageRank, no scipy) → `communities/discursive.json`; `buildCommunities` force-graph + `DiscursiveCommunities` site-page block + controller. |
 | **Precompute portability** | ✅ Done | `db.py` gained a direct `pymysql` path (`DB_HOST`, reusing the container's `MYSQL_*`), so the Python pipeline runs inside the Omeka container or over a VPN, not only via local `docker compose`. See [Regeneration](#regeneration). |
 | **In-Omeka regeneration** | ✅ Done | Admin "Regenerate" button → Omeka background `Job` → pure-PHP precompute (`src/Precompute/`) on Omeka's own DB connection, with logs at `/admin/job/{id}/log`. No Python/host dependency. |
-| Phase 4+ | ⏳ Planned | Browse blocks, generalized Compare, photo views, sibling sparkline, publications. |
+| **Phase 8** — Publications suite | ✅ Done | Unblocked once `fabio:` bibliographic records landed (~172). Publications site-page block: by-template breakdown, top venues/authors, co-author network (matched persons vs. external), keyword co-occurrence. Plus a reusable `templates` breakdown across entity dashboards; people dashboards now surface `bibo:authorList` publications. **Dashboards are now PHP-only — the Python dashboard pipeline was removed.** |
+| Phase 4–7 | ⏳ Planned | Browse blocks, generalized Compare, photo views, sibling sparkline. |
 
 All changes are precompute-and-static; regenerating dashboards populates the new keys. JS/PHP wiring is syntax- and consistency-checked; every new aggregator is unit-validated with mock data (and the choropleth point-in-polygon against the real GeoJSON, the Louvain split on a 2-cluster graph).
 
 ### Regeneration
 
-The precompute now supports two transports (see `scripts/precompute/db.py`):
-
-- **Local Docker** (default) — `docker compose exec db` from `OMEKA_DIR`.
-- **Direct MySQL** — set `DB_HOST` (+ `DB_PORT`, `DB_PASS`) to connect with `pymysql`. Run it **inside the Omeka container** (`DB_HOST=db`) or **over a VPN** to a reachable MySQL. Install deps with `pip install -r scripts/requirements.txt`.
-
-```bash
-# inside / alongside the Omeka container, or over VPN:
-DB_HOST=db DB_USER=omeka DB_PASS=… python3 scripts/precompute-dashboards.py
-```
+Dashboards regenerate **inside Omeka** (pure PHP) — see [In-Omeka regeneration](#in-omeka-regeneration--done) below. The Python dashboard pipeline has been **retired** (2026-05-30); `scripts/precompute-graphs.py` (per-item knowledge-graph JSON) is the only remaining script.
 
 ### In-Omeka regeneration ✅ Done
 
@@ -66,7 +59,7 @@ The precompute now also runs **inside Omeka** — no Python, no shell access, no
 - The job runs a pure-PHP port of the precompute (`src/Precompute/` — `DataLoader`, `Aggregators`, `Runner`) using **Omeka's own DBAL connection** (`Omeka\Connection`), so it reuses Omeka's configured database with zero extra config and works on any Omeka install.
 - The `Aggregators` are dependency-free and **unit-tested** (mock data + the real GeoJSON for the choropleth point-in-polygon + a Louvain 2-cluster check), mirroring the validated Python. PageRank is pure-PHP (no scipy/native deps).
 
-The Python pipeline (`scripts/`) remains as a CLI alternative (local Docker or direct/VPN MySQL). The two engines produce the same JSON artefacts.
+The dashboards are now **PHP-only**; the redundant Python dashboard pipeline (`precompute-dashboards.py` + `precompute/{aggregators,generators,overviews}.py`) was removed. Only `scripts/precompute-graphs.py` remains, for the per-item knowledge-graph JSON.
 
 ---
 
@@ -158,7 +151,7 @@ The module styles itself entirely from the [DRE theme](https://github.com/AM-Dig
 | 4 | `asset/js/dashboard-registry.js` | `CHART_MAP['x'] = c.buildX;` + `CHART_LABELS` + `CHART_DESCRIPTIONS`. |
 | 5 | `asset/js/dashboard-layouts.js` | Add `'x'` to the chosen layouts' `order`/`wide`/`tall`. |
 | 6 | **Asset include** | Add `dashboard-charts-x.js` to the template `headScript()` lists (see Phase 0 — ideally one place after the refactor). |
-| 7 | Run `python3 scripts/precompute-dashboards.py` | Regenerate JSON (documented; not run in this plan). |
+| 7 | **Admin → Regenerate now** | Regenerate JSON in-Omeka (pure PHP). |
 
 ### Recipe B — add a new cross-cutting site-page block
 
@@ -343,9 +336,16 @@ Small, high-polish additions to individual item pages (the surface where this mo
 
 ---
 
-## Phase 8 (gated) — Publications analytics suite
+## Phase 8 — Publications analytics suite ✅ Done
 
-**Status: blocked on data.** The Omeka instance currently holds no bibliographic records. Build this only after a Publications import exists (a dedicated item set or a `bibo:`/`fabio:`-style resource template). Specified now so it's ready.
+**Unblocked 2026-05-30.** The instance now holds ~172 `fabio:`-classed bibliographic records (Article, Working paper, Conference paper, Book chapter, Book, …). Shipped:
+
+- A **Publications** site-page block (`src/Site/BlockLayout/Publications.php` + `view/common/block-layout/publications.phtml`) rendering `item-dashboards/publications.json` via the standard orchestrator (`resourceType: 'publications'`).
+- New PHP aggregators (`buildTemplates`, `buildTopLiteral`, `buildTopAuthors`, `buildCoAuthorNetwork`) reusing existing JS builders (`buildPieChart`, `buildBarChart`, `buildCommunities`, `buildChord`) — no new builder files or controller.
+- The co-author network unifies literal `bibo:authorList` names with Person-linked authors and marks **matched persons** distinctly; keyword co-occurrence reuses `buildChord` on `dcterms:subject`.
+- A reusable **`templates`** breakdown chart across person/organisation/overview dashboards; people dashboards now surface their `bibo:authorList`/`bibo:editorList` publications.
+
+Original specification (retained for reference):
 
 When a publications corpus exists in Omeka:
 

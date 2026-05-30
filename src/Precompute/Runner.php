@@ -59,6 +59,8 @@ final class Runner
     private array $temporal = [];
     private array $geo = [];
     private array $itemSets = [];
+    private array $templateLabels = [];
+    private array $literals = [];
     private array $countryIndex = [];
 
     private int $fileCount = 0;
@@ -106,6 +108,8 @@ final class Runner
         $this->temporal = $data['temporal'];
         $this->geo = $data['geo'];
         $this->itemSets = $data['itemSets'];
+        $this->templateLabels = $data['templateLabels'];
+        $this->literals = $data['literals'];
 
         $features = Aggregators::loadCountryFeatures($this->countriesGeojson);
         $this->countryIndex = Aggregators::buildCountryIndex($this->geo, $features);
@@ -123,6 +127,7 @@ final class Runner
         $this->generateCategoryOverviews();
         $this->generateCollectionOverview();
         $this->generateCommunities();
+        $this->generatePublications();
 
         $this->log('Done. ' . $this->fileCount . ' files written to ' . $this->outputDir);
         return ['files' => $this->fileCount];
@@ -271,7 +276,7 @@ final class Runner
         $people = $this->itemsWhere(fn ($info) => ($info['template_id'] ?? null) === self::TEMPLATE_PERSONS);
         $this->log('=== People (' . count($people) . ') ===');
 
-        $personTerms = ['dcterms:creator', 'dcterms:contributor', 'foaf:member'];
+        $personTerms = ['dcterms:creator', 'dcterms:contributor', 'foaf:member', 'bibo:authorList', 'bibo:editorList'];
         foreach ($this->reverseLinks as $revTerms) {
             foreach ($revTerms as $t => $_) {
                 if (str_starts_with($t, 'marcrel:')) {
@@ -296,11 +301,14 @@ final class Runner
                 continue;
             }
             $dashboard = Aggregators::aggregateItems($itemIds, $this->items, $this->links, $this->itemYear, $this->geo);
+            if ($v = Aggregators::buildTemplates($itemIds, $this->items, $this->templateLabels)) {
+                $dashboard['templates'] = $v;
+            }
 
             $coauthors = [];
             foreach ($itemIds as $iid) {
                 foreach ($this->links[$iid] ?? [] as [$term, $label, $vrid]) {
-                    if (($term === 'dcterms:creator' || $term === 'dcterms:contributor' || str_starts_with($term, 'marcrel:')) && $vrid !== $pid) {
+                    if (($term === 'dcterms:creator' || $term === 'dcterms:contributor' || $term === 'bibo:authorList' || $term === 'bibo:editorList' || str_starts_with($term, 'marcrel:')) && $vrid !== $pid) {
                         if (($this->items[$vrid]['template_id'] ?? null) === self::TEMPLATE_PERSONS) {
                             $coauthors[$vrid] ??= ['name' => $this->items[$vrid]['title'], 'value' => 0, 'itemId' => $vrid];
                             $coauthors[$vrid]['value']++;
@@ -360,6 +368,9 @@ final class Runner
                 continue;
             }
             $dashboard = Aggregators::aggregateItems($itemIds, $this->items, $this->links, $this->itemYear, $this->geo);
+            if ($v = Aggregators::buildTemplates($itemIds, $this->items, $this->templateLabels)) {
+                $dashboard['templates'] = $v;
+            }
             if ($collab = Aggregators::buildCollabNetwork($iid, $iinfo['title'], $itemIds, $this->items, $this->links, $this->reverseLinks, $instSet, $instTerms)) {
                 $dashboard['collabNetwork'] = $collab;
             }
@@ -495,6 +506,9 @@ final class Runner
         if ($v = Aggregators::buildChoropleth($allItems, $this->links, $this->countryIndex)) {
             $dashboard['choropleth'] = $v;
         }
+        if ($v = Aggregators::buildTemplates($allItems, $this->items, $this->templateLabels)) {
+            $dashboard['templates'] = $v;
+        }
         foreach ($extra as $k => $v) {
             $dashboard[$k] = $v;
         }
@@ -505,7 +519,7 @@ final class Runner
     private function generateCategoryOverviews(): void
     {
         $this->log('=== Category Overviews ===');
-        $personTerms = ['dcterms:creator', 'dcterms:contributor'];
+        $personTerms = ['dcterms:creator', 'dcterms:contributor', 'bibo:authorList', 'bibo:editorList'];
         $instTerms = ['frapo:isFundedBy', 'dcterms:provenance'];
         foreach ($this->reverseLinks as $rev) {
             foreach ($rev as $t => $_) {
@@ -659,6 +673,46 @@ final class Runner
             file_put_contents($this->communitiesDir . '/discursive.json', json_encode($communities, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
             $this->log('  ' . count($communities['nodes']) . ' subjects, ' . count($communities['communities']) . ' communities');
         }
+    }
+
+    /**
+     * Publications overview — every bibliographic (fabio:) item as one corpus.
+     * Adds the by-template breakdown, top venues/authors, co-author network and
+     * keyword co-occurrence on top of the standard aggregation. Saved under
+     * 'publications' and rendered by the Publications site-page block.
+     */
+    private function generatePublications(): void
+    {
+        $pubs = array_keys($this->itemsWhere(static fn ($info) => str_starts_with($info['class_term'] ?? '', 'fabio:')));
+        $this->log('=== Publications (' . count($pubs) . ' fabio: items) ===');
+        if (count($pubs) < 3) {
+            return;
+        }
+        $dashboard = Aggregators::aggregateItems($pubs, $this->items, $this->links, $this->itemYear, $this->geo);
+        if ($v = Aggregators::buildTemplates($pubs, $this->items, $this->templateLabels)) {
+            $dashboard['templates'] = $v;
+        }
+        if ($v = Aggregators::buildTopLiteral($pubs, $this->literals, 'dcterms:isPartOf')) {
+            $dashboard['topVenues'] = $v;
+        }
+        if ($v = Aggregators::buildTopAuthors($pubs, $this->links, $this->literals, $this->items)) {
+            $dashboard['topAuthors'] = $v;
+        }
+        if ($v = Aggregators::buildCoAuthorNetwork($pubs, $this->links, $this->literals, $this->items)) {
+            $dashboard['coAuthorNetwork'] = $v;
+        }
+        if ($v = Aggregators::buildChord($pubs, $this->links, $this->items)) {
+            $dashboard['chord'] = $v;
+        }
+        if ($v = Aggregators::buildStackedTimeline($pubs, $this->links, $this->items, $this->itemYear)) {
+            $dashboard['stackedTimeline'] = $v;
+        }
+        if ($v = Aggregators::buildSubjectTrends($pubs, $this->links, $this->items, $this->itemYear)) {
+            $dashboard['subjectTrends'] = $v;
+        }
+        $dashboard['resourceType'] = 'publications';
+        $this->save('publications', $dashboard);
+        $this->log('  publications dashboard written (' . count($pubs) . ' items)');
     }
 
     /** @return array<int,array> id => info, preserving insertion order */
