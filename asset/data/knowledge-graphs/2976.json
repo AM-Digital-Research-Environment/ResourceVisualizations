@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_2976","name":"Perlenarbeit","category":0,"symbolSize":45,"isCenter":true,"itemId":2976},{"id":"item_9819","name":"Ohne Titel","category":1,"symbolSize":16,"itemId":9819}],"edges":[{"source":"item_9819","target":"item_2976","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

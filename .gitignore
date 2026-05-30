@@ -6,3 +6,8 @@ node_modules/
 .idea/
 .vscode/
 __pycache__/
+
+# Per-item knowledge-graph JSON (~6,000 files, ~188 MB) is regenerated in-Omeka
+# via the admin "Regenerate now" job — not committed. The front-end falls back to
+# the live REST API until it has been generated in the container.
+asset/data/knowledge-graphs/

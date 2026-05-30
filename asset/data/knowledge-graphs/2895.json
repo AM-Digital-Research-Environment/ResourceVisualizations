@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_2895","name":"Mauerarbeit","category":0,"symbolSize":45,"isCenter":true,"itemId":2895},{"id":"item_9810","name":"Ohne Titel","category":1,"symbolSize":16,"itemId":9810}],"edges":[{"source":"item_9810","target":"item_2895","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

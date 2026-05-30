@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_2216","name":"Judaism","category":0,"symbolSize":45,"isCenter":true,"itemId":2216},{"id":"item_8438","name":"Untitled","category":1,"symbolSize":16,"itemId":8438}],"edges":[{"source":"item_8438","target":"item_2216","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

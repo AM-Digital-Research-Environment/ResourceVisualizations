@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_2936","name":"National History","category":0,"symbolSize":45,"isCenter":true,"itemId":2936},{"id":"item_8168","name":"Untitled","category":1,"symbolSize":16,"itemId":8168}],"edges":[{"source":"item_8168","target":"item_2936","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

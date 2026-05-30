@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_1070","name":"Miller, Barbara","category":0,"symbolSize":45,"isCenter":true,"itemId":1070},{"id":"item_8383","name":"Knots Landing","category":1,"symbolSize":16,"itemId":8383}],"edges":[{"source":"item_8383","target":"item_1070","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

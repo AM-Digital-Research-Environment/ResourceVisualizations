@@ -73,6 +73,7 @@ final class Runner
         private readonly string $outputDir,
         private readonly string $communitiesDir,
         private readonly string $countriesGeojson,
+        private readonly string $knowledgeGraphsDir,
         ?callable $logFn = null,
     ) {
         $this->logFn = $logFn;
@@ -128,8 +129,9 @@ final class Runner
         $this->generateCollectionOverview();
         $this->generateCommunities();
         $this->generatePublications();
+        $this->generateKnowledgeGraphs();
 
-        $this->log('Done. ' . $this->fileCount . ' files written to ' . $this->outputDir);
+        $this->log('Done. ' . $this->fileCount . ' files written.');
         return ['files' => $this->fileCount];
     }
 
@@ -713,6 +715,46 @@ final class Runner
         $dashboard['resourceType'] = 'publications';
         $this->save('publications', $dashboard);
         $this->log('  publications dashboard written (' . count($pubs) . ' items)');
+    }
+
+    /**
+     * Per-item knowledge graphs (one JSON each) — a PHP port of the former
+     * precompute-graphs.py, run from the same job. Writes to a directory that is
+     * NOT committed to the repo; the front-end falls back to the live REST API
+     * until this has run at least once.
+     */
+    private function generateKnowledgeGraphs(): void
+    {
+        $this->log('=== Knowledge Graphs ===');
+        if (!is_dir($this->knowledgeGraphsDir)) {
+            mkdir($this->knowledgeGraphsDir, 0775, true);
+        }
+        [$idf, $freqPct] = KnowledgeGraphs::computeResourceStats($this->links, count($this->items));
+        $reverse = KnowledgeGraphs::buildShareableReverse($this->reverseLinks);
+        $this->log('  ' . count($idf) . ' resources scored');
+
+        $generated = 0;
+        $skipped = 0;
+        $mapCount = 0;
+        foreach ($this->items as $iid => $info) {
+            $graph = KnowledgeGraphs::buildGraph((int) $iid, $this->items, $this->links, $this->reverseLinks, $reverse, $idf, $freqPct);
+            if ($graph === null) {
+                $skipped++;
+                continue;
+            }
+            $itemMap = KnowledgeGraphs::buildItemMap((int) $iid, $this->links, $this->geo);
+            if ($itemMap !== null) {
+                $graph['itemMap'] = $itemMap;
+                $mapCount++;
+            }
+            file_put_contents($this->knowledgeGraphsDir . '/' . $iid . '.json', json_encode($graph, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            $generated++;
+            if ($generated % 500 === 0) {
+                $this->log('  ' . $generated . ' graphs…');
+            }
+        }
+        $this->fileCount += $generated;
+        $this->log('  ' . $generated . ' graphs (' . $mapCount . ' with location maps), ' . $skipped . ' skipped');
     }
 
     /** @return array<int,array> id => info, preserving insertion order */

@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_10356","name":"Spencer, Lynda","category":0,"symbolSize":45,"isCenter":true,"itemId":10356},{"id":"item_1670","name":"Arts & Aesthetics","category":1,"symbolSize":16,"itemId":1670}],"edges":[{"source":"item_1670","target":"item_10356","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

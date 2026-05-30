@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_3072","name":"Sir Phillip Sidney","category":0,"symbolSize":45,"isCenter":true,"itemId":3072},{"id":"item_9270","name":"An Apology for Poetry","category":1,"symbolSize":16,"itemId":9270}],"edges":[{"source":"item_9270","target":"item_3072","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

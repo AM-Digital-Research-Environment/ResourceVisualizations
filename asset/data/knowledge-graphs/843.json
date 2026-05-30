@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_843","name":"Beh, Doffa","category":0,"symbolSize":45,"isCenter":true,"itemId":843},{"id":"item_8139","name":"Christofest","category":1,"symbolSize":16,"itemId":8139}],"edges":[{"source":"item_8139","target":"item_843","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

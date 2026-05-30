@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_2679","name":"Family","category":0,"symbolSize":45,"isCenter":true,"itemId":2679},{"id":"item_8313","name":"Today's Woman","category":1,"symbolSize":16,"itemId":8313}],"edges":[{"source":"item_8313","target":"item_2679","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

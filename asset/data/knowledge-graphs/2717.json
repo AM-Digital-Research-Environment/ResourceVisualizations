@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_2717","name":"Fächerpalme","category":0,"symbolSize":45,"isCenter":true,"itemId":2717},{"id":"item_9782","name":"Ohne Titel","category":1,"symbolSize":16,"itemId":9782}],"edges":[{"source":"item_9782","target":"item_2717","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_884","name":"Chitimba, Nicholas","category":0,"symbolSize":45,"isCenter":true,"itemId":884},{"id":"item_8165","name":"Roadways to Health","category":1,"symbolSize":16,"itemId":8165}],"edges":[{"source":"item_8165","target":"item_884","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

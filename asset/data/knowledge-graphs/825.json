@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_825","name":"Alexon, Amafi","category":0,"symbolSize":45,"isCenter":true,"itemId":825},{"id":"item_8305","name":"ELTV Channel 6 News","category":1,"symbolSize":16,"itemId":8305}],"edges":[{"source":"item_8305","target":"item_825","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

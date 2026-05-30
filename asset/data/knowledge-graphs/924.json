@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_924","name":"Enewu","category":0,"symbolSize":45,"isCenter":true,"itemId":924},{"id":"item_8034","name":"Between Church and State","category":1,"symbolSize":16,"itemId":8034}],"edges":[{"source":"item_8034","target":"item_924","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

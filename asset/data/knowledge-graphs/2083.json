@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_2083","name":"Basketball","category":0,"symbolSize":45,"isCenter":true,"itemId":2083},{"id":"item_8260","name":"Just for You","category":1,"symbolSize":16,"itemId":8260}],"edges":[{"source":"item_8260","target":"item_2083","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

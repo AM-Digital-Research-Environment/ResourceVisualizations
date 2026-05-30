@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_3067","name":"Silberkapsel","category":0,"symbolSize":45,"isCenter":true,"itemId":3067},{"id":"item_9790","name":"Ohne Titel","category":1,"symbolSize":16,"itemId":9790}],"edges":[{"source":"item_9790","target":"item_3067","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

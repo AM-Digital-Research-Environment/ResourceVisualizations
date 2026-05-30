@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_1088","name":"Ockels, Wubbo","category":0,"symbolSize":45,"isCenter":true,"itemId":1088},{"id":"item_8488","name":"Untitled","category":1,"symbolSize":16,"itemId":8488}],"edges":[{"source":"item_8488","target":"item_1088","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

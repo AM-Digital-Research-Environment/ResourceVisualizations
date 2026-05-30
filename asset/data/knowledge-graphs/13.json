@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_13","name":"Multimedia","category":0,"symbolSize":45,"isCenter":true,"itemId":13},{"id":"item_10166","name":"Images de l'enquête","category":1,"symbolSize":16,"itemId":10166}],"edges":[{"source":"item_10166","target":"item_13","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_823","name":"Abrashev, Bojidar","category":0,"symbolSize":45,"isCenter":true,"itemId":823},{"id":"item_8382","name":"Special Feature","category":1,"symbolSize":16,"itemId":8382}],"edges":[{"source":"item_8382","target":"item_823","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

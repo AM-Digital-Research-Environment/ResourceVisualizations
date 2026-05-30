@@ -104,17 +104,17 @@ All visualizations use precomputed JSON files stored in `asset/data/`:
 
 ```
 asset/data/
-├── knowledge-graphs/       # One per item (~6 000 files)
-└── item-dashboards/        # One per entity with data (~2 500 files)
+├── knowledge-graphs/       # One per item — gitignored, regenerated in-Omeka
+└── item-dashboards/        # One per entity with data (incl. publications.json)
 ```
 
-The **dashboards** regenerate inside Omeka via the admin "Regenerate now" button — a
-pure-PHP engine under `src/Precompute/` (`DataLoader` → `Aggregators` → `Runner`) that
-reuses Omeka's own database connection. No Python, shell access, or extra credentials.
+**Everything** regenerates inside Omeka via the admin "Regenerate now" button — a
+pure-PHP engine under `src/Precompute/` (`DataLoader` → `Aggregators` / `KnowledgeGraphs`
+→ `Runner`) that reuses Omeka's own database connection. No Python, shell access, or extra
+credentials — the module ships **zero** Python.
 
-The only remaining script is `scripts/precompute-graphs.py`, which still produces the
-per-item **knowledge graph** JSON (not yet ported; the front-end falls back to a live
-REST-API graph when a file is missing).
+The knowledge-graph JSON (~6 000 files) is **not committed** — it regenerates on demand;
+until then the front-end falls back to a lighter live REST-API graph.
 
 ### Omeka S data summary
 
@@ -155,15 +155,11 @@ asset/js/
 
 ## Regeneration
 
-After data changes:
+After data changes, click **Admin → Modules → Resource Visualizations → "Regenerate now"** — one in-Omeka, pure-PHP job rebuilds the dashboards, communities, publications **and** the per-item knowledge graphs. No Python.
 
-- **Dashboards** — click **Admin → Modules → Resource Visualizations → "Regenerate now"** (pure PHP, in-Omeka).
-- **Knowledge graphs** — `python3 scripts/precompute-graphs.py` (the only remaining Python step).
-
-Then update the module in the container:
+To pull a new module **release** into the container:
 
 ```bash
-cd /path/to/omeka-s-docker
 docker compose exec php omeka-s-cli module:download --base-path /var/www/html --force gh:fmadore/ResourceVisualizations
 docker compose restart php
 ```

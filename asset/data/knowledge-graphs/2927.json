@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_2927","name":"Music Festival","category":0,"symbolSize":45,"isCenter":true,"itemId":2927},{"id":"item_8140","name":"Untitled","category":1,"symbolSize":16,"itemId":8140}],"edges":[{"source":"item_8140","target":"item_2927","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

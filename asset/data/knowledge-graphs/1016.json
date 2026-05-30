@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_1016","name":"Kobbah-Wureh, Weade","category":0,"symbolSize":45,"isCenter":true,"itemId":1016},{"id":"item_8352","name":"Searchlight","category":1,"symbolSize":16,"itemId":8352}],"edges":[{"source":"item_8352","target":"item_1016","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

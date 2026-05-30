@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_1208","name":"Willie, Max","category":0,"symbolSize":45,"isCenter":true,"itemId":1208},{"id":"item_8340","name":"ELTV Week-in-Review","category":1,"symbolSize":16,"itemId":8340}],"edges":[{"source":"item_8340","target":"item_1208","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

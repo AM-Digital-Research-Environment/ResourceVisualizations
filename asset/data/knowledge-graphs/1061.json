@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_1061","name":"Marley, Bob","category":0,"symbolSize":45,"isCenter":true,"itemId":1061},{"id":"item_8140","name":"Untitled","category":1,"symbolSize":16,"itemId":8140}],"edges":[{"source":"item_8140","target":"item_1061","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

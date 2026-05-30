@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_2131","name":"Crops","category":0,"symbolSize":45,"isCenter":true,"itemId":2131},{"id":"item_8135","name":"Food from the Soil","category":1,"symbolSize":16,"itemId":8135}],"edges":[{"source":"item_8135","target":"item_2131","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

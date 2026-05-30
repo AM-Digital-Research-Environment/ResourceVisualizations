@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_20721","name":"Edward Swarthye","category":0,"symbolSize":45,"isCenter":true,"itemId":20721},{"id":"item_9380","name":"Court Records Buck v Winter STAC 5/B11/13","category":1,"symbolSize":16,"itemId":9380}],"edges":[{"source":"item_9380","target":"item_20721","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

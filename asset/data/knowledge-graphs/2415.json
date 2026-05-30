@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_2415","name":"Inuit","category":0,"symbolSize":45,"isCenter":true,"itemId":2415},{"id":"item_7411","name":"Einzelne Diapositive","category":1,"symbolSize":16,"itemId":7411}],"edges":[{"source":"item_7411","target":"item_2415","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

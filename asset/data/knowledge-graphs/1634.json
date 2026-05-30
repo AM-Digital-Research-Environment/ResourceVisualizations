@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_1634","name":"Ovaltine","category":0,"symbolSize":45,"isCenter":true,"itemId":1634},{"id":"item_8284","name":"ELTV Week-in-Review","category":1,"symbolSize":16,"itemId":8284}],"edges":[{"source":"item_8284","target":"item_1634","name":"references"}],"categories":[{"name":"Organization"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

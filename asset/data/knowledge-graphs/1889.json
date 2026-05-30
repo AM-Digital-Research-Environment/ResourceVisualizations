@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_1889","name":"France","category":0,"symbolSize":45,"isCenter":true,"itemId":1889},{"id":"item_1980","name":"Paris","category":1,"symbolSize":22,"itemId":1980}],"edges":[{"source":"item_1980","target":"item_1889","name":"Is Part Of"}],"categories":[{"name":"Location"},{"name":"Linked Item"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

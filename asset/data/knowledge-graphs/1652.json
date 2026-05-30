@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_1652","name":"The Evangels","category":0,"symbolSize":45,"isCenter":true,"itemId":1652},{"id":"item_8138","name":"Christofest","category":1,"symbolSize":16,"itemId":8138}],"edges":[{"source":"item_8138","target":"item_1652","name":"references"}],"categories":[{"name":"Organization"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

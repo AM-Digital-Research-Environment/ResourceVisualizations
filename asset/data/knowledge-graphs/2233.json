@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_2233","name":"Leprosy","category":0,"symbolSize":45,"isCenter":true,"itemId":2233},{"id":"item_8165","name":"Roadways to Health","category":1,"symbolSize":16,"itemId":8165}],"edges":[{"source":"item_8165","target":"item_2233","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

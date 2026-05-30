@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_3165","name":"Zuschauer","category":0,"symbolSize":45,"isCenter":true,"itemId":3165},{"id":"item_9797","name":"Ohne Titel","category":1,"symbolSize":16,"itemId":9797}],"edges":[{"source":"item_9797","target":"item_3165","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

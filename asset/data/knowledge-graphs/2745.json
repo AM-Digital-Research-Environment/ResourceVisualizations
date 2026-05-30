@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_2745","name":"Grüner Tee","category":0,"symbolSize":45,"isCenter":true,"itemId":2745},{"id":"item_9773","name":"Ohne Titel","category":1,"symbolSize":16,"itemId":9773}],"edges":[{"source":"item_9773","target":"item_2745","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

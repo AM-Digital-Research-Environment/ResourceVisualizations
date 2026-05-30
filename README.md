@@ -8,7 +8,7 @@ An [Omeka S](https://omeka.org/s/) module that adds interactive visualizations t
 
 A force-directed network showing the item's relationships. For items with rich outgoing links (research items, projects, people), shows linked persons, subjects, locations, and other items sharing the same properties. For items that are primarily linked TO (subjects, languages, locations, genres), shows the research items that reference them.
 
-- Pre-computed JSON for instant loading (6,146 graphs)
+- Pre-computed JSON for instant loading, regenerated in-Omeka (live REST-API fallback when absent)
 - Click any node to navigate to its Omeka S page
 - Fullscreen mode (Escape to exit)
 - Adjacency highlighting on hover
@@ -132,43 +132,29 @@ Go to **Admin > Sites > [site] > Theme > Configure resource pages**:
 
 ## Pre-computing Data
 
-Visualizations load from pre-computed JSON files in the module's `asset/data/` directory. There are two ways to generate them.
+Visualizations load from pre-computed JSON in `asset/data/`. **Everything regenerates inside Omeka** — no Python, shell access, or extra credentials.
 
-### Regenerate from the Omeka admin (recommended)
+**Admin → Modules → Resource Visualizations → "Regenerate now"** dispatches an Omeka background job (`src/Precompute/`, pure PHP) that rebuilds, straight from the Omeka database via Omeka's own connection:
 
-**Admin → Modules → Resource Visualizations → "Regenerate now"** dispatches an Omeka background job that rebuilds every dashboard JSON directly from the Omeka database, using Omeka's own connection (no Python, no shell access, no extra credentials). Watch progress and any errors at **Admin → Jobs → the job's log**. This is a pure-PHP port of the pipeline below (`src/Precompute/`).
+- per-entity & category **dashboards** + the **collection overview**
+- the **Discursive Communities** graph
+- the **Publications** analytics (`publications.json`)
+- the per-item **knowledge graphs** + item location maps
 
-> The dashboard JSON regenerates this way; the per-item **Knowledge Graphs** are still produced by the Python script below.
+Watch progress and any errors at **Admin → Jobs → the job's log**. Re-run after importing or substantially editing items.
 
-### Regenerate the knowledge graphs (Python)
+> `asset/data/knowledge-graphs/` is **not** committed to the repo (≈6,000 files) — it regenerates on demand. Until the first "Regenerate now", the knowledge-graph block falls back to a lighter live REST-API graph.
 
-The **dashboards** are PHP-only now (the admin button above). The only remaining Python script produces the per-item **knowledge graphs** (`asset/data/knowledge-graphs/`), which have not been ported — when a graph file is missing the front-end falls back to a lighter live REST-API graph.
+### Updating the module
 
-#### Requirements
-
-- Python 3
-- `pip install -r scripts/requirements.txt` — `PyMySQL` (DB access)
-
-#### Database connection
-
-Two transports, selected automatically (see `scripts/precompute/db.py`):
-
-- **Local Docker** (default) — shells into a local `db` container via `docker compose exec`. The omeka-s-docker directory must be adjacent to this module, or set `OMEKA_DOCKER_DIR`.
-- **Direct MySQL** — set `DB_HOST` (plus `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME` as needed) to connect with `pymysql` instead — inside the Omeka container (`DB_HOST=db`) or over a VPN.
+To pull a new module **release** into the container:
 
 ```bash
-python3 scripts/precompute-graphs.py
-```
-
-#### After Regenerating
-
-Update the module in the container:
-
-```bash
-cd /path/to/omeka-s-docker
 docker compose exec php omeka-s-cli module:download --base-path /var/www/html --force gh:fmadore/ResourceVisualizations
 docker compose restart php
 ```
+
+Then click **"Regenerate now"** to rebuild the precomputed data.
 
 ## Architecture
 
@@ -225,17 +211,13 @@ ResourceVisualizations/
 │       │   └── countries.geojson       # Natural Earth 110m boundaries (choropleth)
 │       ├── communities/
 │       │   └── discursive.json         # Subject co-occurrence + Louvain communities
-│       ├── knowledge-graphs/           # Pre-computed graph JSON (~6,000 files)
-│       └── item-dashboards/            # Pre-computed dashboard JSON (~2,500 files)
-├── src/Precompute/                     # PHP dashboard precompute (admin "Regenerate now")
-│   ├── DataLoader.php                  # Items/links/literals via Omeka\Connection
+│       ├── knowledge-graphs/           # Per-item graph JSON — gitignored, regenerated in-Omeka
+│       └── item-dashboards/            # Pre-computed dashboard JSON (incl. publications.json)
+├── src/Precompute/                     # PHP precompute engine (admin "Regenerate now")
+│   ├── DataLoader.php                  # Items/links/literals/geo via Omeka\Connection
 │   ├── Aggregators.php                 # aggregateItems(), all build*() (unit-tested)
-│   └── Runner.php                      # Entities, overviews, publications
-├── scripts/
-│   ├── precompute-graphs.py            # Knowledge-graph JSON (the only remaining Python)
-│   └── precompute/
-│       ├── config.py                   # Paths, template IDs, item set IDs
-│       └── db.py                       # MySQL helpers for precompute-graphs.py
+│   ├── KnowledgeGraphs.php             # Per-item knowledge-graph builder (IDF-ranked)
+│   └── Runner.php                      # Entities, overviews, publications, knowledge graphs
 ├── ROADMAP.md                          # Full visualization roadmap
 └── README.md
 ```
@@ -246,7 +228,7 @@ Registering a new chart means adding its builder file to that helper's `CHART_SC
 list once, rather than editing every dashboard/compare/overview template.
 
 The **in-Omeka regeneration** (the admin "Regenerate" button) is a self-contained PHP
-port of the precompute under `src/Precompute/` (`DataLoader` → `Aggregators` → `Runner`),
+port of the precompute under `src/Precompute/` (`DataLoader` → `Aggregators` / `KnowledgeGraphs` → `Runner`),
 run by the background job `src/Job/PrecomputeDashboards.php` via the admin
 `src/Controller/Admin/MaintenanceController.php`. The `Aggregators` are dependency-free
 and unit-testable; the job reuses Omeka's `Omeka\Connection`, so no MySQL variables or

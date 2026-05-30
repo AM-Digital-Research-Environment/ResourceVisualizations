@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_1890","name":"Gabon","category":0,"symbolSize":45,"isCenter":true,"itemId":1890},{"id":"item_1944","name":"Ivindu","category":1,"symbolSize":22,"itemId":1944}],"edges":[{"source":"item_1944","target":"item_1890","name":"Is Part Of"}],"categories":[{"name":"Location"},{"name":"Linked Item"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

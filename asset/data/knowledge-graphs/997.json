@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_997","name":"Johnson, J. C. Jr.","category":0,"symbolSize":45,"isCenter":true,"itemId":997},{"id":"item_8053","name":"Roadways to Health","category":1,"symbolSize":16,"itemId":8053}],"edges":[{"source":"item_8053","target":"item_997","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

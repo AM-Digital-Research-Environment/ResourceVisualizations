@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_1086","name":"Nyah, O. Milford","category":0,"symbolSize":45,"isCenter":true,"itemId":1086},{"id":"item_8155","name":"Special","category":1,"symbolSize":16,"itemId":8155}],"edges":[{"source":"item_8155","target":"item_1086","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

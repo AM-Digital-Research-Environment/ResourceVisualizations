@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_1094","name":"Paul, Normal","category":0,"symbolSize":45,"isCenter":true,"itemId":1094},{"id":"item_8369","name":"Good Times","category":1,"symbolSize":16,"itemId":8369}],"edges":[{"source":"item_8369","target":"item_1094","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

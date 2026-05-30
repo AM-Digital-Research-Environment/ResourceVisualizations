@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_10376","name":"Tsofack, Jean-Benoit","category":0,"symbolSize":45,"isCenter":true,"itemId":10376},{"id":"item_1674","name":"Moralities","category":1,"symbolSize":16,"itemId":1674}],"edges":[{"source":"item_1674","target":"item_10376","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

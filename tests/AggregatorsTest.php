@@ -16,8 +16,10 @@ declare(strict_types=1);
  */
 
 require dirname(__DIR__) . '/src/Precompute/Aggregators.php';
+require dirname(__DIR__) . '/src/Precompute/KnowledgeGraphs.php';
 
 use ResourceVisualizations\Precompute\Aggregators as A;
+use ResourceVisualizations\Precompute\KnowledgeGraphs as KG;
 
 $failures = 0;
 function check(bool $cond, string $msg): void
@@ -165,6 +167,32 @@ $mNet = A::buildCoAuthorNetwork([300, 301, 302], $mLinks, $mLits, $mItems);
 $lp = null;
 foreach (($mNet['nodes'] ?? []) as $nd) { if ($nd['name'] === 'Linked Person') { $lp = $nd; } }
 check($lp !== null && $lp['matched'] === true && ($lp['itemId'] ?? null) === 100, 'coAuthorNetwork: linked author marked matched with itemId');
+
+// --- knowledge graph (IDF-ranked shared-item discovery) ---
+$kgItems = [
+    1 => ['title' => 'Center', 'class_label' => 'Article', 'class_term' => 'fabio:JournalArticle', 'template_id' => 11],
+    2 => ['title' => 'Sibling', 'class_label' => 'Article', 'class_term' => 'fabio:JournalArticle', 'template_id' => 11],
+    10 => ['title' => 'Subject A', 'class_label' => 'Subject', 'class_term' => '', 'template_id' => 6],
+    11 => ['title' => 'Subject B', 'class_label' => 'Subject', 'class_term' => '', 'template_id' => 6],
+];
+$kgLinks = [
+    1 => [['dcterms:subject', 'Subject', 10], ['dcterms:subject', 'Subject', 11]],
+    2 => [['dcterms:subject', 'Subject', 10]],
+];
+$kgReverseLinks = [10 => ['dcterms:subject' => [1, 2]], 11 => ['dcterms:subject' => [1]]];
+$kgReverse = KG::buildShareableReverse($kgReverseLinks);
+[$kgIdf, $kgFreq] = KG::computeResourceStats($kgLinks, 4);
+check(abs(($kgFreq[10] ?? 0) - 50.0) < 0.01, 'KG computeResourceStats: subject shared by 2/4 items = 50%');
+$g = KG::buildGraph(1, $kgItems, $kgLinks, $kgReverseLinks, $kgReverse, $kgIdf, $kgFreq);
+check($g !== null, 'KG buildGraph returns a graph');
+$kgIds = array_map(static fn ($n) => $n['id'], $g['nodes'] ?? []);
+check(in_array('item_1', $kgIds, true) && in_array('resource_10', $kgIds, true) && in_array('resource_11', $kgIds, true), 'KG: center + direct subject nodes');
+check(in_array('item_2', $kgIds, true), 'KG: discovers shared item via co-occurring subject');
+$kgShared = false;
+foreach ($g['edges'] ?? [] as $e) { if (!empty($e['isShared'])) { $kgShared = true; } }
+check($kgShared, 'KG: shared edge carries isShared/idf metadata');
+check(isset($g['stats']['maxStrength'], $g['stats']['maxFreqPct']), 'KG: stats present');
+check(KG::buildItemMap(1, $kgLinks, []) === null, 'KG buildItemMap null without geo');
 
 echo $failures ? "\n$failures FAILURE(S)\n" : "\nALL PHP AGGREGATOR TESTS PASS\n";
 exit($failures ? 1 : 0);

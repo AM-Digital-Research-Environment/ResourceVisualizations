@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_2403","name":"Minors","category":0,"symbolSize":45,"isCenter":true,"itemId":2403},{"id":"item_10017","name":"Communication","category":1,"symbolSize":16,"itemId":10017}],"edges":[{"source":"item_10017","target":"item_2403","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_2877","name":"Mahlen","category":0,"symbolSize":45,"isCenter":true,"itemId":2877},{"id":"item_9829","name":"Ohne Titel","category":1,"symbolSize":16,"itemId":9829}],"edges":[{"source":"item_9829","target":"item_2877","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

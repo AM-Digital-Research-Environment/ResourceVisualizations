@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_976","name":"Hodges, Emmanuel D.","category":0,"symbolSize":45,"isCenter":true,"itemId":976},{"id":"item_8312","name":"Concern","category":1,"symbolSize":16,"itemId":8312}],"edges":[{"source":"item_8312","target":"item_976","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_989","name":"Jallah, John","category":0,"symbolSize":45,"isCenter":true,"itemId":989},{"id":"item_8172","name":"Roadways to Health","category":1,"symbolSize":16,"itemId":8172}],"edges":[{"source":"item_8172","target":"item_989","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

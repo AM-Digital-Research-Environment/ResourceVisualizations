@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_2544","name":"Chaga","category":0,"symbolSize":45,"isCenter":true,"itemId":2544},{"id":"item_9342","name":"The Adventures of Mrile","category":1,"symbolSize":16,"itemId":9342}],"edges":[{"source":"item_9342","target":"item_2544","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

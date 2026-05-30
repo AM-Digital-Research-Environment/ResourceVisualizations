@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_2619","name":"Digital Research Environment","category":0,"symbolSize":45,"isCenter":true,"itemId":2619},{"id":"item_9962","name":"Rapport Synthétique projet","category":1,"symbolSize":16,"itemId":9962}],"edges":[{"source":"item_9962","target":"item_2619","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}]}

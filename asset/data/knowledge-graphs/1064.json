@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_1064","name":"Mathews, Hazel","category":0,"symbolSize":45,"isCenter":true,"itemId":1064},{"id":"item_8122","name":"Christofest","category":1,"symbolSize":16,"itemId":8122}],"edges":[{"source":"item_8122","target":"item_1064","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

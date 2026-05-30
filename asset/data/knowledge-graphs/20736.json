@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_20736","name":"Kaya","category":0,"symbolSize":45,"isCenter":true,"itemId":20736},{"id":"item_9979","name":"Rapports d'entretien","category":1,"symbolSize":16,"itemId":9979}],"edges":[{"source":"item_9979","target":"item_20736","name":"references"}],"categories":[{"name":"authority file"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

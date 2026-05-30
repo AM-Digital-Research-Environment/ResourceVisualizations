@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_934","name":"Flomo, Roland K.","category":0,"symbolSize":45,"isCenter":true,"itemId":934},{"id":"item_8252","name":"Sunday Religious Music","category":1,"symbolSize":16,"itemId":8252}],"edges":[{"source":"item_8252","target":"item_934","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}

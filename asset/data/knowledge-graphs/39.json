@@ -1,1 +1,0 @@
-{"nodes":[{"id":"item_39","name":"Ongany, George","category":0,"symbolSize":45,"isCenter":true,"itemId":39},{"id":"item_7976","name":"Di Cwynyi","category":1,"symbolSize":16,"itemId":7976}],"edges":[{"source":"item_7976","target":"item_39","name":"references"}],"categories":[{"name":"Person"},{"name":"Research Item"}],"stats":{"maxStrength":0.0,"maxFreqPct":0}}
