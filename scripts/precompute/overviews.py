@@ -11,7 +11,8 @@ from .config import (
 from .aggregators import (
     aggregate_items, save_json, find_items_linking_to,
     build_stacked_timeline, build_heatmap, build_roles,
-    build_subject_trends, build_language_timeline,
+    build_subject_trends, build_language_timeline, build_beeswarm,
+    build_choropleth,
 )
 
 
@@ -19,7 +20,7 @@ from .aggregators import (
 
 def generate_overview(parent_id, label, set_items, terms, items, links,
                       reverse_links, item_year, geo, resource_type,
-                      distribution_key, filter_fn=None):
+                      distribution_key, filter_fn=None, extra=None):
     """Generate an overview dashboard for a parent/category item.
 
     Aggregates all research items linked to members of an item set, and
@@ -32,6 +33,8 @@ def generate_overview(parent_id, label, set_items, terms, items, links,
         terms:            Set of property terms used to link research items to set members.
         distribution_key: Key name for the bar chart data (e.g. 'genres', 'topLanguages').
         filter_fn:        Optional function(item_id, items) -> bool to filter set members.
+        extra:            Optional dict of extra chart keys merged into the dashboard
+                          (e.g. gantt/beeswarm for the Projects overview).
     """
     members = [sid for sid in set_items if (not filter_fn or filter_fn(sid, items))]
     if not members:
@@ -70,13 +73,61 @@ def generate_overview(parent_id, label, set_items, terms, items, links,
     lang_timeline = build_language_timeline(all_items, links, items, item_year)
     if lang_timeline:
         dashboard['languageTimeline'] = lang_timeline
+    choropleth = build_choropleth(all_items, links, geo)
+    if choropleth:
+        dashboard['choropleth'] = choropleth
+
+    if extra:
+        dashboard.update(extra)
 
     dashboard['resourceType'] = resource_type
     save_json(parent_id, dashboard)
     print(f'  {len(all_items)} items, {len(member_counts)} {distribution_key}')
 
 
-def generate_category_overviews(items, links, reverse_links, item_year, geo, item_sets):
+def _build_projects_timeline_charts(project_ids, items, children_of, temporal):
+    """Gantt + section-grouped beeswarm for the Projects overview.
+
+    Mirrors the Section overview's project charts: a Gantt of each project's
+    duration and a beeswarm of projects by start year, categorised by their
+    research section. Reuses build_beeswarm — no new builder.
+    """
+    extra = {}
+    proj_set = set(project_ids)
+
+    gantt = []
+    for pid in project_ids:
+        if pid in temporal:
+            start, end = temporal[pid]
+            gantt.append({'name': items.get(pid, {}).get('title', f'Project {pid}'),
+                          'start': start, 'end': end, 'itemId': pid})
+    if gantt:
+        gantt.sort(key=lambda x: x['start'])
+        extra['gantt'] = gantt
+
+    beeswarm = []
+    grouped = set()
+    sections = [(sid, sinfo) for sid, sinfo in items.items()
+                if sinfo.get('class_term') == 'frapo:ResearchGroup']
+    for sid, sinfo in sections:
+        sec_projects = [pid for pid in children_of.get(sid, []) if pid in proj_set]
+        pts = build_beeswarm(sinfo['title'], sec_projects, items, children_of, temporal)
+        if pts:
+            beeswarm.extend(pts)
+            grouped.update(sec_projects)
+    leftover = [pid for pid in project_ids if pid not in grouped]
+    if leftover:
+        pts = build_beeswarm('Other', leftover, items, children_of, temporal)
+        if pts:
+            beeswarm.extend(pts)
+    if beeswarm:
+        extra['beeswarm'] = beeswarm
+
+    return extra
+
+
+def generate_category_overviews(items, links, reverse_links, children_of,
+                                item_year, temporal, geo, item_sets):
     """Generate overview dashboards for all category parent items."""
 
     # Gather all marcrel + creator/contributor terms for person/institution lookups.
@@ -138,6 +189,8 @@ def generate_category_overviews(items, links, reverse_links, item_year, geo, ite
                       item_year, geo, 'tagOverview', 'topTags',
                       filter_fn=is_tag)
 
-    generate_overview(OVERVIEW_PROJECT, 'Research Project', item_sets.get(ITEM_SET_PROJECT, []),
+    proj_members = item_sets.get(ITEM_SET_PROJECT, [])
+    proj_extra = _build_projects_timeline_charts(proj_members, items, children_of, temporal)
+    generate_overview(OVERVIEW_PROJECT, 'Research Project', proj_members,
                       {'dcterms:isPartOf'}, items, links, reverse_links,
-                      item_year, geo, 'projectOverview', 'topProjects')
+                      item_year, geo, 'projectOverview', 'topProjects', extra=proj_extra)

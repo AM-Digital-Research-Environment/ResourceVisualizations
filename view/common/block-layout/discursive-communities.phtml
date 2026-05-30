@@ -1,0 +1,29 @@
+<?php
+/**
+ * Discursive Communities page block.
+ *
+ * Loads the precomputed communities/discursive.json and renders a subject
+ * co-occurrence force graph coloured by Louvain community.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var \Omeka\Api\Representation\SitePageBlockRepresentation $block
+ */
+
+// Site-page block (Module.php does not run on page controllers), so request the
+// CDN + core prelude and the communities controller. Single source of truth:
+// ResourceVisualizations\View\Helper\DashboardAssets.
+$this->dashboardAssets(['cdn' => true, 'controller' => 'communities']);
+
+$siteSlug = $this->currentSite()->slug();
+?>
+
+<div class="resource-vis-block communities-block">
+    <div class="communities-container"
+         data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
+         data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">
+        <div class="rv-loading">
+            <div class="rv-spinner"></div>
+            <span><?= $this->translate('Loading discursive communities…') ?></span>
+        </div>
+    </div>
+</div>

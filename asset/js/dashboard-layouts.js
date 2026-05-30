@@ -16,14 +16,15 @@
 
     ns.LAYOUTS = {
         organisation: {
-            order: ['timeline', 'types', 'languages', 'roles', 'contributors',
-                    'subjects', 'collabNetwork', 'affiliationNetwork', 'locations'],
+            order: ['timeline', 'types', 'languages', 'roles', 'radar',
+                    'contributors', 'subjects', 'collabNetwork',
+                    'affiliationNetwork', 'locations'],
             wide:  ['subjects', 'collabNetwork', 'affiliationNetwork', 'locations'],
             tall:  ['subjects', 'collabNetwork', 'affiliationNetwork', 'locations']
         },
         person: {
-            order: ['timeline', 'types', 'languages', 'coAuthors',
-                    'subjects', 'contributorNetwork', 'locations'],
+            order: ['timeline', 'types', 'languages', 'roles', 'radar',
+                    'coAuthors', 'subjects', 'contributorNetwork', 'locations'],
             wide:  ['subjects', 'contributorNetwork', 'locations'],
             tall:  ['subjects', 'contributorNetwork', 'locations']
         },
@@ -31,27 +32,27 @@
             order: ['selfLocation', 'stackedTimeline', 'languageTimeline',
                     'timeline', 'gantt', 'beeswarm', 'types', 'languages',
                     'roles', 'heatmap', 'subjects', 'subjectTrends',
-                    'sunburst', 'treemap', 'locations', 'chord',
+                    'sunburst', 'treemap', 'locations', 'choropleth', 'chord',
                     'contributorNetwork', 'contributors', 'projects', 'sankey'],
             wide:  ['selfLocation', 'stackedTimeline', 'languageTimeline',
                     'gantt', 'beeswarm', 'heatmap', 'sankey', 'sunburst',
                     'treemap', 'subjects', 'subjectTrends', 'locations',
-                    'chord', 'contributorNetwork', 'projects'],
+                    'choropleth', 'chord', 'contributorNetwork', 'projects'],
             tall:  ['selfLocation', 'gantt', 'beeswarm', 'heatmap', 'sankey',
                     'sunburst', 'treemap', 'subjects', 'subjectTrends',
-                    'locations', 'chord', 'contributorNetwork']
+                    'locations', 'choropleth', 'chord', 'contributorNetwork']
         },
         project: {
             order: ['stackedTimeline', 'languageTimeline', 'timeline',
-                    'types', 'languages', 'roles', 'heatmap', 'subjects',
+                    'types', 'languages', 'roles', 'radar', 'heatmap', 'subjects',
                     'subjectTrends', 'sunburst', 'treemap', 'locations',
-                    'chord', 'contributorNetwork', 'contributors',
+                    'choropleth', 'chord', 'contributorNetwork', 'contributors',
                     'sankey'],
             wide:  ['stackedTimeline', 'languageTimeline', 'heatmap', 'sankey',
                     'sunburst', 'treemap', 'subjects', 'subjectTrends',
-                    'locations', 'chord', 'contributorNetwork'],
+                    'locations', 'choropleth', 'chord', 'contributorNetwork'],
             tall:  ['heatmap', 'sankey', 'sunburst', 'treemap', 'subjects',
-                    'subjectTrends', 'locations', 'chord',
+                    'subjectTrends', 'locations', 'choropleth', 'chord',
                     'contributorNetwork']
         },
         location: {
@@ -84,11 +85,12 @@
         languageOverview: {
             order: ['topLanguages', 'stackedTimeline', 'languageTimeline',
                     'timeline', 'types', 'roles', 'heatmap', 'subjects',
-                    'subjectTrends', 'locations', 'contributors'],
+                    'subjectTrends', 'locations', 'choropleth', 'contributors'],
             wide:  ['topLanguages', 'stackedTimeline', 'languageTimeline',
-                    'heatmap', 'subjects', 'subjectTrends', 'locations'],
+                    'heatmap', 'subjects', 'subjectTrends', 'locations',
+                    'choropleth'],
             tall:  ['topLanguages', 'heatmap', 'subjects', 'subjectTrends',
-                    'locations']
+                    'locations', 'choropleth']
         },
         resourceTypeOverview: {
             order: ['topResourceTypes', 'stackedTimeline', 'timeline',
@@ -101,34 +103,39 @@
         },
         targetAudienceOverview: {
             order: ['topAudiences', 'stackedTimeline', 'timeline', 'types',
-                    'languages', 'subjects', 'locations', 'contributors'],
-            wide:  ['topAudiences', 'stackedTimeline', 'subjects',
-                    'locations'],
-            tall:  ['topAudiences', 'subjects', 'locations']
+                    'languages', 'roles', 'heatmap', 'subjects',
+                    'subjectTrends', 'locations', 'contributors'],
+            wide:  ['topAudiences', 'stackedTimeline', 'heatmap', 'subjects',
+                    'subjectTrends', 'locations'],
+            tall:  ['topAudiences', 'heatmap', 'subjects', 'subjectTrends',
+                    'locations']
         },
         personOverview: {
             order: ['topPersons', 'stackedTimeline', 'timeline', 'types',
                     'languages', 'roles', 'heatmap', 'subjects',
-                    'subjectTrends', 'locations', 'contributors'],
+                    'subjectTrends', 'locations', 'choropleth', 'contributors'],
             wide:  ['topPersons', 'stackedTimeline', 'heatmap', 'subjects',
-                    'subjectTrends', 'locations'],
+                    'subjectTrends', 'locations', 'choropleth'],
             tall:  ['topPersons', 'heatmap', 'subjects', 'subjectTrends',
-                    'locations']
+                    'locations', 'choropleth']
         },
         institutionOverview: {
             order: ['topInstitutions', 'stackedTimeline', 'timeline', 'types',
                     'languages', 'roles', 'subjects', 'subjectTrends',
-                    'locations', 'contributors'],
+                    'locations', 'choropleth', 'contributors'],
             wide:  ['topInstitutions', 'stackedTimeline', 'subjects',
-                    'subjectTrends', 'locations'],
+                    'subjectTrends', 'locations', 'choropleth'],
             tall:  ['topInstitutions', 'subjects', 'subjectTrends',
-                    'locations']
+                    'locations', 'choropleth']
         },
         groupOverview: {
             order: ['topGroups', 'stackedTimeline', 'timeline', 'types',
-                    'languages', 'subjects', 'locations', 'contributors'],
-            wide:  ['topGroups', 'stackedTimeline', 'subjects', 'locations'],
-            tall:  ['topGroups', 'subjects', 'locations']
+                    'languages', 'roles', 'heatmap', 'subjects',
+                    'subjectTrends', 'locations', 'contributors'],
+            wide:  ['topGroups', 'stackedTimeline', 'heatmap', 'subjects',
+                    'subjectTrends', 'locations'],
+            tall:  ['topGroups', 'heatmap', 'subjects', 'subjectTrends',
+                    'locations']
         },
         lcshOverview: {
             order: ['topSubjects', 'stackedTimeline', 'timeline', 'types',
@@ -141,20 +148,23 @@
         },
         tagOverview: {
             order: ['topTags', 'stackedTimeline', 'timeline', 'types',
-                    'languages', 'subjects', 'subjectTrends', 'locations',
-                    'contributors'],
-            wide:  ['topTags', 'stackedTimeline', 'subjects',
+                    'languages', 'roles', 'heatmap', 'subjects',
+                    'subjectTrends', 'locations', 'contributors'],
+            wide:  ['topTags', 'stackedTimeline', 'heatmap', 'subjects',
                     'subjectTrends', 'locations'],
-            tall:  ['topTags', 'subjects', 'subjectTrends', 'locations']
+            tall:  ['topTags', 'heatmap', 'subjects', 'subjectTrends',
+                    'locations']
         },
         projectOverview: {
             order: ['topProjects', 'stackedTimeline', 'languageTimeline',
-                    'timeline', 'types', 'languages', 'roles', 'heatmap',
-                    'subjects', 'subjectTrends', 'locations', 'contributors'],
+                    'gantt', 'beeswarm', 'timeline', 'types', 'languages',
+                    'roles', 'heatmap', 'subjects', 'subjectTrends',
+                    'locations', 'choropleth', 'contributors'],
             wide:  ['topProjects', 'stackedTimeline', 'languageTimeline',
-                    'heatmap', 'subjects', 'subjectTrends', 'locations'],
-            tall:  ['topProjects', 'heatmap', 'subjects', 'subjectTrends',
-                    'locations']
+                    'gantt', 'beeswarm', 'heatmap', 'subjects',
+                    'subjectTrends', 'locations', 'choropleth'],
+            tall:  ['topProjects', 'gantt', 'beeswarm', 'heatmap', 'subjects',
+                    'subjectTrends', 'locations', 'choropleth']
         },
         researchItem: {
             order: ['timeline', 'types', 'languages', 'subjects',
@@ -167,18 +177,18 @@
     ns.DEFAULT_LAYOUT = {
         order: ['selfLocation', 'stackedTimeline', 'languageTimeline',
                 'timeline', 'gantt', 'beeswarm', 'types', 'languages',
-                'roles', 'genres', 'heatmap', 'subjects', 'subjectTrends', 'sunburst',
-                'treemap', 'locations', 'chord', 'collabNetwork',
+                'roles', 'radar', 'genres', 'heatmap', 'subjects', 'subjectTrends', 'sunburst',
+                'treemap', 'locations', 'choropleth', 'chord', 'collabNetwork',
                 'contributorNetwork', 'affiliationNetwork', 'contributors',
                 'coAuthors', 'coSubjects', 'projects', 'sankey'],
         wide:  ['selfLocation', 'stackedTimeline', 'languageTimeline', 'gantt',
                 'beeswarm', 'heatmap', 'sankey', 'sunburst', 'treemap',
-                'subjects', 'subjectTrends', 'locations', 'chord',
+                'subjects', 'subjectTrends', 'locations', 'choropleth', 'chord',
                 'collabNetwork', 'contributorNetwork', 'affiliationNetwork',
                 'projects', 'coSubjects'],
         tall:  ['selfLocation', 'gantt', 'beeswarm', 'heatmap', 'sankey',
                 'sunburst', 'treemap', 'subjects', 'subjectTrends',
-                'locations', 'chord', 'collabNetwork',
+                'locations', 'choropleth', 'chord', 'collabNetwork',
                 'contributorNetwork', 'affiliationNetwork']
     };
 })();

@@ -19,13 +19,15 @@ import sys
 # Allow running from the repo root: python3 scripts/precompute-dashboards.py
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from precompute.config import OUTPUT_DIR, OMEKA_DIR, TEMPLATE_RESEARCH_ITEMS
+from precompute.config import (OUTPUT_DIR, COMMUNITIES_DIR, OMEKA_DIR, DB_HOST,
+                               TEMPLATE_RESEARCH_ITEMS, OVERVIEW_LCSH)
 from precompute.db import get_password, load_all_data
 from precompute.aggregators import (
     aggregate_items, save_json,
     build_stacked_timeline, build_heatmap, build_roles,
     build_subject_trends, build_language_timeline, build_chord,
-    build_sankey, build_sunburst, build_geo_flows,
+    build_sankey, build_sunburst, build_geo_flows, build_choropleth,
+    build_discursive_communities,
 )
 from precompute.generators import (
     generate_sections, generate_projects, generate_people,
@@ -37,7 +39,9 @@ from precompute.overviews import generate_category_overviews
 
 def main():
     password = get_password()
-    os.chdir(OMEKA_DIR)
+    if not DB_HOST:
+        # docker-compose-exec transport runs from the stack directory.
+        os.chdir(OMEKA_DIR)
 
     data = load_all_data(password)
     items, links, reverse_links, children_of, item_year, temporal, geo, item_sets = data
@@ -61,7 +65,8 @@ def main():
                          resource_type='genre')
 
     # Category overviews (Genre, Language, Person, etc.)
-    generate_category_overviews(items, links, reverse_links, item_year, geo, item_sets)
+    generate_category_overviews(items, links, reverse_links, children_of,
+                                item_year, temporal, geo, item_sets)
 
     # Collection Overview (all research items)
     research_items = [iid for iid, info in items.items()
@@ -96,11 +101,33 @@ def main():
         geo_flows = build_geo_flows(research_items, links, items, geo)
         if geo_flows:
             dashboard['geoFlows'] = geo_flows
+        choropleth = build_choropleth(research_items, links, geo)
+        if choropleth:
+            dashboard['choropleth'] = choropleth
         dashboard['resourceType'] = 'section'
         path = os.path.join(OUTPUT_DIR, 'collection-overview.json')
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(dashboard, f, ensure_ascii=False, separators=(',', ':'))
         print(f'  Overview dashboard saved ({dashboard["totalItems"]} items)')
+
+    # Discursive Communities — LCSH-only subject co-occurrence + Louvain.
+    print('\n=== Discursive Communities ===')
+    lcsh_ids = set()
+    for sid, slinks in links.items():
+        for term, label, vrid in slinks:
+            if term == 'dcterms:type' and vrid == OVERVIEW_LCSH:
+                lcsh_ids.add(sid)
+                break
+    communities = build_discursive_communities(
+        research_items, links, items, subject_filter=lcsh_ids or None)
+    if communities:
+        os.makedirs(COMMUNITIES_DIR, exist_ok=True)
+        path = os.path.join(COMMUNITIES_DIR, 'discursive.json')
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(communities, f, ensure_ascii=False, separators=(',', ':'))
+        print(f'  {len(communities["nodes"])} subjects, '
+              f'{len(communities["communities"])} communities '
+              f'({"LCSH-only" if lcsh_ids else "all subjects"}) → {path}')
 
     print(f'\nDone. Files in {OUTPUT_DIR}/')
 

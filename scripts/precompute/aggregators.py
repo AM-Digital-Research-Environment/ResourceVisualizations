@@ -5,7 +5,8 @@ import os
 import re
 from collections import Counter
 
-from .config import OUTPUT_DIR, TEMPLATE_PERSONS, TEMPLATE_PROJECTS
+from .config import (OUTPUT_DIR, COUNTRIES_GEOJSON,
+                     TEMPLATE_PERSONS, TEMPLATE_PROJECTS)
 
 
 def save_json(item_id, data):
@@ -159,6 +160,118 @@ def build_chord(item_ids, links, items, term_filter='dcterms:subject', max_nodes
     chord_nodes = [{'name': value_titles[v], 'value': node_counts[v], 'itemId': v}
                    for v in top_nodes if v in value_titles]
     return {'nodes': chord_nodes, 'links': chord_links}
+
+
+def _weighted_pagerank(graph, weight='weight', alpha=0.85, iters=100, tol=1.0e-6):
+    """Pure-Python weighted PageRank (power iteration).
+
+    Avoids networkx's pagerank, which pulls in scipy. The community graph has no
+    isolated nodes (built from edges), so dangling-node handling is unnecessary.
+    """
+    nodes = list(graph.nodes())
+    n = len(nodes)
+    if not n:
+        return {}
+    pr = {u: 1.0 / n for u in nodes}
+    wdeg = {u: sum(graph[u][v].get(weight, 1) for v in graph[u]) or 1 for u in nodes}
+    base = (1.0 - alpha) / n
+    for _ in range(iters):
+        prev = pr
+        pr = {u: base for u in nodes}
+        for u in nodes:
+            share = alpha * prev[u] / wdeg[u]
+            for v in graph[u]:
+                pr[v] += share * graph[u][v].get(weight, 1)
+        if sum(abs(pr[u] - prev[u]) for u in nodes) < tol:
+            break
+    total = sum(pr.values()) or 1.0
+    return {u: pr[u] / total for u in nodes}
+
+
+def build_discursive_communities(item_ids, links, items, subject_filter=None,
+                                 min_cooccurrence=2, max_nodes=120):
+    """Subject co-occurrence network with Louvain communities + PageRank anchors.
+
+    Builds a weighted graph of subjects that co-occur on the same items, detects
+    communities (Louvain), ranks nodes by PageRank, and returns the top
+    `max_nodes` subjects coloured by community, the edges among them, and a
+    per-community summary (size + top-PageRank anchor).
+
+    subject_filter: optional set of subject resource-ids to restrict to
+                    (e.g. LCSH-only, to cut free-text-tag noise).
+
+    Returns None if networkx is unavailable or the graph is too small.
+    """
+    try:
+        import networkx as nx
+    except ImportError:
+        print('  networkx not installed — skipping discursive communities')
+        return None
+
+    pair_counts = Counter()
+    node_counts = Counter()
+    titles = {}
+    for iid in item_ids:
+        subs = set()
+        for term, label, vrid in links.get(iid, []):
+            if term == 'dcterms:subject':
+                if subject_filter is not None and vrid not in subject_filter:
+                    continue
+                title = items.get(vrid, {}).get('title', '')
+                if title:
+                    subs.add(vrid)
+                    titles[vrid] = title
+        subs = list(subs)
+        for v in subs:
+            node_counts[v] += 1
+        for i in range(len(subs)):
+            for j in range(i + 1, len(subs)):
+                pair_counts[tuple(sorted((subs[i], subs[j])))] += 1
+
+    graph = nx.Graph()
+    for (a, b), w in pair_counts.items():
+        if w >= min_cooccurrence:
+            graph.add_edge(a, b, weight=w)
+    if graph.number_of_nodes() < 3 or graph.number_of_edges() < 2:
+        return None
+
+    try:
+        communities = nx.community.louvain_communities(graph, weight='weight', seed=42)
+    except Exception as exc:  # pragma: no cover - defensive
+        print(f'  Louvain failed: {exc}')
+        return None
+    comm_of = {}
+    for ci, comm in enumerate(communities):
+        for node in comm:
+            comm_of[node] = ci
+
+    pagerank = _weighted_pagerank(graph, weight='weight')
+    ranked = sorted(graph.nodes(), key=lambda n: -pagerank.get(n, 0))[:max_nodes]
+    top_set = set(ranked)
+
+    nodes = [{
+        'name': titles[n], 'value': node_counts[n], 'itemId': n,
+        'community': comm_of.get(n, 0), 'rank': round(pagerank.get(n, 0), 6),
+    } for n in ranked if n in titles]
+
+    out_links = []
+    for (a, b), w in pair_counts.items():
+        if w >= min_cooccurrence and a in top_set and b in top_set:
+            out_links.append({'source': titles[a], 'target': titles[b], 'value': w})
+
+    summary = {}
+    for n in ranked:
+        ci = comm_of.get(n, 0)
+        s = summary.setdefault(ci, {'id': ci, 'size': 0, 'anchor': None, '_rank': -1.0})
+        s['size'] += 1
+        if pagerank.get(n, 0) > s['_rank']:
+            s['_rank'] = pagerank.get(n, 0)
+            s['anchor'] = titles[n]
+    communities_list = sorted(
+        [{'id': s['id'], 'size': s['size'], 'anchor': s['anchor']} for s in summary.values()],
+        key=lambda c: -c['size'])
+
+    return {'nodes': nodes, 'links': out_links, 'communities': communities_list}
 
 
 def build_sankey(item_ids, links, items):
@@ -440,10 +553,31 @@ def build_affiliation_network(inst_id, inst_title, items, links, reverse_links,
 
 
 def build_roles(item_ids, links, items):
-    """Build contributor role distribution."""
+    """Build contributor role distribution across all contributors of the items."""
     role_counts = {}
     for iid in item_ids:
         for term, label, vrid in links.get(iid, []):
+            if term.startswith('marcrel:') or term in ('dcterms:creator', 'dcterms:contributor'):
+                role_counts[label] = role_counts.get(label, 0) + 1
+    if not role_counts:
+        return None
+    return sorted([{'name': n, 'value': c} for n, c in role_counts.items()],
+                  key=lambda x: -x['value'])
+
+
+def build_roles_for(entity_id, item_ids, links):
+    """Build the role distribution for one specific entity (e.g. a person).
+
+    Unlike build_roles (which counts every contributor on the items), this
+    counts only the roles that *this* entity played — i.e. links whose value
+    resource is entity_id — so a person dashboard shows that person's own
+    roles (author, photographer, …), not everyone else's.
+    """
+    role_counts = {}
+    for iid in item_ids:
+        for term, label, vrid in links.get(iid, []):
+            if vrid != entity_id:
+                continue
             if term.startswith('marcrel:') or term in ('dcterms:creator', 'dcterms:contributor'):
                 role_counts[label] = role_counts.get(label, 0) + 1
     if not role_counts:
@@ -585,6 +719,187 @@ def build_geo_flows(item_ids, links, items, geo):
             'value': count,
         })
     return {'nodes': nodes, 'links': flow_links} if flow_links else None
+
+
+# -- Choropleth: country-level aggregation -----------------------------------
+#
+# The module's `geo` is point-based (lat/lon per location), so locations are
+# rolled up to countries with a pure-Python point-in-polygon test against the
+# shared Natural Earth GeoJSON. The per-location → country map is built once and
+# cached for the whole run (the geo set is identical across entities).
+
+_country_index = None     # {location_id: country_name}
+_country_features = None   # cached [(country_name, geometry)]
+
+
+def _point_in_polygon(x, y, rings):
+    """Even-odd ray-casting test across all rings of a polygon (handles holes)."""
+    inside = False
+    for ring in rings:
+        n = len(ring)
+        j = n - 1
+        for i in range(n):
+            xi, yi = ring[i][0], ring[i][1]
+            xj, yj = ring[j][0], ring[j][1]
+            if ((yi > y) != (yj > y)) and \
+                    (x < (xj - xi) * (y - yi) / (yj - yi) + xi):
+                inside = not inside
+            j = i
+    return inside
+
+
+def _country_for_point(lon, lat, features):
+    for name, geom in features:
+        gtype = geom.get('type')
+        coords = geom.get('coordinates')
+        if gtype == 'Polygon':
+            if _point_in_polygon(lon, lat, coords):
+                return name
+        elif gtype == 'MultiPolygon':
+            for poly in coords:
+                if _point_in_polygon(lon, lat, poly):
+                    return name
+    return None
+
+
+def _load_country_features():
+    global _country_features
+    if _country_features is not None:
+        return _country_features
+    _country_features = []
+    try:
+        with open(COUNTRIES_GEOJSON, encoding='utf-8') as f:
+            gj = json.load(f)
+    except (OSError, ValueError):
+        return _country_features
+    for ft in gj.get('features', []):
+        props = ft.get('properties', {})
+        name = (props.get('ADMIN') or props.get('NAME')
+                or props.get('NAME_EN') or props.get('NAME_LONG'))
+        geom = ft.get('geometry')
+        if name and geom:
+            _country_features.append((name, geom))
+    return _country_features
+
+
+def _get_country_index(geo):
+    """Build (once) and return {location_id: country_name} via point-in-polygon."""
+    global _country_index
+    if _country_index is not None:
+        return _country_index
+    _country_index = {}
+    features = _load_country_features()
+    if not features:
+        return _country_index
+    for loc_id, g in geo.items():
+        lon, lat = g.get('lon'), g.get('lat')
+        if lon is None or lat is None:
+            continue
+        name = _country_for_point(lon, lat, features)
+        if name:
+            _country_index[loc_id] = name
+    return _country_index
+
+
+def build_choropleth(item_ids, links, geo):
+    """Aggregate item origins (dcterms:spatial) to per-country counts.
+
+    Emits [{country, count}] joined in the browser against the country
+    GeoJSON's ADMIN/NAME property. Each item counts once per country it
+    references. Returns None when nothing geocodes to a country.
+    """
+    country_index = _get_country_index(geo)
+    if not country_index:
+        return None
+    counts = {}
+    for iid in item_ids:
+        seen = set()
+        for term, label, vrid in links.get(iid, []):
+            if term == 'dcterms:spatial':
+                country = country_index.get(vrid)
+                if country and country not in seen:
+                    counts[country] = counts.get(country, 0) + 1
+                    seen.add(country)
+    if not counts:
+        return None
+    return [{'country': c, 'count': n}
+            for c, n in sorted(counts.items(), key=lambda x: -x[1])]
+
+
+# -- Radar profile -----------------------------------------------------------
+#
+# A small "breadth" profile per entity, normalised against the per-type maxima
+# so the polygon size is comparable across entities (a single entity's own
+# values would otherwise fill every axis). Primary payoff is the Compare view,
+# where two profiles overlay on the same axes.
+
+RADAR_AXES = [
+    ('items', 'Items'),
+    ('languages', 'Languages'),
+    ('subjects', 'Subjects'),
+    ('contributors', 'People'),
+    ('types', 'Types'),
+    ('span', 'Year span'),
+]
+
+
+def profile_from_items(item_ids, links, item_year):
+    """Cheap per-entity breadth metrics (no full aggregation)."""
+    langs, subs, contribs, types, locs = set(), set(), set(), set(), set()
+    years = []
+    for iid in item_ids:
+        y = item_year.get(iid)
+        if y and str(y).isdigit():
+            years.append(int(y))
+        for term, label, vrid in links.get(iid, []):
+            if term == 'dcterms:language':
+                langs.add(vrid)
+            elif term == 'dcterms:subject':
+                subs.add(vrid)
+            elif term == 'dcterms:type':
+                types.add(vrid)
+            elif term == 'dcterms:spatial':
+                locs.add(vrid)
+            elif term in ('dcterms:creator', 'dcterms:contributor') or term.startswith('marcrel:'):
+                contribs.add(vrid)
+    span = (max(years) - min(years)) if len(years) >= 2 else 0
+    return {'items': len(item_ids), 'languages': len(langs), 'subjects': len(subs),
+            'contributors': len(contribs), 'types': len(types), 'span': span}
+
+
+def profile_maxima(profiles):
+    """Per-axis maxima across a collection of profiles (the radar's scale)."""
+    mx = {k: 0 for k, _ in RADAR_AXES}
+    for p in profiles:
+        for k, _ in RADAR_AXES:
+            v = p.get(k, 0)
+            if v > mx[k]:
+                mx[k] = v
+    return mx
+
+
+def build_radar(profile, maxima):
+    """Build a radar config: indicators (name + max) + one value series.
+
+    Axes whose maximum is zero across the whole type are dropped — consistently
+    for every entity, since `maxima` is shared per type.
+    """
+    if not profile or not maxima:
+        return None
+    indicator, values = [], []
+    any_nonzero = False
+    for key, label in RADAR_AXES:
+        mx = maxima.get(key, 0)
+        if mx <= 0:
+            continue
+        indicator.append({'name': label, 'max': mx})
+        v = profile.get(key, 0)
+        values.append(v)
+        if v:
+            any_nonzero = True
+    if len(indicator) < 3 or not any_nonzero:
+        return None
+    return {'indicator': indicator, 'series': [{'value': values}]}
 
 
 def build_beeswarm(section_title, project_ids, items, children_of, temporal):

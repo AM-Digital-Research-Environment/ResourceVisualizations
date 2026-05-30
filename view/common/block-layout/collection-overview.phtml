@@ -10,45 +10,10 @@
  * @var \Omeka\Api\Representation\SitePageBlockRepresentation $block
  */
 
-// CDN assets (not injected by Module.php on page controllers).
-$this->headLink()->appendStylesheet(
-    $this->assetUrl('css/resource-visualizations.css', 'ResourceVisualizations')
-);
-$this->headScript()->appendFile(
-    'https://cdn.jsdelivr.net/npm/echarts@6/dist/echarts.min.js'
-);
-$this->headScript()->appendFile(
-    'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2/dist/echarts-wordcloud.min.js'
-);
-$this->headLink()->appendStylesheet(
-    'https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.css'
-);
-$this->headScript()->appendFile(
-    'https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js'
-);
-
-// Module JS.
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-core.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-layouts.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-timeline.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-pie.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-bar.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-wordcloud.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-gantt.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-heatmap.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-chord.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-sankey.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-sunburst.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-stacked-timeline.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-beeswarm.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-map.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-collab-network.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-contributor-network.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-stacked-area.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-treemap.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-geo-flows.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-registry.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard.js', 'ResourceVisualizations'));
+// Dashboard front-end assets. This is a site-page block (Module.php does not
+// run on page controllers), so request the CDN + core prelude too. Single
+// source of truth: ResourceVisualizations\View\Helper\DashboardAssets.
+$this->dashboardAssets(['cdn' => true]);
 
 $siteSlug = $this->currentSite()->slug();
 ?>

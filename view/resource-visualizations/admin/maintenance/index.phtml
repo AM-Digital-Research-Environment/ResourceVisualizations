@@ -1,0 +1,43 @@
+<?php
+/**
+ * Admin maintenance page for ResourceVisualizations.
+ *
+ * A single CSRF-protected "Regenerate" button that dispatches the precompute
+ * background job. Plain server-rendered HTML; the flash messenger (rendered by
+ * the admin layout) links to the job log once dispatched.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var \ResourceVisualizations\Form\MaintenanceForm $form
+ */
+
+$translate = $this->plugin('translate');
+
+$form->setAttribute('action', $this->url('admin/resource-visualizations/maintenance-regenerate'));
+$form->setAttribute('method', 'POST');
+$form->prepare();
+
+echo $this->pageTitle($translate('Resource Visualizations: maintenance'), 1);
+?>
+
+<p class="description">
+    <?= $translate('Rebuild all precomputed visualization data directly from the Omeka database — no shell access or external tools required. Runs as a background job; track progress in the Jobs admin page.') ?>
+</p>
+
+<div style="margin-top:1.5rem;max-width:640px;">
+    <section style="border:1px solid #ddd;border-radius:6px;padding:1.5rem;background:#fff;">
+        <h3 style="margin-top:0;"><?= $translate('Regenerate dashboard data') ?></h3>
+        <p>
+            <?= $translate('Regenerates every precomputed artefact: per-entity dashboards (sections, projects, people, institutions, locations, subjects), category overviews, the collection overview, the Discursive Communities graph, and the per-country choropleth index.') ?>
+        </p>
+        <p>
+            <strong><?= $translate('When to run:') ?></strong>
+            <?= $translate('After importing or substantially editing items, so the visualizations reflect the current data. Existing JSON keeps serving until the job finishes.') ?>
+        </p>
+        <?= $this->form()->openTag($form) ?>
+            <?= $this->formCollection($form) ?>
+            <button type="submit" class="button" style="margin-top:0.5rem;">
+                <?= $translate('Regenerate now') ?>
+            </button>
+        <?= $this->form()->closeTag() ?>
+    </section>
+</div>

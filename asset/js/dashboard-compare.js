@@ -224,6 +224,7 @@
     function initCompare(container) {
         var basePath = container.dataset.basePath || '';
         var siteBase = container.dataset.siteBase || '';
+        ns.basePath = basePath; // expose for builders that load module assets (e.g. choropleth GeoJSON)
         var moduleBase = basePath + '/modules/ResourceVisualizations/asset/data/item-dashboards/';
         var indexUrl = moduleBase + 'projects-index.json';
 

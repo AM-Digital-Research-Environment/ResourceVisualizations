@@ -10,26 +10,9 @@
  * @var \Omeka\Api\Representation\ItemRepresentation $resource
  */
 
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-layouts.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-timeline.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-pie.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-bar.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-wordcloud.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-gantt.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-heatmap.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-chord.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-sankey.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-sunburst.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-stacked-timeline.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-beeswarm.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-map.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-collab-network.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-contributor-network.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-stacked-area.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-treemap.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-charts-geo-flows.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard-registry.js', 'ResourceVisualizations'));
-$this->headScript()->appendFile($this->assetUrl('js/dashboard.js', 'ResourceVisualizations'));
+// Dashboard front-end assets (CDN + core already injected by Module.php on
+// item pages). Single source of truth: ResourceVisualizations\View\Helper\DashboardAssets.
+$this->dashboardAssets();
 $siteSlug = $this->currentSite()->slug();
 ?>
 

@@ -9,10 +9,11 @@ from .config import (OUTPUT_DIR, TEMPLATE_PERSONS, TEMPLATE_PROJECTS,
 from .aggregators import (
     aggregate_items, save_json, find_items_linking_to, build_beeswarm,
     build_heatmap, build_chord, build_stacked_timeline, build_sankey,
-    build_sunburst, build_roles, build_contributor_network,
+    build_sunburst, build_roles, build_roles_for, build_contributor_network,
     build_affiliation_network, build_collab_network,
     build_subject_trends, build_language_timeline, build_treemap,
-    build_geo_flows,
+    build_geo_flows, build_choropleth,
+    profile_from_items, profile_maxima, build_radar,
 )
 
 
@@ -53,6 +54,9 @@ def _add_standard_charts(dashboard, entity_id, entity_title, item_ids,
     geo_flows = build_geo_flows(item_ids, links, items, geo)
     if geo_flows:
         dashboard['geoFlows'] = geo_flows
+    choropleth = build_choropleth(item_ids, links, geo)
+    if choropleth:
+        dashboard['choropleth'] = choropleth
 
 
 def generate_sections(items, links, reverse_links, children_of, item_year, temporal, geo):
@@ -112,6 +116,11 @@ def generate_projects(items, links, reverse_links, children_of, item_year, geo):
     # Collect project index for Compare View selector.
     project_index = []
 
+    # Radar normalisation: per-project breadth maxima (shared scale).
+    radar_profiles = {pid: profile_from_items(children_of.get(pid, []), links, item_year)
+                      for pid, _ in projects if children_of.get(pid)}
+    radar_max = profile_maxima(radar_profiles.values())
+
     count = 0
     for pid, pinfo in projects:
         item_ids = children_of.get(pid, [])
@@ -134,6 +143,9 @@ def generate_projects(items, links, reverse_links, children_of, item_year, geo):
         dashboard = aggregate_items(item_ids, items, links, item_year, geo)
         _add_standard_charts(dashboard, pid, pinfo['title'], item_ids,
                              items, links, children_of, item_year, geo)
+        radar = build_radar(radar_profiles.get(pid), radar_max)
+        if radar:
+            dashboard['radar'] = radar
         dashboard['resourceType'] = TEMPLATE_RESOURCE_TYPE.get(items[pid]['template_id'], 'project')
         save_json(pid, dashboard)
         count += 1
@@ -162,6 +174,14 @@ def generate_people(items, links, reverse_links, children_of, item_year, geo):
                 all_terms_in_data.add(t)
     person_terms.update(all_terms_in_data)
 
+    # Radar normalisation: per-person breadth maxima (shared scale).
+    radar_profiles = {}
+    for pid, _ in people:
+        ids = find_items_linking_to(pid, reverse_links, person_terms)
+        if ids:
+            radar_profiles[pid] = profile_from_items(ids, links, item_year)
+    radar_max = profile_maxima(radar_profiles.values())
+
     count = 0
     for pid, pinfo in people:
         item_ids = find_items_linking_to(pid, reverse_links, person_terms)
@@ -181,6 +201,13 @@ def generate_people(items, links, reverse_links, children_of, item_year, geo):
         dashboard['coAuthors'] = sorted(coauthors.values(), key=lambda x: -x['value'])[:20]
         # People: co-authors replaces contributors (redundant).
         dashboard.pop('contributors', None)
+        # Roles this person played across their items (author, photographer, …).
+        roles = build_roles_for(pid, item_ids, links)
+        if roles:
+            dashboard['roles'] = roles
+        radar = build_radar(radar_profiles.get(pid), radar_max)
+        if radar:
+            dashboard['radar'] = radar
         # Contributor network: person -> project links.
         contrib_net = build_contributor_network(pid, pinfo['title'], item_ids,
                                                 items, links, children_of)
@@ -204,6 +231,14 @@ def generate_institutions(items, links, reverse_links, children_of, item_year, g
     all_marcrel = {t for rev in reverse_links.values() for t in rev if t.startswith('marcrel:')}
     inst_terms.update(all_marcrel)
 
+    # Radar normalisation: per-institution breadth maxima (shared scale).
+    radar_profiles = {}
+    for iid, _ in institutions:
+        ids = find_items_linking_to(iid, reverse_links, inst_terms)
+        if ids:
+            radar_profiles[iid] = profile_from_items(ids, links, item_year)
+    radar_max = profile_maxima(radar_profiles.values())
+
     count = 0
     for iid, iinfo in institutions:
         item_ids = find_items_linking_to(iid, reverse_links, inst_terms)
@@ -219,6 +254,10 @@ def generate_institutions(items, links, reverse_links, children_of, item_year, g
         affil = build_affiliation_network(iid, iinfo['title'], items, links, reverse_links)
         if affil:
             dashboard['affiliationNetwork'] = affil
+
+        radar = build_radar(radar_profiles.get(iid), radar_max)
+        if radar:
+            dashboard['radar'] = radar
 
         dashboard['resourceType'] = TEMPLATE_RESOURCE_TYPE.get(items[iid]['template_id'], 'organisation')
         save_json(iid, dashboard)
@@ -241,6 +280,10 @@ def generate_locations(items, links, reverse_links, children_of, item_year, geo)
         if lid in geo:
             g = geo[lid]
             dashboard['selfLocation'] = {'name': g['name'], 'lat': g['lat'], 'lon': g['lon'], 'itemId': lid}
+        # Origin → current-location flow overlay (rendered on the locations map).
+        geo_flows = build_geo_flows(item_ids, links, items, geo)
+        if geo_flows:
+            dashboard['geoFlows'] = geo_flows
         dashboard['resourceType'] = TEMPLATE_RESOURCE_TYPE.get(items[lid]['template_id'], 'location')
         save_json(lid, dashboard)
         count += 1

@@ -38,15 +38,17 @@ Contextual charts adapted per entity type. All chart elements are clickable, lin
 | Beeswarm (projects by year) | x | | | | | | | | |
 | Resource Types (pie) | x | x | x | x | x | x | x | | x |
 | Languages | x | x | x | x | x | x | | x | x |
-| Contributor Roles | x | x | | | | | | | |
+| Contributor Roles | x | x | x | | | | | | |
 | Heatmap (type x language) | x | x | | | | | | | |
 | Subjects (word cloud) | x | x | x | x | x | | x | x | |
 | Subject Trends over Time | x | x | | | | | | | |
 | Sunburst (type > language > subject) | x | x | | | | | | | |
 | Treemap (project x type) | x | x | | | | | | | |
 | Geographic Origins (map) | x | x | x | x | | | x | x | |
-| Origin > Current Location (flow map) | x | x | | | | | | | |
+| Origin > Current Location (flow map) | x | x | | | x | | | | |
+| Items by Country (choropleth) | x | x | | | | | | | |
 | Self-location MiniMap | | | | | x | | | | |
+| Profile (radar) | | x | x | x | | | | | |
 | Subject Co-occurrence (chord) | x | x | | | | | | | |
 | Collaboration Network | | | | x | | | | | |
 | Contributor Network | x | x | x | | | | | | |
@@ -71,16 +73,20 @@ Parent/category items get aggregate dashboards spanning their entire item set. E
 | Language | 2039 | Top languages (28) | Stacked timeline, language timeline, types, roles, heatmap, subjects, subject trends |
 | Resource Type | 22203 | Top types (16) | Stacked timeline, languages, roles, heatmap, subjects, subject trends |
 | Target Audience | 22479 | Top audiences (49) | Stacked timeline, types, languages, subjects |
-| Person | 22200 | Top persons (1,242) | Stacked timeline, types, languages, roles, heatmap, subjects, subject trends |
-| Institution | 22202 | Top institutions (552) | Stacked timeline, types, languages, roles, subjects, subject trends |
-| Group | 22536 | Top groups | Stacked timeline, types, languages, subjects |
+| Person | 22200 | Top persons (1,242) | Stacked timeline, types, languages, roles, heatmap, subjects, subject trends, choropleth |
+| Institution | 22202 | Top institutions (552) | Stacked timeline, types, languages, roles, subjects, subject trends, choropleth |
+| Group | 22536 | Top groups | Stacked timeline, types, languages, roles, heatmap, subjects, subject trends |
 | LCSH Subjects | 3167 | Top LCSH subjects (418) | Stacked timeline, types, languages, roles, heatmap, subjects, subject trends |
-| Tags | 22199 | Top tags (773) | Stacked timeline, types, languages, subjects, subject trends |
-| Research Project | 3346 | Top projects (36) | Stacked timeline, language timeline, types, languages, roles, heatmap, subjects, subject trends |
+| Tags | 22199 | Top tags (773) | Stacked timeline, types, languages, roles, heatmap, subjects, subject trends |
+| Research Project | 3346 | Top projects (36) | Stacked timeline, language timeline, gantt, beeswarm, types, languages, roles, heatmap, subjects, subject trends, choropleth |
 
 ### Compare Projects
 
 Side-by-side comparison of two projects with paired charts (stacked timeline, resource types, languages, subjects) and overlap statistics (shared subject percentage, shared subject badges). Accessible as a resource page block.
+
+### Discursive Communities
+
+A collection-wide subject co-occurrence network: subjects that appear together across items are clustered into communities (Louvain) and sized by influence (PageRank), each community a distinct colour. Added as a **site-page block** (Admin > Sites > [site] > Pages), it loads `asset/data/communities/discursive.json`. Defaults to LCSH-only subjects to cut free-text-tag noise. Click any subject to open its page.
 
 ### Item Set Dashboard
 
@@ -115,15 +121,36 @@ Go to **Admin > Sites > [site] > Theme > Configure resource pages**:
 
 ## Pre-computing Data
 
-Visualizations load from pre-computed JSON files stored in the module's `asset/data/` directory. Two Python scripts generate these files by querying the Omeka S MySQL database through `docker compose exec` (no port exposure needed).
+Visualizations load from pre-computed JSON files in the module's `asset/data/` directory. There are two ways to generate them.
 
-### Requirements
+### Regenerate from the Omeka admin (recommended)
+
+**Admin → Modules → Resource Visualizations → "Regenerate now"** dispatches an Omeka background job that rebuilds every dashboard JSON directly from the Omeka database, using Omeka's own connection (no Python, no shell access, no extra credentials). Watch progress and any errors at **Admin → Jobs → the job's log**. This is a pure-PHP port of the pipeline below (`src/Precompute/`).
+
+> The dashboard JSON regenerates this way; the per-item **Knowledge Graphs** are still produced by the Python script below.
+
+### Regenerate from the command line (Python)
+
+The original pipeline still works for local/CI use by querying the Omeka S MySQL database.
+
+#### Requirements
 
 - Python 3
-- `pymysql` (`sudo apt-get install python3-pymysql`)
-- The omeka-s-docker directory must be adjacent to this module, or set `OMEKA_DOCKER_DIR`
+- `pip install -r scripts/requirements.txt` — `PyMySQL` (DB access) and `networkx` (Discursive Communities; PageRank is pure-Python, so **scipy is not needed**)
 
-### Knowledge Graphs
+#### Database connection
+
+Two transports, selected automatically (see `scripts/precompute/db.py`):
+
+- **Local Docker** (default) — shells into a local `db` container via `docker compose exec`. The omeka-s-docker directory must be adjacent to this module, or set `OMEKA_DOCKER_DIR`.
+- **Direct MySQL** — set `DB_HOST` (plus `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME` as needed) to connect with `pymysql` instead. Use this to run the precompute **inside the Omeka container** (`DB_HOST=db`) or **over a VPN** to a reachable MySQL — no local Docker stack required.
+
+```bash
+# Direct connection (inside the container or over VPN):
+DB_HOST=db DB_USER=omeka DB_PASS=… python3 scripts/precompute-dashboards.py
+```
+
+#### Knowledge Graphs
 
 Generates one JSON file per item (~6,000 files), including embedded location map data for items with spatial/provenance links:
 
@@ -131,7 +158,7 @@ Generates one JSON file per item (~6,000 files), including embedded location map
 python3 scripts/precompute-graphs.py
 ```
 
-### Dashboards (all entity types)
+#### Dashboards (all entity types)
 
 Generates dashboard JSON for sections, projects, people, institutions, locations, subjects, languages, resource types, and genres (~2,500 files):
 
@@ -139,7 +166,7 @@ Generates dashboard JSON for sections, projects, people, institutions, locations
 python3 scripts/precompute-dashboards.py
 ```
 
-### After Regenerating
+#### After Regenerating
 
 Update the module in the container:
 
@@ -188,6 +215,10 @@ ResourceVisualizations/
 │   │   ├── dashboard-charts-stacked-area.js      # Subject trends, language timeline
 │   │   ├── dashboard-charts-treemap.js           # Hierarchical treemap
 │   │   ├── dashboard-charts-geo-flows.js         # Origin → current location flow map
+│   │   ├── dashboard-charts-choropleth.js        # Country choropleth (MapLibre fill)
+│   │   ├── dashboard-charts-radar.js             # Entity breadth-profile radar (ECharts)
+│   │   ├── dashboard-charts-communities.js       # Discursive communities force graph
+│   │   ├── dashboard-communities.js              # Discursive Communities block controller
 │   │   ├── dashboard-charts-contributor-network.js # Contributor + affiliation networks
 │   │   ├── dashboard-collab-network.js           # Institution collaboration network
 │   │   ├── dashboard-compare.js                  # Compare Projects controller
@@ -196,6 +227,10 @@ ResourceVisualizations/
 │   ├── css/
 │   │   └── resource-visualizations.css # Styles with CSS custom properties
 │   └── data/
+│       ├── geo/
+│       │   └── countries.geojson       # Natural Earth 110m boundaries (choropleth)
+│       ├── communities/
+│       │   └── discursive.json         # Subject co-occurrence + Louvain communities
 │       ├── knowledge-graphs/           # Pre-computed graph JSON (~6,000 files)
 │       └── item-dashboards/            # Pre-computed dashboard JSON (~2,500 files)
 ├── scripts/
@@ -210,6 +245,18 @@ ResourceVisualizations/
 ├── ROADMAP.md                          # Full visualization roadmap
 └── README.md
 ```
+
+The front-end script chain (chart builders + registry + controller) is injected by a
+single view helper — `src/View/Helper/DashboardAssets.php` (`$this->dashboardAssets(...)`).
+Registering a new chart means adding its builder file to that helper's `CHART_SCRIPTS`
+list once, rather than editing every dashboard/compare/overview template.
+
+The **in-Omeka regeneration** (the admin "Regenerate" button) is a self-contained PHP
+port of the precompute under `src/Precompute/` (`DataLoader` → `Aggregators` → `Runner`),
+run by the background job `src/Job/PrecomputeDashboards.php` via the admin
+`src/Controller/Admin/MaintenanceController.php`. The `Aggregators` are dependency-free
+and unit-testable; the job reuses Omeka's `Omeka\Connection`, so no MySQL variables or
+Python are needed at runtime.
 
 ## Theming — follows the DRE theme
 

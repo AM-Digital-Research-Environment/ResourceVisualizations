@@ -6,6 +6,7 @@ return [
         'invokables' => [
             'compareProjects' => Site\BlockLayout\CompareProjects::class,
             'collectionOverview' => Site\BlockLayout\CollectionOverview::class,
+            'discursiveCommunities' => Site\BlockLayout\DiscursiveCommunities::class,
         ],
     ],
     'resource_page_block_layouts' => [
@@ -18,6 +19,79 @@ return [
     'view_manager' => [
         'template_path_stack' => [
             dirname(__DIR__) . '/view',
+        ],
+    ],
+    'view_helpers' => [
+        'invokables' => [
+            'dashboardAssets' => View\Helper\DashboardAssets::class,
+        ],
+    ],
+    'controllers' => [
+        'invokables' => [
+            Controller\Admin\MaintenanceController::class => Controller\Admin\MaintenanceController::class,
+        ],
+    ],
+    'form_elements' => [
+        'invokables' => [
+            Form\MaintenanceForm::class => Form\MaintenanceForm::class,
+        ],
+    ],
+    'router' => [
+        'routes' => [
+            'admin' => [
+                'child_routes' => [
+                    'resource-visualizations' => [
+                        'type' => \Laminas\Router\Http\Literal::class,
+                        'options' => [
+                            'route' => '/resource-visualizations',
+                            'defaults' => [
+                                '__NAMESPACE__' => 'ResourceVisualizations\Controller\Admin',
+                                'controller' => Controller\Admin\MaintenanceController::class,
+                                'action' => 'index',
+                            ],
+                        ],
+                        'may_terminate' => true,
+                        'child_routes' => [
+                            'maintenance' => [
+                                'type' => \Laminas\Router\Http\Literal::class,
+                                'options' => [
+                                    'route' => '/maintenance',
+                                    'defaults' => [
+                                        'controller' => Controller\Admin\MaintenanceController::class,
+                                        'action' => 'index',
+                                    ],
+                                ],
+                            ],
+                            'maintenance-regenerate' => [
+                                'type' => \Laminas\Router\Http\Literal::class,
+                                'options' => [
+                                    'route' => '/maintenance/regenerate',
+                                    'defaults' => [
+                                        'controller' => Controller\Admin\MaintenanceController::class,
+                                        'action' => 'regenerate',
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ],
+    'navigation' => [
+        'AdminModule' => [
+            [
+                'label' => 'Resource Visualizations', // @translate
+                'route' => 'admin/resource-visualizations/maintenance',
+                'resource' => Controller\Admin\MaintenanceController::class,
+                'class' => 'o-icon-chart',
+                'pages' => [
+                    [
+                        'route' => 'admin/resource-visualizations/maintenance-regenerate',
+                        'visible' => false,
+                    ],
+                ],
+            ],
         ],
     ],
 ];

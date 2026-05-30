@@ -5,7 +5,7 @@ import re
 import subprocess
 import sys
 
-from .config import OMEKA_DIR, DB_USER, DB_PASS, DB_NAME
+from .config import OMEKA_DIR, DB_USER, DB_PASS, DB_NAME, DB_HOST, DB_PORT
 
 
 def get_password():
@@ -17,11 +17,45 @@ def get_password():
             for line in f:
                 if line.startswith('MYSQL_PASSWORD='):
                     return line.strip().split('=', 1)[1]
-    print('ERROR: Set DB_PASS or ensure MYSQL_PASSWORD is in .env')
+    print('ERROR: Set DB_PASS, set DB_HOST for a direct connection, '
+          'or ensure MYSQL_PASSWORD is in OMEKA_DIR/.env')
     sys.exit(1)
 
 
+# Cached direct connection (only used when DB_HOST is set).
+_conn = None
+
+
+def _get_conn(password):
+    global _conn
+    if _conn is None:
+        import pymysql
+        _conn = pymysql.connect(
+            host=DB_HOST, port=DB_PORT, user=DB_USER,
+            password=password, database=DB_NAME, charset='utf8mb4',
+        )
+    return _conn
+
+
 def query_mysql(sql, password):
+    """Run a query, returning a list of string-tuples (NULL → '').
+
+    Two transports, selected by config:
+      - DB_HOST set  → direct pymysql connection (container / VPN / remote);
+      - otherwise    → `docker compose exec -T db mysql` against a local stack.
+    Both yield the same string-tuple shape so callers don't care which is used.
+    """
+    if DB_HOST:
+        try:
+            conn = _get_conn(password)
+            with conn.cursor() as cur:
+                cur.execute(sql)
+                rows = cur.fetchall()
+        except Exception as exc:  # pragma: no cover - network/credential errors
+            print(f'  MySQL error: {exc}')
+            return []
+        return [tuple('' if v is None else str(v) for v in row) for row in rows]
+
     cmd = [
         'docker', 'compose', 'exec', '-T', 'db',
         'mysql', f'-u{DB_USER}', f'-p{password}', DB_NAME,
