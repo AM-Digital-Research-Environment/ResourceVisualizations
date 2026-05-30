@@ -8,6 +8,8 @@ return [
             'collectionOverview' => Site\BlockLayout\CollectionOverview::class,
             'discursiveCommunities' => Site\BlockLayout\DiscursiveCommunities::class,
             'publications' => Site\BlockLayout\Publications::class,
+            'projectExplorer' => Site\BlockLayout\ProjectExplorer::class,
+            'compareEntity' => Site\BlockLayout\CompareEntity::class,
         ],
     ],
     'resource_page_block_layouts' => [

@@ -80,9 +80,16 @@ Parent/category items get aggregate dashboards spanning their entire item set. E
 | Tags | 22199 | Top tags (773) | Stacked timeline, types, languages, roles, heatmap, subjects, subject trends |
 | Research Project | 3346 | Top projects (36) | Stacked timeline, language timeline, gantt, beeswarm, types, languages, roles, heatmap, subjects, subject trends, choropleth |
 
-### Compare Projects
+### Project Explorer
 
-Side-by-side comparison of two projects with paired charts (stacked timeline, resource types, languages, subjects) and overlap statistics (shared subject percentage, shared subject badges). Accessible as a resource page block.
+A single project selector that retunes a full project dashboard (~12 charts) beneath it — a meta-page over the precomputed per-project dashboards, with no navigation. Added as a **site-page block** (Admin > Sites > [site] > Pages); deep-links via `?project=ID`.
+
+### Compare
+
+Side-by-side comparison of two entities of the **same type** — paired charts, an overlaid A/B **radar** profile, and overlap statistics (shared-item percentage + shared badges). Two **site-page blocks** (Admin > Sites > [site] > Pages):
+
+- **Compare Projects** — locked to project × project (stacked timeline, types, languages, subjects; subject overlap).
+- **Compare (any entity)** — an in-page type switcher across **projects, people, institutions, subjects, languages**, each with its own paired-chart set + overlap key (e.g. co-occurring subjects when comparing subjects). Loads the matching `{type}-index.json`.
 
 ### Discursive Communities
 
@@ -201,7 +208,8 @@ ResourceVisualizations/
 │   │   ├── dashboard-communities.js              # Discursive Communities block controller
 │   │   ├── dashboard-charts-contributor-network.js # Contributor + affiliation networks
 │   │   ├── dashboard-collab-network.js           # Institution collaboration network
-│   │   ├── dashboard-compare.js                  # Compare Projects controller
+│   │   ├── dashboard-compare.js                  # Compare controller (any entity type)
+│   │   ├── dashboard-explorer.js                 # Project Explorer controller
 │   │   ├── dashboard-registry.js                 # CHART_MAP, labels, descriptions
 │   │   └── dashboard.js                          # Orchestrator: render + async/inline init
 │   ├── css/
@@ -212,7 +220,7 @@ ResourceVisualizations/
 │       ├── communities/
 │       │   └── discursive.json         # Subject co-occurrence + Louvain communities
 │       ├── knowledge-graphs/           # Per-item graph JSON — gitignored, regenerated in-Omeka
-│       └── item-dashboards/            # Pre-computed dashboard JSON (incl. publications.json)
+│       └── item-dashboards/            # Dashboard JSON + {type}-index.json (projects/people/…)
 ├── src/Precompute/                     # PHP precompute engine (admin "Regenerate now")
 │   ├── DataLoader.php                  # Items/links/literals/geo via Omeka\Connection
 │   ├── Aggregators.php                 # aggregateItems(), all build*() (unit-tested)

@@ -1,18 +1,18 @@
 <?php
 /**
- * Compare Projects page block.
+ * Compare (any entity) page block.
  *
- * Side-by-side comparison of two projects: select from dropdowns,
- * fetch both dashboard JSONs, and render paired charts with overlap stats.
+ * Side-by-side comparison of any two entities of the same type, with an in-page
+ * type switcher (projects / people / institutions / subjects / languages).
+ * Rendered by asset/js/dashboard-compare.js — no data-entity-type, so the
+ * controller shows the switcher.
  *
  * @var \Laminas\View\Renderer\PhpRenderer $this
  * @var \Omeka\Api\Representation\SitePageBlockRepresentation $block
  */
 
-// Dashboard front-end assets with the Compare controller chain. This is a
-// site-page block (Module.php does not run on page controllers), so request
-// the CDN + core prelude too. Single source of truth:
-// ResourceVisualizations\View\Helper\DashboardAssets.
+// Site-page block (Module.php does not run on page controllers), so request the
+// CDN + core prelude and the compare controller chain.
 $this->dashboardAssets(['cdn' => true, 'controller' => 'compare']);
 
 $siteSlug = $this->currentSite()->slug();
@@ -20,12 +20,11 @@ $siteSlug = $this->currentSite()->slug();
 
 <div class="resource-vis-block compare-block">
     <div class="compare-container"
-         data-entity-type="projects"
          data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
          data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">
         <div class="rv-loading">
             <div class="rv-spinner"></div>
-            <span><?= $this->translate('Loading project comparison…') ?></span>
+            <span><?= $this->translate('Loading comparison…') ?></span>
         </div>
     </div>
 </div>

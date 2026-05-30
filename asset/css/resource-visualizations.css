@@ -796,6 +796,51 @@ button.rv-toolbar-btn:focus-visible,
     padding-bottom: 0.45rem;
 }
 
+/* Compare: in-page entity-type switcher (Compare any-entity block) */
+.compare-type-switcher {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 1.25rem;
+}
+
+.compare-type-btn {
+    font-size: 0.85rem;
+}
+
+/* Compare: overlaid A/B radar headline */
+.compare-radar-row {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.compare-radar-panel {
+    max-width: 560px;
+    width: 100%;
+}
+
+/* Project Explorer */
+.explorer-controls {
+    margin-bottom: 1.5rem;
+}
+
+.explorer-selector {
+    max-width: 480px;
+}
+
+.explorer-selector-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--rv-heading-color);
+    margin-bottom: 0.35rem;
+}
+
+.explorer-content {
+    min-height: 120px;
+}
+
 /* Stats cards */
 .compare-stats {
     display: grid !important;

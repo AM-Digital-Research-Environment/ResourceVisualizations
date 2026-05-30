@@ -1,12 +1,16 @@
 /**
- * Compare Projects: side-by-side project comparison.
+ * Compare: side-by-side comparison of two entities of the same type.
  *
- * Fetches the projects-index.json for dropdowns, then loads two
- * dashboard JSONs and renders paired charts with overlap statistics.
+ * Generic over entity type (projects, people, institutions, subjects,
+ * languages). The block sets `data-entity-type` to lock a type; when absent the
+ * controller shows an in-page type switcher (the "Compare (any entity)" block).
+ * Fetches the matching {type}-index.json for the dropdowns, loads two dashboard
+ * JSONs, and renders paired charts + an overlaid radar headline + overlap stats.
  *
  * Depends on:
- *   - dashboard-core.js   (THEME, COLORS, helpers)
- *   - dashboard-registry.js (CHART_MAP, CHART_LABELS)
+ *   - dashboard-core.js        (THEME, COLORS, helpers)
+ *   - dashboard-registry.js    (CHART_MAP, CHART_LABELS)
+ *   - dashboard-compare-unify.js (ns.unifyForComparison)
  */
 (function () {
     'use strict';
@@ -15,27 +19,79 @@
     if (!ns) return;
 
     /* ------------------------------------------------------------------ */
-    /*  Compare charts to display                                          */
+    /*  Per-entity-type configuration                                      */
     /* ------------------------------------------------------------------ */
 
-    var COMPARE_CHARTS = [
-        { key: 'stackedTimeline', label: 'Items by Year and Type', tall: false },
-        { key: 'types',           label: 'Resource Types',         tall: false },
-        { key: 'languages',       label: 'Languages',              tall: false },
-        { key: 'subjects',        label: 'Subjects',               tall: true  }
-    ];
+    var TYPES = {
+        projects: {
+            index: 'projects-index.json', label: 'Projects', singular: 'Project',
+            charts: [
+                { key: 'stackedTimeline', label: 'Items by Year and Type', tall: false },
+                { key: 'types',           label: 'Resource Types',         tall: false },
+                { key: 'languages',       label: 'Languages',              tall: false },
+                { key: 'subjects',        label: 'Subjects',               tall: true  }
+            ],
+            unifyKeys: ['types', 'languages', 'subjects'],
+            overlapKey: 'subjects', overlapLabel: 'Subject', radar: true, grouped: true
+        },
+        people: {
+            index: 'people-index.json', label: 'People', singular: 'Person',
+            charts: [
+                { key: 'timeline',  label: 'Timeline',       tall: false },
+                { key: 'types',     label: 'Resource Types', tall: false },
+                { key: 'languages', label: 'Languages',      tall: false },
+                { key: 'subjects',  label: 'Subjects',       tall: true  }
+            ],
+            unifyKeys: ['types', 'languages', 'subjects'],
+            overlapKey: 'subjects', overlapLabel: 'Subject', radar: true, grouped: false
+        },
+        institutions: {
+            index: 'institutions-index.json', label: 'Institutions', singular: 'Institution',
+            charts: [
+                { key: 'timeline',  label: 'Timeline',       tall: false },
+                { key: 'types',     label: 'Resource Types', tall: false },
+                { key: 'languages', label: 'Languages',      tall: false },
+                { key: 'subjects',  label: 'Subjects',       tall: true  }
+            ],
+            unifyKeys: ['types', 'languages', 'subjects'],
+            overlapKey: 'subjects', overlapLabel: 'Subject', radar: true, grouped: false
+        },
+        subjects: {
+            index: 'subjects-index.json', label: 'Subjects', singular: 'Subject',
+            charts: [
+                { key: 'timeline',   label: 'Timeline',              tall: false },
+                { key: 'types',      label: 'Resource Types',        tall: false },
+                { key: 'languages',  label: 'Languages',             tall: false },
+                { key: 'coSubjects', label: 'Co-occurring Subjects', tall: true  }
+            ],
+            unifyKeys: ['types', 'languages', 'coSubjects'],
+            overlapKey: 'coSubjects', overlapLabel: 'Co-subject', radar: false, grouped: false
+        },
+        languages: {
+            index: 'languages-index.json', label: 'Languages', singular: 'Language',
+            charts: [
+                { key: 'timeline',     label: 'Timeline',               tall: false },
+                { key: 'types',        label: 'Resource Types',         tall: false },
+                { key: 'subjects',     label: 'Subjects',               tall: true  },
+                { key: 'contributors', label: 'Top Associated Persons', tall: false }
+            ],
+            unifyKeys: ['types', 'subjects', 'contributors'],
+            overlapKey: 'subjects', overlapLabel: 'Subject', radar: false, grouped: false
+        }
+    };
+    var TYPE_ORDER = ['projects', 'people', 'institutions', 'subjects', 'languages'];
 
     /* ------------------------------------------------------------------ */
     /*  Overlap computation                                                */
     /* ------------------------------------------------------------------ */
 
-    function computeOverlap(leftData, rightData) {
+    function computeOverlap(leftData, rightData, key) {
         if (!leftData || !rightData) return null;
-        var leftSubjects = extractNames(leftData.subjects);
-        var rightSubjects = extractNames(rightData.subjects);
-        var intersection = leftSubjects.filter(function (s) { return rightSubjects.indexOf(s) >= 0; });
-        var union = leftSubjects.slice();
-        rightSubjects.forEach(function (s) { if (union.indexOf(s) < 0) union.push(s); });
+        var left = extractNames(leftData[key]);
+        var right = extractNames(rightData[key]);
+        var intersection = left.filter(function (s) { return right.indexOf(s) >= 0; });
+        var union = left.slice();
+        right.forEach(function (s) { if (union.indexOf(s) < 0) union.push(s); });
         return {
             percentage: union.length ? Math.round(intersection.length / union.length * 100) : 0,
             shared: intersection.slice(0, 12),
@@ -54,12 +110,26 @@
     /*  UI builders                                                        */
     /* ------------------------------------------------------------------ */
 
-    function buildSelector(projects, side, selectedId, onChange) {
+    function buildSwitcher(activeType, onSwitch) {
+        var wrap = document.createElement('div');
+        wrap.className = 'compare-type-switcher';
+        TYPE_ORDER.forEach(function (t) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'rv-btn compare-type-btn' + (t === activeType ? ' rv-btn-active' : '');
+            btn.textContent = TYPES[t].label;
+            btn.addEventListener('click', function () { if (t !== activeType) onSwitch(t); });
+            wrap.appendChild(btn);
+        });
+        return wrap;
+    }
+
+    function buildSelector(entries, side, cfg, onChange) {
         var wrap = document.createElement('div');
         wrap.className = 'compare-selector';
 
         var label = document.createElement('label');
-        label.textContent = side === 'left' ? 'Project A' : 'Project B';
+        label.textContent = cfg.singular + (side === 'left' ? ' A' : ' B');
         label.className = 'compare-selector-label';
 
         var select = document.createElement('select');
@@ -67,66 +137,73 @@
 
         var placeholder = document.createElement('option');
         placeholder.value = '';
-        placeholder.textContent = 'Select a project\u2026';
+        placeholder.textContent = 'Select a ' + cfg.singular.toLowerCase() + '…';
         placeholder.disabled = true;
-        if (!selectedId) placeholder.selected = true;
+        placeholder.selected = true;
         select.appendChild(placeholder);
 
-        // Group by section
-        var sections = {};
-        projects.forEach(function (p) {
-            var sec = (p.sections && p.sections[0]) || 'Other';
-            if (!sections[sec]) sections[sec] = [];
-            sections[sec].push(p);
-        });
+        function makeOption(p) {
+            var opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = truncate(p.name, 70) + ' (' + p.items + ' items)';
+            opt.title = p.name;
+            return opt;
+        }
 
-        Object.keys(sections).sort().forEach(function (sec) {
-            var group = document.createElement('optgroup');
-            group.label = sec;
-            sections[sec].forEach(function (p) {
-                var opt = document.createElement('option');
-                opt.value = p.id;
-                opt.textContent = truncate(p.name, 70) + ' (' + p.items + ' items)';
-                opt.title = p.name;
-                if (String(p.id) === String(selectedId)) opt.selected = true;
-                group.appendChild(opt);
+        if (cfg.grouped) {
+            var sections = {};
+            entries.forEach(function (p) {
+                var sec = (p.sections && p.sections[0]) || 'Other';
+                (sections[sec] = sections[sec] || []).push(p);
             });
-            select.appendChild(group);
-        });
+            Object.keys(sections).sort().forEach(function (sec) {
+                var group = document.createElement('optgroup');
+                group.label = sec;
+                sections[sec].forEach(function (p) { group.appendChild(makeOption(p)); });
+                select.appendChild(group);
+            });
+        } else {
+            entries.forEach(function (p) { select.appendChild(makeOption(p)); });
+        }
 
-        select.addEventListener('change', function () { onChange(select.value); });
+        select.addEventListener('change', function () {
+            var id = select.value, entry = null;
+            for (var i = 0; i < entries.length; i++) {
+                if (String(entries[i].id) === String(id)) { entry = entries[i]; break; }
+            }
+            onChange(id, entry);
+        });
 
         wrap.appendChild(label);
         wrap.appendChild(select);
         return wrap;
     }
 
-    function buildStatsPanel(leftData, rightData) {
-        var overlap = computeOverlap(leftData, rightData);
+    function buildStatsPanel(leftData, rightData, cfg) {
+        var overlap = computeOverlap(leftData, rightData, cfg.overlapKey);
         var html = '<div class="compare-stats">';
 
         html += '<div class="compare-stat-card">'
-            + '<span class="compare-stat-value">' + (leftData ? leftData.totalItems : '\u2014') + '</span>'
+            + '<span class="compare-stat-value">' + (leftData ? leftData.totalItems : '—') + '</span>'
             + '<span class="compare-stat-label">Items (A)</span></div>';
 
         html += '<div class="compare-stat-card">'
-            + '<span class="compare-stat-value">' + (rightData ? rightData.totalItems : '\u2014') + '</span>'
+            + '<span class="compare-stat-value">' + (rightData ? rightData.totalItems : '—') + '</span>'
             + '<span class="compare-stat-label">Items (B)</span></div>';
 
         if (overlap) {
             html += '<div class="compare-stat-card compare-stat-accent">'
                 + '<span class="compare-stat-value">' + overlap.percentage + '%</span>'
-                + '<span class="compare-stat-label">Subject Overlap'
+                + '<span class="compare-stat-label">' + cfg.overlapLabel + ' Overlap'
                 + '<br><small>' + overlap.sharedCount + ' shared of ' + overlap.totalCount + ' total</small>'
                 + '</span></div>';
         }
 
         html += '</div>';
 
-        // Shared subjects badges
         if (overlap && overlap.shared.length > 0) {
             html += '<div class="compare-shared">'
-                + '<span class="compare-shared-label">Shared Subjects:</span>';
+                + '<span class="compare-shared-label">Shared ' + cfg.overlapLabel + 's:</span>';
             overlap.shared.forEach(function (s) {
                 html += '<span class="compare-badge">' + escapeHtml(s) + '</span>';
             });
@@ -140,15 +217,40 @@
         return html;
     }
 
+    /** Overlaid A/B radar panel (same-type entities share normalized axes). */
+    function buildRadarHeadline(leftData, rightData, leftName, rightName, siteBase) {
+        if (!leftData || !rightData || !leftData.radar || !rightData.radar) return null;
+        var lr = leftData.radar, rr = rightData.radar;
+        if (!lr.indicator || !lr.indicator.length || !lr.series || !lr.series.length
+            || !rr.series || !rr.series.length) return null;
+
+        var combined = {
+            indicator: lr.indicator,
+            series: [
+                { value: lr.series[0].value, name: truncate(leftName, 22) + ' (A)' },
+                { value: rr.series[0].value, name: truncate(rightName, 22) + ' (B)' }
+            ]
+        };
+
+        var panel = document.createElement('div');
+        panel.className = 'chart-panel chart-panel-wide compare-radar-panel';
+        var h4 = document.createElement('h4');
+        h4.textContent = 'Profile';
+        panel.appendChild(h4);
+        var el = document.createElement('div');
+        el.className = 'chart-container chart-container-tall';
+        el.setAttribute('data-chart', 'radar');
+        panel.appendChild(el);
+
+        pendingCharts.push({ el: el, key: 'radar', data: combined, siteBase: siteBase, panel: panel });
+        return panel;
+    }
+
     function buildChartPair(key, label, leftData, rightData, siteBase, tall) {
         var container = document.createElement('div');
         container.className = 'compare-chart-row';
-
-        var leftPanel = buildChartSide(key, label + ' (A)', leftData, siteBase, tall);
-        var rightPanel = buildChartSide(key, label + ' (B)', rightData, siteBase, tall);
-
-        container.appendChild(leftPanel);
-        container.appendChild(rightPanel);
+        container.appendChild(buildChartSide(key, label + ' (A)', leftData, siteBase, tall));
+        container.appendChild(buildChartSide(key, label + ' (B)', rightData, siteBase, tall));
         return container;
     }
 
@@ -164,7 +266,7 @@
         panel.appendChild(h4);
 
         var chartData = data ? data[key] : null;
-        // For stacked timeline, fall back to basic timeline
+        // For stacked timeline, fall back to basic timeline.
         if (!chartData && key === 'stackedTimeline' && data) {
             chartData = data.timeline;
             key = 'timeline';
@@ -185,9 +287,7 @@
         el.setAttribute('data-chart', key);
         panel.appendChild(el);
 
-        // Queue chart init — will be flushed after all panels are in the DOM.
         pendingCharts.push({ el: el, key: key, data: chartData, siteBase: siteBase, panel: panel });
-
         return panel;
     }
 
@@ -208,7 +308,7 @@
     /* ------------------------------------------------------------------ */
 
     function truncate(str, max) {
-        return str && str.length > max ? str.substring(0, max) + '\u2026' : (str || '');
+        return str && str.length > max ? str.substring(0, max) + '…' : (str || '');
     }
 
     function escapeHtml(str) {
@@ -224,24 +324,120 @@
     function initCompare(container) {
         var basePath = container.dataset.basePath || '';
         var siteBase = container.dataset.siteBase || '';
-        ns.basePath = basePath; // expose for builders that load module assets (e.g. choropleth GeoJSON)
+        ns.basePath = basePath; // expose for builders that load module assets
         var moduleBase = basePath + '/modules/ResourceVisualizations/asset/data/item-dashboards/';
-        var indexUrl = moduleBase + 'projects-index.json';
 
-        var leftId = null, rightId = null;
-        var leftData = null, rightData = null;
-        var projects = [];
+        var fixedType = container.dataset.entityType || '';
+        var hasSwitcher = !TYPES[fixedType];
+        var activeType = TYPES[fixedType] ? fixedType : 'projects';
 
-        fetch(indexUrl).then(function (r) {
-            if (!r.ok) throw new Error('Project index not found');
-            return r.json();
-        }).then(function (data) {
-            projects = data;
+        container.innerHTML = '<div class="rv-loading"><div class="rv-spinner"></div>'
+            + '<span>Loading…</span></div>';
+        loadType(activeType);
+
+        function loadType(type) {
+            activeType = type;
+            var cfg = TYPES[type];
+            fetch(moduleBase + cfg.index).then(function (r) {
+                if (!r.ok) throw new Error('index not found');
+                return r.json();
+            }).then(function (entries) {
+                renderType(cfg, entries);
+            }).catch(function () {
+                container.innerHTML = '<div class="rv-error">Could not load '
+                    + cfg.label.toLowerCase() + ' data.</div>';
+            });
+        }
+
+        function renderType(cfg, entries) {
             container.innerHTML = '';
-            render();
-        }).catch(function () {
-            container.innerHTML = '<div class="rv-error">Could not load project data.</div>';
-        });
+            var leftId = null, rightId = null;
+            var leftData = null, rightData = null;
+            var leftEntry = null, rightEntry = null;
+
+            var header = document.createElement('div');
+            header.className = 'dashboard-header';
+            header.innerHTML = '<h3>Compare ' + cfg.label + '</h3>';
+            container.appendChild(header);
+
+            if (hasSwitcher) {
+                container.appendChild(buildSwitcher(activeType, function (t) { loadType(t); }));
+            }
+
+            var selectors = document.createElement('div');
+            selectors.className = 'compare-selectors';
+            selectors.appendChild(buildSelector(entries, 'left', cfg, function (id, entry) {
+                leftId = id; leftEntry = entry;
+                fetchDashboard(id, function (data) { leftData = data; renderComparison(); });
+            }));
+            var vsSpan = document.createElement('span');
+            vsSpan.className = 'compare-vs';
+            vsSpan.textContent = 'vs';
+            selectors.appendChild(vsSpan);
+            selectors.appendChild(buildSelector(entries, 'right', cfg, function (id, entry) {
+                rightId = id; rightEntry = entry;
+                fetchDashboard(id, function (data) { rightData = data; renderComparison(); });
+            }));
+            container.appendChild(selectors);
+
+            var content = document.createElement('div');
+            content.className = 'compare-content';
+            container.appendChild(content);
+            renderComparison();
+
+            function renderComparison() {
+                content.innerHTML = '';
+                if (!leftId && !rightId) {
+                    content.innerHTML = '<div class="rv-no-data">Select two '
+                        + cfg.label.toLowerCase() + ' to compare.</div>';
+                    return;
+                }
+                if (!leftId || !rightId) {
+                    content.innerHTML = '<div class="rv-no-data">Select a second '
+                        + cfg.singular.toLowerCase() + ' to compare.</div>';
+                    return;
+                }
+
+                var unify = ns.unifyForComparison;
+                var uLeft = leftData ? JSON.parse(JSON.stringify(leftData)) : null;
+                var uRight = rightData ? JSON.parse(JSON.stringify(rightData)) : null;
+                if (uLeft && uRight && unify) {
+                    cfg.unifyKeys.forEach(function (key) {
+                        var order = unify.buildUnifiedOrder(uLeft, uRight, key);
+                        uLeft = unify.reorderEntries(uLeft, key, order);
+                        uRight = unify.reorderEntries(uRight, key, order);
+                    });
+                    unify.unifyStackedSeries(uLeft, uRight, 'stackedTimeline');
+                }
+
+                var statsDiv = document.createElement('div');
+                statsDiv.innerHTML = buildStatsPanel(leftData, rightData, cfg);
+                content.appendChild(statsDiv);
+
+                pendingCharts = [];
+
+                if (cfg.radar) {
+                    var radarPanel = buildRadarHeadline(
+                        leftData, rightData,
+                        leftEntry ? leftEntry.name : 'A',
+                        rightEntry ? rightEntry.name : 'B',
+                        siteBase
+                    );
+                    if (radarPanel) {
+                        var radarRow = document.createElement('div');
+                        radarRow.className = 'compare-radar-row';
+                        radarRow.appendChild(radarPanel);
+                        content.appendChild(radarRow);
+                    }
+                }
+
+                cfg.charts.forEach(function (c) {
+                    content.appendChild(buildChartPair(c.key, c.label, uLeft, uRight, siteBase, c.tall));
+                });
+
+                flushPendingCharts();
+            }
+        }
 
         function fetchDashboard(id, callback) {
             if (!id) { callback(null); return; }
@@ -249,91 +445,6 @@
                 if (!r.ok) throw new Error('not found');
                 return r.json();
             }).then(callback).catch(function () { callback(null); });
-        }
-
-        function render() {
-            container.innerHTML = '';
-
-            // Header
-            var header = document.createElement('div');
-            header.className = 'dashboard-header';
-            header.innerHTML = '<h3>Compare Projects</h3>';
-            container.appendChild(header);
-
-            // Selectors row
-            var selectors = document.createElement('div');
-            selectors.className = 'compare-selectors';
-
-            selectors.appendChild(buildSelector(projects, 'left', leftId, function (id) {
-                leftId = id;
-                fetchDashboard(id, function (data) { leftData = data; renderComparison(); });
-            }));
-
-            var vsSpan = document.createElement('span');
-            vsSpan.className = 'compare-vs';
-            vsSpan.textContent = 'vs';
-            selectors.appendChild(vsSpan);
-
-            selectors.appendChild(buildSelector(projects, 'right', rightId, function (id) {
-                rightId = id;
-                fetchDashboard(id, function (data) { rightData = data; renderComparison(); });
-            }));
-
-            container.appendChild(selectors);
-
-            // Content area
-            var content = document.createElement('div');
-            content.className = 'compare-content';
-            container.appendChild(content);
-
-            renderComparison();
-        }
-
-        function renderComparison() {
-            var content = container.querySelector('.compare-content');
-            if (!content) return;
-            content.innerHTML = '';
-
-            if (!leftId && !rightId) {
-                content.innerHTML = '<div class="rv-no-data">Select two projects to compare.</div>';
-                return;
-            }
-            if (!leftId || !rightId) {
-                content.innerHTML = '<div class="rv-no-data">Select a second project to compare.</div>';
-                return;
-            }
-
-            // Build unified copies so both sides use consistent colors.
-            var unify = ns.unifyForComparison;
-            var uLeft = leftData ? JSON.parse(JSON.stringify(leftData)) : null;
-            var uRight = rightData ? JSON.parse(JSON.stringify(rightData)) : null;
-
-            if (uLeft && uRight && unify) {
-                // Unify entry-based charts (bar, pie): same name order = same color index.
-                ['types', 'languages', 'subjects'].forEach(function (key) {
-                    var order = unify.buildUnifiedOrder(uLeft, uRight, key);
-                    uLeft = unify.reorderEntries(uLeft, key, order);
-                    uRight = unify.reorderEntries(uRight, key, order);
-                });
-
-                // Unify stacked charts: same series order = same color index.
-                unify.unifyStackedSeries(uLeft, uRight, 'stackedTimeline');
-            }
-
-            // Stats (use original data for overlap computation)
-            var statsDiv = document.createElement('div');
-            statsDiv.innerHTML = buildStatsPanel(leftData, rightData);
-            content.appendChild(statsDiv);
-
-            // Chart pairs (use unified copies)
-            pendingCharts = [];
-            COMPARE_CHARTS.forEach(function (cfg) {
-                var pair = buildChartPair(cfg.key, cfg.label, uLeft, uRight, siteBase, cfg.tall);
-                content.appendChild(pair);
-            });
-
-            // Init charts now that all elements are in the DOM.
-            flushPendingCharts();
         }
     }
 

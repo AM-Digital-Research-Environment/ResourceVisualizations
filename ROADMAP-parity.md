@@ -43,7 +43,9 @@ This revision was rewritten after re-verifying **both** codebases against their 
 | **Precompute portability** | ✅ Done | `db.py` gained a direct `pymysql` path (`DB_HOST`, reusing the container's `MYSQL_*`), so the Python pipeline runs inside the Omeka container or over a VPN, not only via local `docker compose`. See [Regeneration](#regeneration). |
 | **In-Omeka regeneration** | ✅ Done | Admin "Regenerate" button → Omeka background `Job` → pure-PHP precompute (`src/Precompute/`) on Omeka's own DB connection, with logs at `/admin/job/{id}/log`. No Python/host dependency. |
 | **Phase 8** — Publications suite | ✅ Done | Unblocked once `fabio:` bibliographic records landed (~172). Publications site-page block: by-template breakdown, top venues/authors, co-author network (matched persons vs. external), keyword co-occurrence. Plus a reusable `templates` breakdown across entity dashboards; people dashboards now surface `bibo:authorList` publications. **Dashboards are now PHP-only — the Python dashboard pipeline was removed.** |
-| Phase 4–7 | ⏳ Planned | Browse blocks, generalized Compare, photo views, sibling sparkline. |
+| **Phase 4.1** — Project Explorer | ✅ Done | Site-page block: a project selector retunes the full project dashboard, reusing `ns.renderInto` + the existing `projects-index.json`; `?project=` deep-link. |
+| **Phase 5** — Generalized Compare | ✅ Done | Compare any entity type (projects/people/institutions/subjects/languages) via a `CompareEntity` block with an in-page type switcher; per-type charts + overlap + overlaid A/B radar. New `people/institutions/subjects/languages-index.json` emitters; `CompareProjects` kept (locked to projects). |
+| Phase 4.2 / 6 / 7 | ⏳ Planned | What's New, photo views, sibling sparkline. |
 
 All changes are precompute-and-static; regenerating dashboards populates the new keys. JS/PHP wiring is syntax- and consistency-checked; every new aggregator is unit-validated with mock data (and the choropleth point-in-polygon against the real GeoJSON, the Louvain split on a 2-cluster graph).
 
@@ -72,8 +74,8 @@ Verified against the dashboard's `src/routes/` and `src/lib/components/charts/` 
 | Capability | Dashboard location | Module status | Plan |
 |---|---|---|---|
 | **Discursive Communities network** (Louvain clustering + PageRank anchors) | `/network` tab 5, `NetworkGraph.svelte` | missing | **Phase 3** |
-| **Generalized cross-entity Compare** (any type, live selection) | `/compare/[type]`, `EntityCompare` | only project × project | **Phase 5** |
-| **Project Explorer** (one selector retunes ~12 charts) | `/project-explorer` | missing | **Phase 4** |
+| **Generalized cross-entity Compare** (any type, live selection) | `/compare/[type]`, `EntityCompare` | ✅ **Done** (CompareEntity block) | **Phase 5** |
+| **Project Explorer** (one selector retunes ~12 charts) | `/project-explorer` | ✅ **Done** | **Phase 4** |
 | **What's New** (recent-items feed + top recent projects) | `/whats-new` | missing | **Phase 4** |
 | **Photo browsing** (masonry / map / timeline for image-heavy sets) | `/collections/[slug]` | missing | **Phase 6** |
 | **Calendar Heatmap** (cadence by day/month/year) | `CalendarHeatmap.svelte` | missing | **Phase 2** |

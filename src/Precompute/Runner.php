@@ -93,6 +93,14 @@ final class Runner
         $this->fileCount++;
     }
 
+    /** Write a Compare/Explorer index (`[{id,name,items}]`), sorted by name. */
+    private function saveIndex(string $file, array $index): void
+    {
+        usort($index, static fn ($a, $b) => strcmp((string) $a['name'], (string) $b['name']));
+        file_put_contents($this->outputDir . '/' . $file, json_encode($index, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $this->log('  ' . $file . ': ' . count($index) . ' entries');
+    }
+
     /** Entry point. Returns a small stats array for the job log. */
     public function run(): array
     {
@@ -123,7 +131,7 @@ final class Runner
         $this->generateLocations();
         $this->generateSubjects();
         $this->generateByItemSet(self::ITEM_SET_RESOURCE_TYPE, 'dcterms:type', 'Resource Types', 'authority', ['types']);
-        $this->generateByItemSet(self::ITEM_SET_LANGUAGE, 'dcterms:language', 'Languages', 'authority', ['languages']);
+        $this->generateByItemSet(self::ITEM_SET_LANGUAGE, 'dcterms:language', 'Languages', 'authority', ['languages'], 'languages-index.json');
         $this->generateByItemSet(self::ITEM_SET_GENRE, 'dcterms:format', 'Genres', 'genre', []);
         $this->generateCategoryOverviews();
         $this->generateCollectionOverview();
@@ -297,11 +305,13 @@ final class Runner
         }
         $radarMax = Aggregators::profileMaxima(array_values($radarProfiles));
 
+        $index = [];
         foreach ($people as $pid => $pinfo) {
             $itemIds = Aggregators::findItemsLinkingTo($pid, $this->reverseLinks, $personTerms);
             if (!$itemIds) {
                 continue;
             }
+            $index[] = ['id' => $pid, 'name' => $pinfo['title'], 'items' => count($itemIds)];
             $dashboard = Aggregators::aggregateItems($itemIds, $this->items, $this->links, $this->itemYear, $this->geo);
             if ($v = Aggregators::buildTemplates($itemIds, $this->items, $this->templateLabels)) {
                 $dashboard['templates'] = $v;
@@ -334,6 +344,8 @@ final class Runner
             $dashboard['resourceType'] = self::TEMPLATE_RESOURCE_TYPE[$this->items[$pid]['template_id']] ?? 'person';
             $this->save($pid, $dashboard);
         }
+
+        $this->saveIndex('people-index.json', $index);
     }
 
     private function generateInstitutions(): void
@@ -364,11 +376,13 @@ final class Runner
         }
         $radarMax = Aggregators::profileMaxima(array_values($radarProfiles));
 
+        $index = [];
         foreach ($institutions as $iid => $iinfo) {
             $itemIds = Aggregators::findItemsLinkingTo($iid, $this->reverseLinks, $instTerms);
             if (!$itemIds) {
                 continue;
             }
+            $index[] = ['id' => $iid, 'name' => $iinfo['title'], 'items' => count($itemIds)];
             $dashboard = Aggregators::aggregateItems($itemIds, $this->items, $this->links, $this->itemYear, $this->geo);
             if ($v = Aggregators::buildTemplates($itemIds, $this->items, $this->templateLabels)) {
                 $dashboard['templates'] = $v;
@@ -385,6 +399,8 @@ final class Runner
             $dashboard['resourceType'] = self::TEMPLATE_RESOURCE_TYPE[$this->items[$iid]['template_id']] ?? 'organisation';
             $this->save($iid, $dashboard);
         }
+
+        $this->saveIndex('institutions-index.json', $index);
     }
 
     private function generateLocations(): void
@@ -413,11 +429,13 @@ final class Runner
     {
         $subjects = $this->itemsWhere(fn ($info) => ($info['template_id'] ?? null) === self::TEMPLATE_AUTHORITY);
         $this->log('=== Subjects/Authority (' . count($subjects) . ') ===');
+        $index = [];
         foreach ($subjects as $sid => $sinfo) {
             $itemIds = Aggregators::findItemsLinkingTo($sid, $this->reverseLinks, ['dcterms:subject']);
             if (!$itemIds) {
                 continue;
             }
+            $index[] = ['id' => $sid, 'name' => $sinfo['title'], 'items' => count($itemIds)];
             $dashboard = Aggregators::aggregateItems($itemIds, $this->items, $this->links, $this->itemYear, $this->geo);
             $cosubs = [];
             foreach ($itemIds as $iid) {
@@ -434,23 +452,30 @@ final class Runner
             $dashboard['resourceType'] = 'authority';
             $this->save($sid, $dashboard);
         }
+
+        $this->saveIndex('subjects-index.json', $index);
     }
 
-    private function generateByItemSet(int $setId, string $term, string $label, string $resourceType, array $excludeKeys): void
+    private function generateByItemSet(int $setId, string $term, string $label, string $resourceType, array $excludeKeys, ?string $indexFile = null): void
     {
         $setItems = $this->itemSets[$setId] ?? [];
         $this->log('=== ' . $label . ' (item set ' . $setId . ', ' . count($setItems) . ') ===');
+        $index = [];
         foreach ($setItems as $eid) {
             $itemIds = Aggregators::findItemsLinkingTo($eid, $this->reverseLinks, [$term]);
             if (!$itemIds) {
                 continue;
             }
+            $index[] = ['id' => $eid, 'name' => $this->items[$eid]['title'] ?? ('Item ' . $eid), 'items' => count($itemIds)];
             $dashboard = Aggregators::aggregateItems($itemIds, $this->items, $this->links, $this->itemYear, $this->geo);
             foreach ($excludeKeys as $k) {
                 unset($dashboard[$k]);
             }
             $dashboard['resourceType'] = $resourceType;
             $this->save($eid, $dashboard);
+        }
+        if ($indexFile !== null) {
+            $this->saveIndex($indexFile, $index);
         }
     }
 

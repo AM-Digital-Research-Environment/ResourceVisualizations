@@ -1,0 +1,30 @@
+<?php
+/**
+ * Project Explorer page block.
+ *
+ * A project selector that retunes the full project dashboard beneath it,
+ * reusing the precomputed per-project dashboards. Rendered by
+ * asset/js/dashboard-explorer.js, which reuses ns.renderInto (the shared
+ * item-page render loop) from dashboard.js.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var \Omeka\Api\Representation\SitePageBlockRepresentation $block
+ */
+
+// Site-page block (Module.php does not run on page controllers), so request the
+// CDN + core prelude and the explorer controller chain.
+$this->dashboardAssets(['cdn' => true, 'controller' => 'explorer']);
+
+$siteSlug = $this->currentSite()->slug();
+?>
+
+<div class="resource-vis-block explorer-block">
+    <div class="dashboard-explorer-container"
+         data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
+         data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">
+        <div class="rv-loading">
+            <div class="rv-spinner"></div>
+            <span><?= $this->translate('Loading project explorer…') ?></span>
+        </div>
+    </div>
+</div>

@@ -65,6 +65,7 @@ class DashboardAssets extends AbstractHelper
      */
     const CONTROLLERS = [
         'dashboard'   => ['js/dashboard.js'],
+        'explorer'    => ['js/dashboard.js', 'js/dashboard-explorer.js'],
         'compare'     => ['js/dashboard-compare-unify.js', 'js/dashboard-compare.js'],
         'communities' => ['js/dashboard-communities.js'],
     ];

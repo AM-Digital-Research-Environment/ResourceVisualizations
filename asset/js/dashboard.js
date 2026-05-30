@@ -66,6 +66,10 @@
         // dashboard-core.js (ns.refresh / the global resize handler).
     }
 
+    // Expose the render loop so other controllers (e.g. Project Explorer) reuse
+    // the exact item-page renderer instead of duplicating it.
+    ns.renderInto = renderDashboard;
+
     /* ------------------------------------------------------------------ */
     /*  Async dashboard (precomputed JSON)                                 */
     /* ------------------------------------------------------------------ */
