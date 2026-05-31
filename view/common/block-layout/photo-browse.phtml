@@ -1,0 +1,194 @@
+<?php
+/**
+ * Photo Browsing page block.
+ *
+ * Server-renders the editor-selected item set's image-bearing items into a JSON
+ * payload (thumbnail + original derivative URLs, year, raw date, place name, and
+ * item-level coordinates) that asset/js/item-set-photo-views.js turns into
+ * masonry / map / timeline browsers with a lightbox.
+ *
+ * No precompute: thumbnails are Omeka S derivatives, coordinates are geo:lat /
+ * geo:long, dates come from the usual date properties — all resolved here.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var \Omeka\Api\Representation\SitePageBlockRepresentation $block
+ * @var int|null  $itemSetId
+ * @var string    $heading
+ * @var string    $defaultView
+ */
+
+use ResourceVisualizations\View\Helper\DashboardAssets;
+
+if (!$itemSetId) {
+    return; // block not configured yet
+}
+
+// Safety bound: a gallery is lazy-loaded client-side, but we still serialise the
+// records, so cap a runaway set and surface the cap (never silently truncate).
+$MAX_PHOTOS = 600;
+$dateProperties = ['dcterms:issued', 'dcterms:created', 'dcterms:date', 'fabio:hasDateCollected'];
+
+$siteSlug = $this->currentSite()->slug();
+$photos = [];
+$capped = false;
+$page = 1;
+
+do {
+    $items = $this->api()->search('items', [
+        'item_set_id' => $itemSetId,
+        'per_page'    => 100,
+        'page'        => $page,
+    ])->getContent();
+
+    foreach ($items as $item) {
+        $media = $item->primaryMedia();
+        if (!$media || !$media->hasThumbnails()) {
+            continue; // only image-bearing items belong in a photo gallery
+        }
+        if (count($photos) >= $MAX_PHOTOS) {
+            $capped = true;
+            break 2;
+        }
+
+        // --- Year + raw date (first available date property) ---
+        $year = null;
+        $dateStr = null;
+        foreach ($dateProperties as $prop) {
+            $dv = $item->value($prop);
+            if ($dv) {
+                $dateStr = trim((string) $dv);
+                if (preg_match('/(\d{4})/', $dateStr, $m)) {
+                    $year = (int) $m[1];
+                }
+                break;
+            }
+        }
+
+        // --- Coordinates (item-level geo:lat / geo:long) ---
+        $latV = $item->value('geo:lat');
+        $lonV = $item->value('geo:long');
+        $lat = ($latV !== null && is_numeric((string) $latV)) ? (float) (string) $latV : null;
+        $lon = ($lonV !== null && is_numeric((string) $lonV)) ? (float) (string) $lonV : null;
+        if ($lat === null || $lon === null
+            || $lat < -90 || $lat > 90 || $lon < -180 || $lon > 180
+        ) {
+            $lat = $lon = null;
+        }
+
+        // --- Place name (linked or literal dcterms:spatial), for the lightbox ---
+        $place = null;
+        $sp = $item->value('dcterms:spatial');
+        if ($sp) {
+            $spr = $sp->valueResource();
+            $place = $spr ? $spr->displayTitle() : trim((string) $sp);
+            if ($place === '') {
+                $place = null;
+            }
+        }
+
+        $photos[] = [
+            'id'    => $item->id(),
+            'title' => $item->displayTitle(),
+            'url'   => $item->siteUrl($siteSlug),
+            'thumb' => $media->thumbnailUrl('large'),
+            'full'  => $media->originalUrl() ?: $media->thumbnailUrl('large'),
+            'year'  => $year,
+            'date'  => ($dateStr !== null && $dateStr !== '') ? $dateStr : null,
+            'place' => $place,
+            'lat'   => $lat,
+            'lon'   => $lon,
+        ];
+    }
+    $page++;
+} while (count($items) === 100);
+
+if (empty($photos)) {
+    return; // no images in this set
+}
+
+// Which browsers are meaningful for this set?
+$geoCount = 0;
+$datedCount = 0;
+foreach ($photos as $p) {
+    if ($p['lat'] !== null) {
+        $geoCount++;
+    }
+    if ($p['year'] !== null) {
+        $datedCount++;
+    }
+}
+$views = ['masonry'];
+if ($geoCount > 0) {
+    $views[] = 'map';
+}
+if ($datedCount > 0) {
+    $views[] = 'timeline';
+}
+if (!in_array($defaultView, $views, true)) {
+    $defaultView = 'masonry';
+}
+
+$viewLabels = [
+    'masonry'  => $this->translate('Grid'),
+    'map'      => $this->translate('Map'),
+    'timeline' => $this->translate('Timeline'),
+];
+
+$payload = json_encode($photos,
+    JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+
+// Lean asset prelude — masonry & timeline are pure DOM, the map lazy-loads
+// MapLibre on demand, so we skip the full chart-builder chain and only inject
+// the stylesheet, the shared RV core helpers, and this block's engine. The
+// MapLibre CDN URLs ride along as data-attributes (single source of truth:
+// DashboardAssets) so the engine can inject them when the Map tab is opened.
+$this->headLink()->appendStylesheet(
+    $this->assetUrl('css/resource-visualizations.css', 'ResourceVisualizations'));
+$this->headScript()->appendFile(
+    $this->assetUrl('js/dashboard-core.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile(
+    $this->assetUrl('js/item-set-photo-views.js', 'ResourceVisualizations'));
+?>
+
+<div class="resource-vis-block photo-browse-block">
+    <?php if ($heading !== ''): ?>
+    <h3 class="photo-browse-heading"><?= $this->escapeHtml($heading) ?></h3>
+    <?php endif; ?>
+
+    <div class="photo-browse-container"
+         data-default-view="<?= $this->escapeHtmlAttr($defaultView) ?>"
+         data-maplibre-css="<?= $this->escapeHtmlAttr(DashboardAssets::MAPLIBRE_CSS) ?>"
+         data-maplibre-js="<?= $this->escapeHtmlAttr(DashboardAssets::MAPLIBRE_JS) ?>">
+
+        <div class="photo-browse-toolbar">
+            <?php if (count($views) > 1): ?>
+            <div class="photo-view-toggle" role="tablist" aria-label="<?= $this->escapeHtmlAttr($this->translate('Photo view')) ?>">
+                <?php foreach ($views as $v): ?>
+                <button type="button" role="tab"
+                        class="photo-view-btn<?= $v === $defaultView ? ' is-active' : '' ?>"
+                        data-view="<?= $this->escapeHtmlAttr($v) ?>"
+                        aria-selected="<?= $v === $defaultView ? 'true' : 'false' ?>">
+                    <?= $this->escapeHtml($viewLabels[$v]) ?>
+                </button>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+            <span class="photo-browse-count">
+                <?php if ($capped): ?>
+                    <?= sprintf($this->translate('First %d images'), count($photos)) ?>
+                <?php else: ?>
+                    <?= sprintf($this->translatePlural('%d image', '%d images', count($photos)), count($photos)) ?>
+                <?php endif; ?>
+            </span>
+        </div>
+
+        <div class="photo-browse-stage">
+            <div class="rv-loading">
+                <div class="rv-spinner"></div>
+                <span><?= $this->translate('Loading photos…') ?></span>
+            </div>
+        </div>
+
+        <script type="application/json" class="photo-data"><?= $payload ?></script>
+    </div>
+</div>

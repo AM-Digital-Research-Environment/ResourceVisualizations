@@ -1046,3 +1046,345 @@ button.rv-toolbar-btn:focus-visible,
         padding: 0;
     }
 }
+
+/* ------------------------------------------------------------------ */
+/*  Photo Browsing block (masonry / map / timeline + lightbox)         */
+/* ------------------------------------------------------------------ */
+
+.rv-empty {
+    padding: 24px;
+    text-align: center;
+    color: var(--rv-text-color);
+    font-size: 0.9rem;
+}
+
+.photo-browse-heading {
+    margin: 0 0 14px;
+    color: var(--rv-heading-color);
+}
+
+.photo-browse-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.photo-view-toggle {
+    display: inline-flex;
+    border: 1px solid var(--rv-border);
+    border-radius: var(--rv-radius-sm);
+    overflow: hidden;
+}
+
+.photo-view-btn {
+    border: 0;
+    background: var(--rv-bg);
+    color: var(--rv-text-strong);
+    padding: 6px 16px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.photo-view-btn + .photo-view-btn {
+    border-left: 1px solid var(--rv-border);
+}
+
+.photo-view-btn:hover:not(.is-active) {
+    background: var(--rv-bg-sunken);
+}
+
+.photo-view-btn.is-active {
+    background: var(--rv-accent);
+    color: var(--rv-accent-contrast);
+}
+
+.photo-browse-count {
+    color: var(--rv-text-color);
+    font-size: 0.85rem;
+}
+
+.photo-browse-stage {
+    position: relative;
+    min-height: 200px;
+}
+
+/* `hidden` alone loses to the timeline's display:flex — force it off. */
+.photo-browse-stage .photo-view[hidden] {
+    display: none !important;
+}
+
+/* --- Masonry --- */
+.photo-masonry {
+    column-count: 4;
+    column-gap: 12px;
+}
+
+@media (max-width: 1100px) { .photo-masonry { column-count: 3; } }
+@media (max-width: 760px)  { .photo-masonry { column-count: 2; } }
+@media (max-width: 480px)  { .photo-masonry { column-count: 1; } }
+
+.photo-card {
+    display: block;
+    width: 100%;
+    margin: 0 0 12px;
+    padding: 0;
+    border: 0;
+    background: none;
+    line-height: 0;
+    position: relative;
+    cursor: pointer;
+    break-inside: avoid;
+    border-radius: var(--rv-radius-sm);
+    overflow: hidden;
+    box-shadow: var(--rv-shadow-sm);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.photo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--rv-shadow);
+}
+
+.photo-card:focus-visible {
+    outline: none;
+    box-shadow: var(--rv-focus-ring);
+}
+
+.photo-card.is-broken {
+    display: none;
+}
+
+.photo-card-img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.photo-card-year {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    background: var(--rv-overlay);
+    color: var(--rv-text-strong);
+    font-size: 0.72rem;
+    line-height: 1.4;
+    padding: 1px 7px;
+    border-radius: 10px;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.photo-card:hover .photo-card-year {
+    opacity: 1;
+}
+
+/* --- Map --- */
+.photo-map {
+    height: min(70vh, 560px);
+    min-height: 360px;
+    border-radius: var(--rv-radius);
+    overflow: hidden;
+    border: 1px solid var(--rv-border);
+}
+
+/* --- Timeline (horizontal strip grouped by year) --- */
+.photo-timeline {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    overflow-x: auto;
+    padding-bottom: 12px;
+}
+
+.photo-timeline-group {
+    flex: 0 0 auto;
+}
+
+.photo-timeline-year {
+    font-weight: 700;
+    color: var(--rv-heading-color);
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 2px solid var(--rv-accent);
+}
+
+.photo-timeline-items {
+    display: grid;
+    grid-template-columns: repeat(2, 110px);
+    gap: 8px;
+}
+
+.photo-timeline-items .photo-card {
+    margin: 0;
+}
+
+.photo-timeline-items .photo-card-img {
+    height: 110px;
+    object-fit: cover;
+}
+
+/* --- Lightbox --- */
+body.photo-lightbox-open {
+    overflow: hidden;
+}
+
+.photo-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.photo-lightbox[hidden] {
+    display: none;
+}
+
+.photo-lightbox-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.82);
+}
+
+.photo-lightbox-body {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    max-width: 94vw;
+    max-height: 92vh;
+    background: var(--rv-bg-raised);
+    border-radius: var(--rv-radius);
+    overflow: hidden;
+    box-shadow: var(--rv-shadow);
+}
+
+.photo-lightbox-figure {
+    margin: 0;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.photo-lightbox-figure img {
+    max-width: 72vw;
+    max-height: 92vh;
+    width: auto;
+    height: auto;
+    display: block;
+    object-fit: contain;
+}
+
+.photo-lightbox-meta {
+    flex: 0 0 280px;
+    width: 280px;
+    padding: 20px 22px;
+    overflow-y: auto;
+}
+
+.photo-lightbox-title {
+    margin: 0 0 14px;
+    color: var(--rv-heading-color);
+    font-size: 1.05rem;
+    line-height: 1.35;
+}
+
+.photo-lightbox-fields {
+    margin: 0 0 18px;
+}
+
+.photo-lightbox-fields dt {
+    color: var(--rv-text-color);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 10px;
+}
+
+.photo-lightbox-fields dd {
+    margin: 2px 0 0;
+    color: var(--rv-text-strong);
+}
+
+.photo-lightbox-link {
+    display: inline-block;
+    color: var(--rv-accent);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.photo-lightbox-link:hover {
+    color: var(--rv-accent-hover);
+    text-decoration: underline;
+}
+
+.photo-lightbox-close,
+.photo-lightbox-nav {
+    position: absolute;
+    z-index: 2;
+    border: 0;
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.15s;
+}
+
+.photo-lightbox-close:hover,
+.photo-lightbox-nav:hover {
+    background: rgba(0, 0, 0, 0.75);
+}
+
+.photo-lightbox-close {
+    top: 14px;
+    right: 16px;
+    width: 38px;
+    height: 38px;
+    font-size: 1.1rem;
+}
+
+.photo-lightbox-nav {
+    top: 50%;
+    transform: translateY(-50%);
+    width: 46px;
+    height: 46px;
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.photo-lightbox-prev { left: 14px; }
+.photo-lightbox-next { right: 14px; }
+
+@media (max-width: 680px) {
+    .photo-lightbox-body {
+        flex-direction: column;
+        max-height: 94vh;
+    }
+
+    .photo-lightbox-figure img {
+        max-width: 94vw;
+        max-height: 58vh;
+    }
+
+    .photo-lightbox-meta {
+        flex-basis: auto;
+        width: auto;
+        max-height: 34vh;
+    }
+
+    .photo-lightbox-nav {
+        width: 38px;
+        height: 38px;
+        font-size: 1.6rem;
+    }
+}

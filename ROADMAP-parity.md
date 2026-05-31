@@ -48,7 +48,7 @@ This revision was rewritten after re-verifying **both** codebases against their 
 | **Phase 2.3–2.5** — Calendar / Box Plot / Time-chord | ✅ Done | Acquisition calendar, items-per-project box plot, and a year-sliding subject chord (ECharts `timeline`) on the collection/projects/section/project overviews; `created` map added to `DataLoader`. |
 | **Phase 4.2** — What's New | ✅ Done | Recent-additions feed (3/6/12-month windows off max-`created`) + most-active-projects bar; `whats-new.json` + site-page block. |
 | **Phase 7.1** — Sibling sparkline | ✅ Done | Resource-page block: a research item's project cadence with the item's year marked (REST-API + the project's precomputed timeline; no precompute change). |
-| Phase 6 | ⏳ Planned | Photo browsing (masonry / map / timeline) — deferred. |
+| **Phase 6** — Photo browsing | ✅ Done | Site-page **PhotoBrowse** block: the editor picks an item set; the view **server-renders** its image items into masonry / clustered-map / year-timeline browsers with a shared keyboard lightbox. Thumbnails are Omeka derivatives, coords/dates resolved at render time — **no precompute**. MapLibre lazy-loads only when the Map tab opens. |
 
 All changes are precompute-and-static; regenerating dashboards populates the new keys. JS/PHP wiring is syntax- and consistency-checked; every new aggregator is unit-validated with mock data (and the choropleth point-in-polygon against the real GeoJSON, the Louvain split on a 2-cluster graph).
 
@@ -80,7 +80,7 @@ Verified against the dashboard's `src/routes/` and `src/lib/components/charts/` 
 | **Generalized cross-entity Compare** (any type, live selection) | `/compare/[type]`, `EntityCompare` | ✅ **Done** (CompareEntity block) | **Phase 5** |
 | **Project Explorer** (one selector retunes ~12 charts) | `/project-explorer` | ✅ **Done** | **Phase 4** |
 | **What's New** (recent-items feed + top recent projects) | `/whats-new` | ✅ **Done** | **Phase 4** |
-| **Photo browsing** (masonry / map / timeline for image-heavy sets) | `/collections/[slug]` | missing | **Phase 6** |
+| **Photo browsing** (masonry / map / timeline for image-heavy sets) | `/collections/[slug]` | ✅ **Done** (PhotoBrowse block) | **Phase 6** |
 | **Calendar Heatmap** (cadence by day/month/year) | `CalendarHeatmap.svelte` | ✅ **Done** | **Phase 2** |
 | **Choropleth Map** (country fill) | `ChoroplethMap.svelte` | missing | **Phase 2** |
 | **Radar Chart** (entity profile, 5–7 axes) | `RadarChart.svelte` | ✅ **Done** | **Phase 2** |
@@ -315,17 +315,17 @@ Today `CompareProjects` + `dashboard-compare.js` handle only project × project.
 
 ---
 
-## Phase 6 — Photo browsing views for item sets
+## Phase 6 — Photo browsing views for item sets ✅ Done
 
-**Goal:** port the dashboard's `PhotoMasonry` + `PhotoMap` + `PhotoTimeline` for image-heavy item sets. Self-contained; touches only the item-set surface.
+**Shipped (v1.25.0)** as a curated **site-page block** rather than the originally-sketched item-set resource-page toggle. The editor picks one image-heavy item set in the block config, so the gallery can live on any page — chosen for editorial control over auto-attachment. The rendering engine is surface-agnostic, so the auto resource-page mode (a view toggle on the item-set page) remains an easy future add if wanted. Ported the dashboard's `PhotoMasonry` + `PhotoMap` + `PhotoTimeline`.
 
-- [ ] Detect image-heavy sets (≥ threshold of `dctype:StillImage` / `dctype:MovingImage`) in `ItemSetDashboard.php`.
-- [ ] Add a view-mode toggle (charts / masonry / map / timeline) to `view/common/resource-page-block-layout/item-set-dashboard.phtml`.
-- [ ] New asset `asset/js/item-set-photo-views.js`:
-  - **Masonry** — CSS grid + `IntersectionObserver` lazy-loading; **rely on Omeka S derivative renditions** for thumbnails (no image pipeline of our own).
-  - **Map** — MapLibre cluster (theme-aware via `trackMap`/`getBasemapStyle`) keyed on `dcterms:spatial`.
-  - **Timeline** — horizontal strip grouped by year.
-- [ ] **Lightbox** — prefer Omeka S's built-in image viewer if the theme provides one; otherwise a small keyboard-navigable lightbox with a metadata sidebar + item deep-link.
+- [x] `src/Site/BlockLayout/PhotoBrowse.php` — config form with an item-set selector, optional heading, and a default-view choice (registered under `block_layouts.invokables`).
+- [x] `view/common/block-layout/photo-browse.phtml` — **server-renders** the set's image-bearing items (thumbnail + original derivative URLs, year, place, `geo:lat` / `geo:long`) to a JSON payload. **No precompute** — thumbnails are Omeka S derivatives, everything resolves at render time. Map / Timeline tabs appear only when the set has coordinates / dates; the default tab is configurable.
+- [x] `asset/js/item-set-photo-views.js`:
+  - **Masonry** — CSS-columns grid with native lazy-loading; relies on Omeka S derivative renditions (no image pipeline).
+  - **Map** — MapLibre cluster, theme-aware via `trackMap` / `getBasemapStyle`, **lazy-loaded** on first open so the default Grid view ships zero map weight. Keyed on item-level `geo:lat` / `geo:long`.
+  - **Timeline** — horizontal strip grouped by year (the undated bucket is surfaced, not dropped).
+- [x] **Lightbox** — a small keyboard-navigable lightbox (← / → / Esc) with a metadata sidebar (title / date / place) + item deep-link.
 
 ---
 
@@ -463,8 +463,8 @@ Each becomes its own issue in this repo.
 - [ ] Generalize CompareProjects → CompareEntity (+ per-type index files, radar profile)
 
 **Phase 6–7**
-- [ ] Photo views for item-set dashboards (masonry / map / timeline)
-- [ ] Sibling-items sparkline on item pages
+- [x] Photo views (masonry / map / timeline) — shipped as the PhotoBrowse site-page block
+- [x] Sibling-items sparkline on item pages
 
 **Phase 8 (gated)**
 - [ ] Publications analytics suite — open only after a bibliographic import lands

@@ -11,6 +11,7 @@ return [
             'projectExplorer' => Site\BlockLayout\ProjectExplorer::class,
             'compareEntity' => Site\BlockLayout\CompareEntity::class,
             'whatsNew' => Site\BlockLayout\WhatsNew::class,
+            'photoBrowse' => Site\BlockLayout\PhotoBrowse::class,
         ],
     ],
     'resource_page_block_layouts' => [

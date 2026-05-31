@@ -116,6 +116,16 @@ Authors matched to Person records and subjects matched to Authority/LCSH records
 
 A recent-additions feed with a **3 / 6 / 12-month** window selector and a "most active projects" bar. Added as a **site-page block** (Admin > Sites > [site] > Pages), it loads `asset/data/item-dashboards/whats-new.json`. "Now" is the latest item-creation date in the corpus, so it stays meaningful regardless of when the data was imported.
 
+### Photo Browsing
+
+Image-first browsing for an image-heavy item set, as a **site-page block** (Admin > Sites > [site] > Pages). Pick an item set in the block settings; the page server-renders that set's image-bearing items into three browsers sharing one keyboard-navigable **lightbox** (← / → / Esc, with a metadata sidebar and an item deep-link):
+
+- **Grid** — a responsive masonry of lazy-loaded thumbnails;
+- **Map** — a clustered MapLibre map of the geolocated photos (`geo:lat` / `geo:long`), loaded on demand so the default Grid view ships zero map weight;
+- **Timeline** — a horizontal strip grouped by year.
+
+Thumbnails are Omeka S derivatives and everything resolves at render time, so there is **no precompute** — the block works the moment it is added. The Map and Timeline tabs appear only when the set actually has coordinates / dates, and the default tab is configurable.
+
 ### Item Set Dashboard
 
 Inline dashboard for item set pages with server-side aggregation.
@@ -220,6 +230,7 @@ ResourceVisualizations/
 │   │   ├── dashboard-collab-network.js           # Institution collaboration network
 │   │   ├── dashboard-compare.js                  # Compare controller (any entity type)
 │   │   ├── dashboard-explorer.js                 # Project Explorer controller
+│   │   ├── item-set-photo-views.js               # Photo Browsing: masonry / map / timeline + lightbox
 │   │   ├── dashboard-registry.js                 # CHART_MAP, labels, descriptions
 │   │   └── dashboard.js                          # Orchestrator: render + async/inline init
 │   ├── css/
