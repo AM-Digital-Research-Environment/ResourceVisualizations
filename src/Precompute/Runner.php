@@ -56,12 +56,17 @@ final class Runner
     private array $reverseLinks = [];
     private array $childrenOf = [];
     private array $itemYear = [];
+    private array $itemDate = [];
     private array $temporal = [];
     private array $geo = [];
     private array $itemSets = [];
     private array $templateLabels = [];
     private array $literals = [];
+    private array $primaryMedia = [];
     private array $countryIndex = [];
+
+    /** Safety bound on a single gallery's serialised records (matches the block). */
+    private const MAX_GALLERY_PHOTOS = 600;
 
     private int $fileCount = 0;
 
@@ -74,6 +79,7 @@ final class Runner
         private readonly string $communitiesDir,
         private readonly string $countriesGeojson,
         private readonly string $knowledgeGraphsDir,
+        private readonly string $galleriesDir,
         ?callable $logFn = null,
     ) {
         $this->logFn = $logFn;
@@ -114,11 +120,13 @@ final class Runner
         $this->reverseLinks = $data['reverseLinks'];
         $this->childrenOf = $data['childrenOf'];
         $this->itemYear = $data['itemYear'];
+        $this->itemDate = $data['itemDate'];
         $this->temporal = $data['temporal'];
         $this->geo = $data['geo'];
         $this->itemSets = $data['itemSets'];
         $this->templateLabels = $data['templateLabels'];
         $this->literals = $data['literals'];
+        $this->primaryMedia = $data['primaryMedia'];
 
         $features = Aggregators::loadCountryFeatures($this->countriesGeojson);
         $this->countryIndex = Aggregators::buildCountryIndex($this->geo, $features);
@@ -138,6 +146,7 @@ final class Runner
         $this->generateCommunities();
         $this->generatePublications();
         $this->generateWhatsNew();
+        $this->generatePhotoGalleries();
         $this->generateKnowledgeGraphs();
 
         $this->log('Done. ' . $this->fileCount . ' files written.');
@@ -797,6 +806,90 @@ final class Runner
             file_put_contents($this->outputDir . '/whats-new.json', json_encode($whatsNew, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
             $this->log('  whats-new.json: reference ' . $whatsNew['reference'] . ', ' . count($whatsNew['windows']) . ' windows');
         }
+    }
+
+    /**
+     * Photo Browsing galleries — one JSON per item set that has at least one
+     * image-bearing public item. Sets with no images are skipped entirely
+     * (nothing to render), so no empty galleries are written.
+     *
+     * Pure data only: item id, title, primary-media storage_id + extension,
+     * year, raw date, and the origin place + coordinates resolved by following
+     * the item's dcterms:spatial link to a Location item (a literal spatial
+     * value yields a label but no coordinates — the same indirection the
+     * knowledge-graph and item-location map already use). The block rebuilds the
+     * file/item URLs from these ids in the view, so the JSON stays free of any
+     * environment-specific absolute URLs.
+     */
+    private function generatePhotoGalleries(): void
+    {
+        $this->log('=== Photo Galleries ===');
+        if (!is_dir($this->galleriesDir)) {
+            mkdir($this->galleriesDir, 0775, true);
+        }
+
+        $setCount = 0;
+        foreach ($this->itemSets as $setId => $itemIds) {
+            $photos = [];
+            $total = 0;
+            foreach ($itemIds as $itemId) {
+                $media = $this->primaryMedia[$itemId] ?? null;
+                if ($media === null) {
+                    continue; // not an image-bearing item
+                }
+                if (!($this->items[$itemId]['public'] ?? false)) {
+                    continue; // never expose a non-public item in a gallery
+                }
+                $total++;
+                if (count($photos) >= self::MAX_GALLERY_PHOTOS) {
+                    continue; // cap what we serialise, but keep counting the true total
+                }
+
+                // Origin place + coordinates: first linked dcterms:spatial → Location.
+                $place = null;
+                $lat = null;
+                $lon = null;
+                foreach ($this->links[$itemId] ?? [] as [$term, , $vrid]) {
+                    if ($term === 'dcterms:spatial') {
+                        $place = $this->items[$vrid]['title'] ?? null;
+                        if (isset($this->geo[$vrid])) {
+                            $lat = $this->geo[$vrid]['lat'];
+                            $lon = $this->geo[$vrid]['lon'];
+                        }
+                        break; // first spatial wins (mirrors the block)
+                    }
+                }
+                // No linked place → fall back to a literal dcterms:spatial label.
+                if ($place === null && isset($this->literals[$itemId]['dcterms:spatial'][0])) {
+                    $place = $this->literals[$itemId]['dcterms:spatial'][0];
+                }
+
+                $photos[] = [
+                    'id'      => $itemId,
+                    'title'   => $this->items[$itemId]['title'] ?? ('Item ' . $itemId),
+                    'storage' => $media['storage'],
+                    'ext'     => $media['ext'],
+                    'year'    => isset($this->itemYear[$itemId]) ? (int) $this->itemYear[$itemId] : null,
+                    'date'    => $this->itemDate[$itemId] ?? null,
+                    'place'   => $place,
+                    'lat'     => $lat,
+                    'lon'     => $lon,
+                ];
+            }
+
+            if (!$photos) {
+                continue; // item set with no image-bearing public items — skip
+            }
+
+            file_put_contents(
+                $this->galleriesDir . '/' . $setId . '.json',
+                json_encode(['total' => $total, 'photos' => $photos],
+                    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+            );
+            $this->fileCount++;
+            $setCount++;
+        }
+        $this->log('  ' . $setCount . ' photo galleries written');
     }
 
     private function generateKnowledgeGraphs(): void

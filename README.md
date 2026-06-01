@@ -120,13 +120,13 @@ A recent-additions feed with a **3 / 6 / 12-month** window selector and a "most 
 
 ### Photo Browsing
 
-Image-first browsing for an image-heavy item set, as a **site-page block** (Admin > Sites > [site] > Pages). Pick an item set in the block settings; the page server-renders that set's image-bearing items into three browsers sharing one keyboard-navigable **lightbox** (← / → / Esc, with a metadata sidebar and an item deep-link):
+Image-first browsing for an image-heavy item set, as a **site-page block** (Admin > Sites > [site] > Pages). Pick an item set in the block settings; the page renders that set's image-bearing items into three browsers sharing one keyboard-navigable **lightbox** (← / → / Esc, with a metadata sidebar and an item deep-link):
 
 - **Grid** — a responsive masonry of lazy-loaded thumbnails;
-- **Map** — a clustered MapLibre map of the geolocated photos (`geo:lat` / `geo:long`), loaded on demand so the default Grid view ships zero map weight;
+- **Map** — a clustered MapLibre map of the geolocated photos, loaded on demand so the default Grid view ships zero map weight. Coordinates are resolved by following each photo's `dcterms:spatial` link to a Location item (`geo:lat` / `geo:long`) — the photos themselves rarely carry coordinates;
 - **Timeline** — a horizontal strip grouped by year.
 
-Thumbnails are Omeka S derivatives and everything resolves at render time, so there is **no precompute** — the block works the moment it is added. The Map and Timeline tabs appear only when the set actually has coordinates / dates, and the default tab is configurable.
+The gallery is **precomputed** per item set (like every other dataset — see [Pre-computing Data](#pre-computing-data)), and only for sets that have at least one image-bearing item. Until the first "Regenerate", the block falls back to resolving the gallery live through the Omeka API, so it still works the moment it is added. The Map and Timeline tabs appear only when the set actually has coordinates / dates, and the default tab is configurable.
 
 ### Item Set Dashboard
 
@@ -168,6 +168,7 @@ Visualizations load from pre-computed JSON in `asset/data/`. **Everything regene
 - per-entity & category **dashboards** + the **collection overview**
 - the **Discursive Communities** graph
 - the **Publications** analytics (`publications.json`)
+- the **Photo Browsing** galleries (one JSON per image-bearing item set)
 - the per-item **knowledge graphs** + item location maps
 
 Watch progress and any errors at **Admin → Jobs → the job's log**. Re-run after importing or substantially editing items.
@@ -243,6 +244,7 @@ ResourceVisualizations/
 │       ├── communities/
 │       │   └── discursive.json         # Subject co-occurrence + Louvain communities
 │       ├── knowledge-graphs/           # Per-item graph JSON — gitignored, regenerated in-Omeka
+│       ├── photo-galleries/            # Per-item-set gallery JSON — gitignored, regenerated in-Omeka
 │       └── item-dashboards/            # Dashboard JSON + {type}-index.json (projects/people/…)
 ├── src/Precompute/                     # PHP precompute engine (admin "Regenerate now")
 │   ├── DataLoader.php                  # Items/links/literals/geo via Omeka\Connection

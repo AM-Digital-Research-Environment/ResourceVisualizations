@@ -2,19 +2,24 @@
 /**
  * Photo Browsing page block.
  *
- * Server-renders the editor-selected item set's image-bearing items into a JSON
- * payload (thumbnail + original derivative URLs, year, raw date, place name, and
- * item-level coordinates) that asset/js/item-set-photo-views.js turns into
- * masonry / map / timeline browsers with a lightbox.
+ * Renders the editor-selected item set's image-bearing items into a JSON payload
+ * (thumbnail + original URLs, year, raw date, place name, coordinates) that
+ * asset/js/item-set-photo-views.js turns into masonry / map / timeline browsers
+ * with a lightbox.
  *
- * No precompute: thumbnails are Omeka S derivatives, coordinates are geo:lat /
- * geo:long, dates come from the usual date properties — all resolved here.
+ * Data comes from the precompute (asset/data/photo-galleries/{itemSetId}.json,
+ * built by the admin "Regenerate" job straight from the Omeka DB — coordinates
+ * resolved by following dcterms:spatial to a Location item, like every other
+ * precomputed dataset). When that file is absent — e.g. a freshly added block
+ * before the next regenerate — the view falls back to resolving the gallery live
+ * through the Omeka API.
  *
  * @var \Laminas\View\Renderer\PhpRenderer $this
  * @var \Omeka\Api\Representation\SitePageBlockRepresentation $block
  * @var int|null  $itemSetId
  * @var string    $heading
  * @var string    $defaultView
+ * @var array{total:int,photos:array}|null $precomputed
  */
 
 use ResourceVisualizations\View\Helper\DashboardAssets;
@@ -26,81 +31,133 @@ if (!$itemSetId) {
 // Safety bound: a gallery is lazy-loaded client-side, but we still serialise the
 // records, so cap a runaway set and surface the cap (never silently truncate).
 $MAX_PHOTOS = 600;
-$dateProperties = ['dcterms:issued', 'dcterms:created', 'dcterms:date', 'fabio:hasDateCollected'];
-
 $siteSlug = $this->currentSite()->slug();
+$siteBase = $this->basePath() . '/s/' . $siteSlug;
 $photos = [];
 $capped = false;
-$page = 1;
 
-do {
-    $items = $this->api()->search('items', [
-        'item_set_id' => $itemSetId,
-        'per_page'    => 100,
-        'page'        => $page,
-    ])->getContent();
-
-    foreach ($items as $item) {
-        $media = $item->primaryMedia();
-        if (!$media || !$media->hasThumbnails()) {
-            continue; // only image-bearing items belong in a photo gallery
+if ($precomputed !== null) {
+    // ---- Fast path: the precomputed gallery. Records hold ids only; rebuild the
+    // file + item URLs here, root-relative so the JSON stays domain-independent.
+    // thumb = the large derivative (always .jpg); full = the stored original when
+    // present, else the large thumb. ----
+    foreach ($precomputed['photos'] as $p) {
+        $storage = (string) ($p['storage'] ?? '');
+        if ($storage === '') {
+            continue;
         }
-        if (count($photos) >= $MAX_PHOTOS) {
-            $capped = true;
-            break 2;
-        }
+        $ext = (string) ($p['ext'] ?? '');
+        $thumb = $this->basePath() . '/files/large/' . $storage . '.jpg';
+        $full  = $ext !== '' ? ($this->basePath() . '/files/original/' . $storage . '.' . $ext) : $thumb;
+        $id = (int) $p['id'];
+        $photos[] = [
+            'id'    => $id,
+            'title' => (string) ($p['title'] ?? ('Item ' . $id)),
+            'url'   => $siteBase . '/item/' . $id,
+            'thumb' => $thumb,
+            'full'  => $full,
+            'year'  => $p['year'] ?? null,
+            'date'  => $p['date'] ?? null,
+            'place' => $p['place'] ?? null,
+            'lat'   => $p['lat'] ?? null,
+            'lon'   => $p['lon'] ?? null,
+        ];
+    }
+    $total = (int) ($precomputed['total'] ?? count($photos));
+    $capped = $total > count($photos);
+} else {
+    // ---- Fallback: resolve live through the Omeka API so a newly added block
+    // works before the next "Regenerate". Coordinates follow the item's
+    // dcterms:spatial link to a Location item — the photo itself rarely carries
+    // geo:lat/long — exactly as the precompute does, just one request late. ----
+    $dateProperties = ['dcterms:issued', 'dcterms:created', 'dcterms:date', 'fabio:hasDateCollected'];
 
-        // --- Year + raw date (first available date property) ---
-        $year = null;
-        $dateStr = null;
-        foreach ($dateProperties as $prop) {
-            $dv = $item->value($prop);
-            if ($dv) {
-                $dateStr = trim((string) $dv);
-                if (preg_match('/(\d{4})/', $dateStr, $m)) {
-                    $year = (int) $m[1];
-                }
-                break;
-            }
-        }
-
-        // --- Coordinates (item-level geo:lat / geo:long) ---
-        $latV = $item->value('geo:lat');
-        $lonV = $item->value('geo:long');
+    // Reads validated geo:lat / geo:long off any resource representation.
+    $readGeo = function ($res): array {
+        $latV = $res->value('geo:lat');
+        $lonV = $res->value('geo:long');
         $lat = ($latV !== null && is_numeric((string) $latV)) ? (float) (string) $latV : null;
         $lon = ($lonV !== null && is_numeric((string) $lonV)) ? (float) (string) $lonV : null;
         if ($lat === null || $lon === null
             || $lat < -90 || $lat > 90 || $lon < -180 || $lon > 180
         ) {
-            $lat = $lon = null;
+            return [null, null];
         }
+        return [$lat, $lon];
+    };
+    $placeGeoCache = []; // linked place item id => [lat, lon], resolved once per place
+    $page = 1;
 
-        // --- Place name (linked or literal dcterms:spatial), for the lightbox ---
-        $place = null;
-        $sp = $item->value('dcterms:spatial');
-        if ($sp) {
-            $spr = $sp->valueResource();
-            $place = $spr ? $spr->displayTitle() : trim((string) $sp);
-            if ($place === '') {
-                $place = null;
+    do {
+        $items = $this->api()->search('items', [
+            'item_set_id' => $itemSetId,
+            'per_page'    => 100,
+            'page'        => $page,
+        ])->getContent();
+
+        foreach ($items as $item) {
+            $media = $item->primaryMedia();
+            if (!$media || !$media->hasThumbnails()) {
+                continue; // only image-bearing items belong in a photo gallery
             }
-        }
+            if (count($photos) >= $MAX_PHOTOS) {
+                $capped = true;
+                break 2;
+            }
 
-        $photos[] = [
-            'id'    => $item->id(),
-            'title' => $item->displayTitle(),
-            'url'   => $item->siteUrl($siteSlug),
-            'thumb' => $media->thumbnailUrl('large'),
-            'full'  => $media->originalUrl() ?: $media->thumbnailUrl('large'),
-            'year'  => $year,
-            'date'  => ($dateStr !== null && $dateStr !== '') ? $dateStr : null,
-            'place' => $place,
-            'lat'   => $lat,
-            'lon'   => $lon,
-        ];
-    }
-    $page++;
-} while (count($items) === 100);
+            // --- Year + raw date (first available date property) ---
+            $year = null;
+            $dateStr = null;
+            foreach ($dateProperties as $prop) {
+                $dv = $item->value($prop);
+                if ($dv) {
+                    $dateStr = trim((string) $dv);
+                    if (preg_match('/(\d{4})/', $dateStr, $m)) {
+                        $year = (int) $m[1];
+                    }
+                    break;
+                }
+            }
+
+            // --- Place (linked or literal dcterms:spatial): label + origin coords. ---
+            $place = null;
+            $spr = null;
+            $sp = $item->value('dcterms:spatial');
+            if ($sp) {
+                $spr = $sp->valueResource();
+                $place = $spr ? $spr->displayTitle() : trim((string) $sp);
+                if ($place === '') {
+                    $place = null;
+                }
+            }
+
+            // --- Coordinates: the item's own geo:lat / geo:long, else the linked
+            // origin place's coordinates (cached per place id). ---
+            [$lat, $lon] = $readGeo($item);
+            if (($lat === null || $lon === null) && $spr) {
+                $pid = $spr->id();
+                if (!array_key_exists($pid, $placeGeoCache)) {
+                    $placeGeoCache[$pid] = $readGeo($spr);
+                }
+                [$lat, $lon] = $placeGeoCache[$pid];
+            }
+
+            $photos[] = [
+                'id'    => $item->id(),
+                'title' => $item->displayTitle(),
+                'url'   => $item->siteUrl($siteSlug),
+                'thumb' => $media->thumbnailUrl('large'),
+                'full'  => $media->originalUrl() ?: $media->thumbnailUrl('large'),
+                'year'  => $year,
+                'date'  => ($dateStr !== null && $dateStr !== '') ? $dateStr : null,
+                'place' => $place,
+                'lat'   => $lat,
+                'lon'   => $lon,
+            ];
+        }
+        $page++;
+    } while (count($items) === 100);
+}
 
 if (empty($photos)) {
     return; // no images in this set

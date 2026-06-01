@@ -11,3 +11,8 @@ __pycache__/
 # via the admin "Regenerate now" job — not committed. The front-end falls back to
 # the live REST API until it has been generated in the container.
 asset/data/knowledge-graphs/
+
+# Per-item-set photo-gallery JSON is install-specific (media storage hashes) and
+# regenerated in-Omeka by the same job. The Photo Browsing block falls back to
+# live API resolution until it has been generated.
+asset/data/photo-galleries/

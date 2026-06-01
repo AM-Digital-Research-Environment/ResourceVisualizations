@@ -39,6 +39,7 @@ class PrecomputeDashboards extends AbstractJob
                 $dataDir . '/communities',
                 $dataDir . '/geo/countries.geojson',
                 $dataDir . '/knowledge-graphs',
+                $dataDir . '/photo-galleries',
                 static fn (string $message) => $logger->info($message)
             );
             $stats = $runner->run();

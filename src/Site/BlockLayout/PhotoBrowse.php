@@ -78,6 +78,7 @@ class PhotoBrowse extends AbstractBlockLayout
         $templateViewScript = 'common/block-layout/photo-browse')
     {
         $itemSetId = $block->dataValue('item_set');
+        $itemSetId = $itemSetId ? (int) $itemSetId : null;
         $defaultView = $block->dataValue('default_view', 'masonry');
         if (!in_array($defaultView, self::VIEWS, true)) {
             $defaultView = 'masonry';
@@ -85,10 +86,30 @@ class PhotoBrowse extends AbstractBlockLayout
 
         return $view->partial($templateViewScript, [
             'block'       => $block,
-            'itemSetId'   => $itemSetId ? (int) $itemSetId : null,
+            'itemSetId'   => $itemSetId,
             'heading'     => (string) $block->dataValue('heading', ''),
             'defaultView' => $defaultView,
+            'precomputed' => $itemSetId ? $this->loadGallery($itemSetId) : null,
         ]);
+    }
+
+    /**
+     * Load the precomputed gallery for an item set, or null when absent — in
+     * which case the view falls back to resolving the gallery live (so a newly
+     * added block still works before the next "Regenerate"). Written by the
+     * precompute job to asset/data/photo-galleries/{itemSetId}.json.
+     *
+     * @return array{total:int,photos:array<int,array<string,mixed>>}|null
+     */
+    private function loadGallery(int $itemSetId): ?array
+    {
+        // src/Site/BlockLayout/PhotoBrowse.php → module root is three levels up.
+        $file = dirname(__DIR__, 3) . '/asset/data/photo-galleries/' . $itemSetId . '.json';
+        if (!is_readable($file)) {
+            return null;
+        }
+        $data = json_decode((string) file_get_contents($file), true);
+        return (is_array($data) && isset($data['photos']) && is_array($data['photos'])) ? $data : null;
     }
 
     /** Build the `field` markup Omeka's page editor expects. */
