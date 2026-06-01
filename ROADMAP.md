@@ -1,6 +1,6 @@
 # Visualization Roadmap
 
-Comprehensive plan for adding interactive visualizations to all entity types in the Omeka S instance, inspired by the [WissKI Dashboard](https://github.com/fmadore/WissKI-dashboard).
+Comprehensive plan for adding interactive visualizations to all entity types in the Omeka S instance, inspired by the sibling [amira dashboard](https://github.com/AM-Digital-Research-Environment/amira) (formerly the WissKI dashboard).
 
 ## Current State
 
@@ -155,7 +155,7 @@ asset/js/
 
 ## Adding a new visualization — recipes & guardrails
 
-These are the load-bearing conventions that keep the module modular, maintainable, and theme-consistent. They were proven out across the visualization-parity initiative with the sibling [amira dashboard](https://github.com/fmadore/WissKI-dashboard) (tracked against [amira#10](https://github.com/AM-Digital-Research-Environment/amira/issues/10)); that initiative is now **complete**, so its per-phase tracker was retired and its reusable playbook preserved here.
+These are the load-bearing conventions that keep the module modular, maintainable, and theme-consistent. They were proven out across the visualization-parity initiative with the sibling [amira dashboard](https://github.com/AM-Digital-Research-Environment/amira) (tracked against [amira#10](https://github.com/AM-Digital-Research-Environment/amira/issues/10)); that initiative is now **complete**, so its per-phase tracker was retired and its reusable playbook preserved here.
 
 ### The precompute → registry → builder pattern
 

@@ -2,6 +2,8 @@
 
 An [Omeka S](https://omeka.org/s/) module that adds interactive visualizations to resource pages using [ECharts](https://echarts.apache.org/) and [MapLibre GL](https://maplibre.org/).
 
+> Counterpart to the sibling [**amira** dashboard](https://github.com/AM-Digital-Research-Environment/amira) over the same Africa Multiple research data — see [Related project](#related-project).
+
 ## Features
 
 ### Knowledge Graph (Item Pages)
@@ -341,6 +343,17 @@ Loaded via CDN (no bundling required):
 - [ECharts 6](https://echarts.apache.org/)
 - [echarts-wordcloud 2](https://github.com/ecomfe/echarts-wordcloud)
 - [MapLibre GL 5](https://maplibre.org/)
+
+## Related project
+
+This module is the Omeka S half of a two-project initiative with the sibling **[amira dashboard](https://github.com/AM-Digital-Research-Environment/amira)** — a SvelteKit static site (ECharts 6 + MapLibre GL) that browses and visualizes the same **Africa Multiple Cluster of Excellence** research data. (amira was formerly the "WissKI dashboard"; some historical names in `ROADMAP.md` reflect that.)
+
+The two are complementary and were brought to **analytical parity** over the shared dataset — tracked in [AM-Digital-Research-Environment/amira#10](https://github.com/AM-Digital-Research-Environment/amira/issues/10):
+
+- **This module** renders a full per-entity dashboard (7–20 charts) inline on each Omeka resource page, plus cross-cutting site-page blocks — Collection Overview, Compare, Project Explorer, What's New, Discursive Communities, Publications, and Photo Browsing.
+- **amira** provides the broad cross-archive overviews as a standalone site.
+
+A reader should find roughly the same analytical toolkit on either side. The "how to add a visualization" recipes and architecture guardrails distilled from that initiative live in [ROADMAP.md](ROADMAP.md).
 
 ## License
 
