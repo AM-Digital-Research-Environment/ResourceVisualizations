@@ -113,11 +113,29 @@
     function buildSwitcher(activeType, onSwitch) {
         var wrap = document.createElement('div');
         wrap.className = 'compare-type-switcher';
+        wrap.setAttribute('role', 'group');
+        wrap.setAttribute('aria-label', 'Comparison type');
         TYPE_ORDER.forEach(function (t) {
+            var isActive = (t === activeType);
             var btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = 'rv-btn compare-type-btn' + (t === activeType ? ' rv-btn-active' : '');
-            btn.textContent = TYPES[t].label;
+            // A proper icon + label pill — NOT the fixed 2rem icon-button (.rv-btn),
+            // which clipped these text labels into overlapping squares.
+            btn.className = 'compare-type-btn' + (isActive ? ' is-active' : '');
+            btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            // Lucide icon — reuses the dashboard stat-card icon set (ns.statIconFor),
+            // whose alias map already covers institutions → organisations and
+            // subjects → subjectsTags. Omitted gracefully if the helper is absent.
+            var icon = ns.statIconFor ? ns.statIconFor(t) : '';
+            if (icon) {
+                btn.innerHTML = '<svg class="compare-type-icon" xmlns="http://www.w3.org/2000/svg"'
+                    + ' viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+                    + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+                    + icon + '</svg>';
+            }
+            var span = document.createElement('span');
+            span.textContent = TYPES[t].label;
+            btn.appendChild(span);
             btn.addEventListener('click', function () { if (t !== activeType) onSwitch(t); });
             wrap.appendChild(btn);
         });

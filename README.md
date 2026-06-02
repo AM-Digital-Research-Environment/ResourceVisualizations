@@ -15,6 +15,7 @@ A force-directed network showing the item's relationships. For items with rich o
 - Fullscreen mode (Escape to exit)
 - Adjacency highlighting on hover
 - Node cap (150 direct + 30 shared) prevents overload on highly-connected entities
+- Collapsible section — a native `<details>` disclosure mirroring the DRE theme's *Linked resources* accordion (expanded by default; the graph re-fits on expand)
 
 ### Item Location Map (Item Pages)
 
@@ -31,7 +32,7 @@ For a research item that belongs to a project, a compact sparkline of the projec
 
 ### Visualizations Dashboard (Item Pages)
 
-Contextual charts adapted per entity type. All chart elements are clickable, linking to the corresponding Omeka S item page. 2,551 dashboards pre-computed across all entity types.
+Contextual charts adapted per entity type. All chart elements are clickable, linking to the corresponding Omeka S item page. 2,551 dashboards pre-computed across all entity types. The whole dashboard sits in a collapsible `<details>` header (matching the Knowledge Graph and the theme's *Linked resources* accordion); charts re-fit when a collapsed section is re-opened.
 
 #### Charts by Entity Type
 

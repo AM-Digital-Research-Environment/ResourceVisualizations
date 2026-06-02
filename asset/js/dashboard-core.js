@@ -533,4 +533,19 @@
             ns._allMaps.forEach(function (m) { try { m.map.resize(); } catch (e) {} });
         }, 100);
     });
+
+    // Re-fit charts/maps when a collapsible section (.rv-collapsible) is expanded:
+    // a chart sized while its panel was hidden (the closed <details> uses
+    // content-visibility) needs a resize once the panel is visible again. The
+    // `toggle` event does not bubble, so listen in the capture phase. Mirrors the
+    // working knowledge-graph fullscreen resize.
+    document.addEventListener('toggle', function (e) {
+        var d = e.target;
+        if (!d || !d.classList || !d.classList.contains('rv-collapsible') || !d.open) return;
+        requestAnimationFrame(function () {
+            ns.pruneCharts();
+            ns._allCharts.forEach(function (c) { try { c.resize(); } catch (e) {} });
+            ns._allMaps.forEach(function (m) { try { m.map.resize(); } catch (e) {} });
+        });
+    }, true);
 })();

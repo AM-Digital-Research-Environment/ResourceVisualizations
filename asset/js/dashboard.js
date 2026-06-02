@@ -25,7 +25,7 @@
     /*  Render dashboard                                                   */
     /* ------------------------------------------------------------------ */
 
-    function renderDashboard(container, data, siteBase) {
+    function renderDashboard(container, data, siteBase, collapsible) {
         var layout = (ns.LAYOUTS && ns.LAYOUTS[data.resourceType]) || ns.DEFAULT_LAYOUT;
         var chartKeys = layout.order;
 
@@ -33,13 +33,10 @@
         // no `stats` array, so this is empty for them).
         var statsHtml = (ns.renderStatCards && data.stats) ? ns.renderStatCards(data.stats) : '';
 
-        var html = statsHtml
-            + '<div class="dashboard-header">'
-            + '<h3>Visualizations</h3>'
-            + '<span class="dashboard-total">' + (data.totalItems || 0) + ' items</span>'
-            + '</div>'
-            + '<div class="dashboard-charts">';
+        var headInner = '<h3>Visualizations</h3>'
+            + '<span class="dashboard-total">' + (data.totalItems || 0) + ' items</span>';
 
+        var chartsHtml = '<div class="dashboard-charts">';
         chartKeys.forEach(function (key) {
             var d = data[key];
             var hasData = Array.isArray(d) ? d.length > 0 : (d && Object.keys(d).length > 0);
@@ -49,14 +46,35 @@
             var wide = layout.wide.indexOf(key) >= 0 ? ' chart-panel-wide' : '';
             var tall = layout.tall.indexOf(key) >= 0 ? ' chart-container-tall' : '';
             var desc = (ns.CHART_DESCRIPTIONS && ns.CHART_DESCRIPTIONS[key]) || '';
-            html += '<div class="chart-panel' + wide + '">'
+            chartsHtml += '<div class="chart-panel' + wide + '">'
                 + '<h4>' + ((ns.CHART_LABELS && ns.CHART_LABELS[key]) || key) + '</h4>'
                 + (desc ? '<p class="chart-description">' + desc + '</p>' : '')
                 + '<div class="chart-container' + tall + '" data-chart="' + key + '"></div>'
                 + '</div>';
         });
-        html += '</div>';
-        container.innerHTML = html;
+        chartsHtml += '</div>';
+
+        // The async dashboards (Collection Overview, Publications, item-page
+        // Visualizations) wrap their header + charts in a collapsible disclosure
+        // that matches the DRE theme's "Linked resources" accordion. The shared
+        // render path (inline mode, Project Explorer) leaves `collapsible`
+        // undefined and keeps the flat layout it has always used.
+        if (collapsible) {
+            container.innerHTML = '<details class="rv-collapsible" open>'
+                + '<summary class="rv-collapsible__head">'
+                + headInner
+                + '<span class="rv-collapsible__chevron" aria-hidden="true"></span>'
+                + '</summary>'
+                + '<div class="rv-collapsible__panel">'
+                + statsHtml
+                + chartsHtml
+                + '</div>'
+                + '</details>';
+        } else {
+            container.innerHTML = statsHtml
+                + '<div class="dashboard-header">' + headInner + '</div>'
+                + chartsHtml;
+        }
 
         chartKeys.forEach(function (key) {
             var el = container.querySelector('[data-chart="' + key + '"]');
@@ -68,7 +86,9 @@
             }
         });
         // Window resizing + light/dark theme changes are handled globally in
-        // dashboard-core.js (ns.refresh / the global resize handler).
+        // dashboard-core.js (ns.refresh / the global resize handler). Re-fitting
+        // charts after a collapsed panel re-opens is handled by the `toggle`
+        // listener there too.
     }
 
     // Expose the render loop so other controllers (e.g. Project Explorer) reuse
@@ -93,7 +113,7 @@
         }).then(function (data) {
             if (!data || !data.totalItems) { container.innerHTML = ''; return; }
             container.innerHTML = '';
-            renderDashboard(container, data, siteBase);
+            renderDashboard(container, data, siteBase, true);
         }).catch(function () { container.innerHTML = ''; });
     }
 

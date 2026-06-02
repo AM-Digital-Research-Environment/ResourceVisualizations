@@ -16,21 +16,26 @@ $siteSlug = $this->currentSite()->slug();
 $resourceClass = $resource->resourceClass();
 ?>
 
-<div class="resource-vis-block knowledge-graph-block">
-    <h3><?= $this->translate('Knowledge Graph') ?></h3>
-    <div class="knowledge-graph-toolbar">
-        <button type="button" class="rv-btn rv-fullscreen-toggle" aria-label="<?= $this->escapeHtmlAttr($this->translate('Toggle fullscreen')) ?>">
-            <span class="rv-icon-expand">&#x26F6;</span>
-        </button>
-    </div>
-    <div class="knowledge-graph-container"
-         data-item-id="<?= $resource->id() ?>"
-         data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
-         data-api-base="<?= $this->escapeHtmlAttr($this->basePath() . '/api') ?>"
-         data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">
-        <div class="rv-loading">
-            <div class="rv-spinner"></div>
-            <span><?= $this->translate('Loading knowledge graph…') ?></span>
+<details class="resource-vis-block knowledge-graph-block rv-collapsible" open>
+    <summary class="rv-collapsible__head">
+        <h3><?= $this->translate('Knowledge Graph') ?></h3>
+        <span class="rv-collapsible__chevron" aria-hidden="true"></span>
+    </summary>
+    <div class="rv-collapsible__panel">
+        <div class="knowledge-graph-toolbar">
+            <button type="button" class="rv-btn rv-fullscreen-toggle" aria-label="<?= $this->escapeHtmlAttr($this->translate('Toggle fullscreen')) ?>">
+                <span class="rv-icon-expand">&#x26F6;</span>
+            </button>
+        </div>
+        <div class="knowledge-graph-container"
+             data-item-id="<?= $resource->id() ?>"
+             data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
+             data-api-base="<?= $this->escapeHtmlAttr($this->basePath() . '/api') ?>"
+             data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">
+            <div class="rv-loading">
+                <div class="rv-spinner"></div>
+                <span><?= $this->translate('Loading knowledge graph…') ?></span>
+            </div>
         </div>
     </div>
-</div>
+</details>

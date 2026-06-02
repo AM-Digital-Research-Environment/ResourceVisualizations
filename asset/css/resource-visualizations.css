@@ -108,6 +108,84 @@ body {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Collapsible section                                                 */
+/*                                                                      */
+/*  Mirrors the DRE theme's "Linked resources" disclosure: a native     */
+/*  <details> with a summary head (heading + chevron) over a panel.     */
+/*  Used by the Knowledge Graph block and the async dashboards so the    */
+/*  heavy visualizations can be collapsed. Expanded by default; charts   */
+/*  re-fit on re-expand (see the `toggle` handler in dashboard-core.js). */
+/* ------------------------------------------------------------------ */
+
+details.rv-collapsible {
+    display: block;
+}
+
+/* Summary head — heading on the left, a chevron that flips on the right.
+   The whole bar toggles the panel. */
+.rv-collapsible__head {
+    list-style: none;               /* strip the native disclosure triangle… */
+    display: flex;                  /* …and flex display drops the list marker */
+    align-items: center;
+    gap: 1rem;
+    margin: 0;
+    padding: 0.4rem 0;
+    cursor: pointer;
+    border-bottom: 1px solid var(--rv-border);
+}
+
+.rv-collapsible__head::-webkit-details-marker {
+    display: none;
+}
+
+.rv-collapsible__head:focus-visible {
+    outline: 2px solid var(--rv-accent);
+    outline-offset: 3px;
+    border-radius: var(--rv-radius-sm);
+}
+
+/* Reuse the block heading style; just neutralise its margin in the flex head. */
+.rv-collapsible__head h3 {
+    margin: 0;
+    transition: color 0.15s ease;
+}
+
+.rv-collapsible__head:hover h3 {
+    color: var(--rv-accent);
+}
+
+/* CSS chevron: points down when closed, flips up when open. */
+.rv-collapsible__chevron {
+    flex-shrink: 0;
+    margin-left: auto;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-right: 2px solid var(--rv-text-color);
+    border-bottom: 2px solid var(--rv-text-color);
+    transform: translateY(-2px) rotate(45deg);
+    transition: transform 0.2s ease, border-color 0.15s ease;
+}
+
+.rv-collapsible__head:hover .rv-collapsible__chevron {
+    border-color: var(--rv-accent);
+}
+
+details.rv-collapsible[open] > .rv-collapsible__head .rv-collapsible__chevron {
+    transform: translateY(1px) rotate(225deg);
+}
+
+.rv-collapsible__panel {
+    padding-top: 1.25rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rv-collapsible__chevron,
+    .rv-collapsible__head h3 {
+        transition: none;
+    }
+}
+
+/* ------------------------------------------------------------------ */
 /*  Knowledge graph                                                    */
 /* ------------------------------------------------------------------ */
 
@@ -149,6 +227,26 @@ body {
 .knowledge-graph-block.rv-fullscreen .knowledge-graph-toolbar {
     top: 1rem;
     right: 1rem;
+}
+
+/* Collapsible knowledge graph — the summary head sits at the top, so the
+   floating toolbar is positioned within the panel (over the graph's corner),
+   and fullscreen hides the head so the graph fills the screen. */
+.knowledge-graph-block .rv-collapsible__panel {
+    position: relative;
+}
+
+.knowledge-graph-block .knowledge-graph-toolbar {
+    top: 1.6rem;
+    right: 0.5rem;
+}
+
+.knowledge-graph-block.rv-fullscreen > .rv-collapsible__head {
+    display: none;
+}
+
+.knowledge-graph-block.rv-fullscreen .rv-collapsible__panel {
+    padding-top: 0;
 }
 
 /* ------------------------------------------------------------------ */
@@ -796,16 +894,54 @@ button.rv-toolbar-btn:focus-visible,
     padding-bottom: 0.45rem;
 }
 
-/* Compare: in-page entity-type switcher (Compare any-entity block) */
+/* Compare: in-page entity-type switcher (Compare any-entity block) — a row of
+   icon + label pills; the active type is a filled accent pill. */
 .compare-type-switcher {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.4rem;
+    gap: 0.5rem;
     margin-bottom: 1.25rem;
 }
 
 .compare-type-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.85rem;
     font-size: 0.85rem;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--rv-text-strong);
+    background: var(--rv-bg);
+    border: 1px solid var(--rv-border);
+    border-radius: var(--rv-radius);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.compare-type-btn:hover {
+    background: var(--rv-bg-raised);
+    border-color: var(--rv-border-strong);
+    color: var(--rv-heading-color);
+}
+
+.compare-type-btn:focus-visible {
+    outline: none;
+    box-shadow: var(--rv-focus-ring);
+}
+
+.compare-type-btn.is-active {
+    background: var(--rv-accent);
+    border-color: var(--rv-accent);
+    color: var(--rv-accent-contrast);
+}
+
+.compare-type-icon {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
 }
 
 /* Compare: overlaid A/B radar headline */
