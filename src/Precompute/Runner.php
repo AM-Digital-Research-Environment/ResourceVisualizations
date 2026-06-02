@@ -38,6 +38,7 @@ final class Runner
     private const ITEM_SET_INSTITUTION = 110;
     private const ITEM_SET_SUBJECT = 1852;
     private const ITEM_SET_PROJECT = 20;
+    private const ITEM_SET_PUBLICATIONS = 29918;
 
     // Parent item IDs for category overviews.
     private const OVERVIEW_GENRE = 22198;
@@ -370,7 +371,6 @@ final class Runner
         }
 
         $this->saveIndex('people-index.json', $index);
-        $this->statCounts['people'] = count($index);
     }
 
     private function generateInstitutions(): void
@@ -426,7 +426,6 @@ final class Runner
         }
 
         $this->saveIndex('institutions-index.json', $index);
-        $this->statCounts['organisations'] = count($index);
     }
 
     private function generateLocations(): void
@@ -483,7 +482,6 @@ final class Runner
         }
 
         $this->saveIndex('subjects-index.json', $index);
-        $this->statCounts['subjectsTags'] = count($index);
     }
 
     /** @return int Number of set members that have ≥1 linked item (used for stat cards). */
@@ -758,23 +756,26 @@ final class Runner
      */
     private function buildOverviewStats(int $researchItemCount, int $countries): array
     {
-        $publications = count($this->itemsWhere(
-            static fn ($info) => str_starts_with($info['class_term'] ?? '', 'fabio:')
-        ));
+        // People, Organisations, Subjects & Tags and Cluster Publications are the
+        // sizes of their authority item sets (Persons / Institutions / Subjects /
+        // Publications) — the full curated count, not just entities linked to a
+        // research item. Projects, Locations, Languages and Resource Types stay as
+        // the "present in the collection" counts gathered by the index passes.
+        $setCount = fn (int $setId): int => count($this->itemSets[$setId] ?? []);
 
         // Assemble via the reusable component — it casts values, drops empty
         // cards (Research Items aside, always > 0) and clears null subtitles.
         return Aggregators::buildStatCards([
             ['key' => 'researchItems', 'label' => 'Research Items', 'value' => $researchItemCount],
-            ['key' => 'projects', 'label' => 'Projects', 'value' => $this->statCounts['projects'] ?? 0],
-            ['key' => 'people', 'label' => 'People', 'value' => $this->statCounts['people'] ?? 0],
-            ['key' => 'organisations', 'label' => 'Organisations', 'value' => $this->statCounts['organisations'] ?? 0],
+            ['key' => 'projects', 'label' => 'Projects (with items)', 'value' => $this->statCounts['projects'] ?? 0],
+            ['key' => 'people', 'label' => 'People', 'value' => $setCount(self::ITEM_SET_PERSON)],
+            ['key' => 'organisations', 'label' => 'Organisations', 'value' => $setCount(self::ITEM_SET_INSTITUTION)],
             ['key' => 'locations', 'label' => 'Locations', 'value' => $this->statCounts['locations'] ?? 0,
                 'subtitle' => $countries > 0 ? ('in ' . $countries . ' ' . ($countries === 1 ? 'country' : 'countries')) : null],
             ['key' => 'languages', 'label' => 'Languages', 'value' => $this->statCounts['languages'] ?? 0],
-            ['key' => 'subjectsTags', 'label' => 'Subjects & Tags', 'value' => $this->statCounts['subjectsTags'] ?? 0],
+            ['key' => 'subjectsTags', 'label' => 'Subjects & Tags', 'value' => $setCount(self::ITEM_SET_SUBJECT)],
             ['key' => 'resourceTypes', 'label' => 'Resource Types', 'value' => $this->statCounts['resourceTypes'] ?? 0],
-            ['key' => 'publications', 'label' => 'Cluster Publications', 'value' => $publications],
+            ['key' => 'publications', 'label' => 'Cluster Publications', 'value' => $setCount(self::ITEM_SET_PUBLICATIONS)],
         ]);
     }
 

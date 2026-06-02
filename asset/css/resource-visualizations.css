@@ -1016,6 +1016,14 @@ button.rv-toolbar-btn:focus-visible,
 /*  Collection Overview — summary stat cards (amira-style)             */
 /* ------------------------------------------------------------------ */
 
+/* The Collection Overview / Publications blocks lead with the stat-card grid
+   directly under the page-title block, so the module's default 2rem top margin
+   stacks with the heading and leaves too big a gap. Drop it for those blocks
+   only (embedded item-page dashboards have no .rv-stat-cards, so are untouched). */
+.resource-vis-block:has(.rv-stat-cards) {
+    margin-top: 0;
+}
+
 .rv-stat-cards {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
