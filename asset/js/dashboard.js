@@ -29,7 +29,12 @@
         var layout = (ns.LAYOUTS && ns.LAYOUTS[data.resourceType]) || ns.DEFAULT_LAYOUT;
         var chartKeys = layout.order;
 
-        var html = '<div class="dashboard-header">'
+        // Summary stat cards (Collection Overview only — other dashboards carry
+        // no `stats` array, so this is empty for them).
+        var statsHtml = (ns.renderStatCards && data.stats) ? ns.renderStatCards(data.stats) : '';
+
+        var html = statsHtml
+            + '<div class="dashboard-header">'
             + '<h3>Visualizations</h3>'
             + '<span class="dashboard-total">' + (data.totalItems || 0) + ' items</span>'
             + '</div>'

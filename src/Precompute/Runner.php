@@ -65,6 +65,13 @@ final class Runner
     private array $primaryMedia = [];
     private array $countryIndex = [];
 
+    /**
+     * Entity counts for the Collection Overview stat cards, filled by the
+     * per-entity index passes (each counts entities that have ≥1 linked item)
+     * and read by {@see self::buildOverviewStats()}.
+     */
+    private array $statCounts = [];
+
     /** Safety bound on a single gallery's serialised records (matches the block). */
     private const MAX_GALLERY_PHOTOS = 600;
 
@@ -138,8 +145,8 @@ final class Runner
         $this->generateInstitutions();
         $this->generateLocations();
         $this->generateSubjects();
-        $this->generateByItemSet(self::ITEM_SET_RESOURCE_TYPE, 'dcterms:type', 'Resource Types', 'authority', ['types']);
-        $this->generateByItemSet(self::ITEM_SET_LANGUAGE, 'dcterms:language', 'Languages', 'authority', ['languages'], 'languages-index.json');
+        $this->statCounts['resourceTypes'] = $this->generateByItemSet(self::ITEM_SET_RESOURCE_TYPE, 'dcterms:type', 'Resource Types', 'authority', ['types']);
+        $this->statCounts['languages'] = $this->generateByItemSet(self::ITEM_SET_LANGUAGE, 'dcterms:language', 'Languages', 'authority', ['languages'], 'languages-index.json');
         $this->generateByItemSet(self::ITEM_SET_GENRE, 'dcterms:format', 'Genres', 'genre', []);
         $this->generateCategoryOverviews();
         $this->generateCollectionOverview();
@@ -295,6 +302,7 @@ final class Runner
 
         usort($projectIndex, static fn ($a, $b) => strcmp((string) $a['name'], (string) $b['name']));
         file_put_contents($this->outputDir . '/projects-index.json', json_encode($projectIndex, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $this->statCounts['projects'] = count($projectIndex);
     }
 
     private function generatePeople(): void
@@ -362,6 +370,7 @@ final class Runner
         }
 
         $this->saveIndex('people-index.json', $index);
+        $this->statCounts['people'] = count($index);
     }
 
     private function generateInstitutions(): void
@@ -417,17 +426,20 @@ final class Runner
         }
 
         $this->saveIndex('institutions-index.json', $index);
+        $this->statCounts['organisations'] = count($index);
     }
 
     private function generateLocations(): void
     {
         $locs = $this->itemsWhere(fn ($info) => ($info['template_id'] ?? null) === self::TEMPLATE_LOCATION);
         $this->log('=== Locations (' . count($locs) . ') ===');
+        $withItems = 0;
         foreach ($locs as $lid => $linfo) {
             $itemIds = Aggregators::findItemsLinkingTo($lid, $this->reverseLinks, ['dcterms:spatial', 'dcterms:provenance']);
             if (!$itemIds) {
                 continue;
             }
+            $withItems++;
             $dashboard = Aggregators::aggregateItems($itemIds, $this->items, $this->links, $this->itemYear, $this->geo);
             if (isset($this->geo[$lid])) {
                 $g = $this->geo[$lid];
@@ -439,6 +451,7 @@ final class Runner
             $dashboard['resourceType'] = self::TEMPLATE_RESOURCE_TYPE[$this->items[$lid]['template_id']] ?? 'location';
             $this->save($lid, $dashboard);
         }
+        $this->statCounts['locations'] = $withItems;
     }
 
     private function generateSubjects(): void
@@ -470,9 +483,11 @@ final class Runner
         }
 
         $this->saveIndex('subjects-index.json', $index);
+        $this->statCounts['subjectsTags'] = count($index);
     }
 
-    private function generateByItemSet(int $setId, string $term, string $label, string $resourceType, array $excludeKeys, ?string $indexFile = null): void
+    /** @return int Number of set members that have ≥1 linked item (used for stat cards). */
+    private function generateByItemSet(int $setId, string $term, string $label, string $resourceType, array $excludeKeys, ?string $indexFile = null): int
     {
         $setItems = $this->itemSets[$setId] ?? [];
         $this->log('=== ' . $label . ' (item set ' . $setId . ', ' . count($setItems) . ') ===');
@@ -493,6 +508,7 @@ final class Runner
         if ($indexFile !== null) {
             $this->saveIndex($indexFile, $index);
         }
+        return count($index);
     }
 
     /* ------------------------------------------------------------------ */
@@ -717,8 +733,49 @@ final class Runner
         if ($v = Aggregators::buildBoxplot($sections, $this->childrenOf)) {
             $dashboard['boxplot'] = $v;
         }
+        // amira-style summary stat cards. Country count comes from the choropleth
+        // just built above (one entry per distinct country of origin).
+        $countries = is_array($dashboard['choropleth'] ?? null) ? count($dashboard['choropleth']) : 0;
+        $dashboard['stats'] = $this->buildOverviewStats(count($researchItems), $countries);
         $dashboard['resourceType'] = 'section';
         $this->save('collection-overview', $dashboard);
+    }
+
+    /**
+     * Build the ordered summary stat cards for the Collection Overview, mirroring
+     * the amira dashboard's overview cards. Each entry is
+     * `{key, label, value[, subtitle]}`; the front-end (dashboard-stat-cards.js)
+     * pairs the `key` with a lucide icon and renders the grid.
+     *
+     * Counts come from the per-entity index passes that already ran in run()
+     * (projects / people / organisations / subjects&tags / languages / resource
+     * types — each counting entities that have ≥1 linked item), so the cards
+     * equal what a reader gets by browsing each category. Cluster Publications is
+     * counted here from the fabio:-classed corpus. Cards with a zero count are
+     * dropped to keep the grid tidy in non-amira installs.
+     *
+     * @return list<array{key:string,label:string,value:int,subtitle?:string}>
+     */
+    private function buildOverviewStats(int $researchItemCount, int $countries): array
+    {
+        $publications = count($this->itemsWhere(
+            static fn ($info) => str_starts_with($info['class_term'] ?? '', 'fabio:')
+        ));
+
+        // Assemble via the reusable component — it casts values, drops empty
+        // cards (Research Items aside, always > 0) and clears null subtitles.
+        return Aggregators::buildStatCards([
+            ['key' => 'researchItems', 'label' => 'Research Items', 'value' => $researchItemCount],
+            ['key' => 'projects', 'label' => 'Projects', 'value' => $this->statCounts['projects'] ?? 0],
+            ['key' => 'people', 'label' => 'People', 'value' => $this->statCounts['people'] ?? 0],
+            ['key' => 'organisations', 'label' => 'Organisations', 'value' => $this->statCounts['organisations'] ?? 0],
+            ['key' => 'locations', 'label' => 'Locations', 'value' => $this->statCounts['locations'] ?? 0,
+                'subtitle' => $countries > 0 ? ('in ' . $countries . ' ' . ($countries === 1 ? 'country' : 'countries')) : null],
+            ['key' => 'languages', 'label' => 'Languages', 'value' => $this->statCounts['languages'] ?? 0],
+            ['key' => 'subjectsTags', 'label' => 'Subjects & Tags', 'value' => $this->statCounts['subjectsTags'] ?? 0],
+            ['key' => 'resourceTypes', 'label' => 'Resource Types', 'value' => $this->statCounts['resourceTypes'] ?? 0],
+            ['key' => 'publications', 'label' => 'Cluster Publications', 'value' => $publications],
+        ]);
     }
 
     private function generateCommunities(): void
@@ -779,6 +836,34 @@ final class Runner
         if ($v = Aggregators::buildSubjectTrends($pubs, $this->links, $this->items, $this->itemYear)) {
             $dashboard['subjectTrends'] = $v;
         }
+
+        // Reusable stat cards, mirroring the amira Publications overview: total,
+        // distinct resource templates (types), languages, and authors matched to
+        // a Person record. "Matched" mirrors buildTopAuthors — a bibo:authorList
+        // link to a titled resource, deduped by name.
+        $templateIds = [];
+        $matchedAuthors = [];
+        foreach ($pubs as $iid) {
+            $tid = $this->items[$iid]['template_id'] ?? null;
+            if ($tid !== null) {
+                $templateIds[$tid] = true;
+            }
+            foreach ($this->links[$iid] ?? [] as [$term, , $vrid]) {
+                if ($term === 'bibo:authorList') {
+                    $name = trim((string) ($this->items[$vrid]['title'] ?? ''));
+                    if ($name !== '') {
+                        $matchedAuthors[$name] = true;
+                    }
+                }
+            }
+        }
+        $dashboard['stats'] = Aggregators::buildStatCards([
+            ['key' => 'publications', 'label' => 'Publications', 'value' => count($pubs)],
+            ['key' => 'types', 'label' => 'Types', 'value' => count($templateIds)],
+            ['key' => 'languages', 'label' => 'Languages', 'value' => count($dashboard['languages'] ?? [])],
+            ['key' => 'authors', 'label' => 'Authors', 'value' => count($matchedAuthors), 'subtitle' => 'matched to people'],
+        ]);
+
         $dashboard['resourceType'] = 'publications';
         $this->save('publications', $dashboard);
         $this->log('  publications dashboard written (' . count($pubs) . ' items)');

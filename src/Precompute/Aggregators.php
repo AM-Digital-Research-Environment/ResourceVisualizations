@@ -110,6 +110,43 @@ final class Aggregators
         ];
     }
 
+    /**
+     * Normalise a list of stat-card specs into the render-ready `stats` array
+     * the front-end draws (dashboard-stat-cards.js → ns.renderStatCards).
+     *
+     * The reusable stat-card component on the precompute side: any generator
+     * computes its own counts (the standard PHP precompute way) and passes rows
+     * shaped as `['key'=>, 'label'=>, 'value'=>, 'subtitle'=>?]`; this returns
+     * the cleaned list — value cast to int, cards with a non-positive value
+     * dropped, empty / null subtitles removed, and the given order preserved.
+     *
+     * The card `key` selects the lucide icon on the front-end (see STAT_ICONS /
+     * the alias map in dashboard-stat-cards.js); unknown keys fall back to a
+     * generic icon there, so any new card still renders a badge.
+     *
+     * @param array<array{key?:string,label?:string,value?:int|float,subtitle?:?string}> $cards
+     * @return list<array{key:string,label:string,value:int,subtitle?:string}>
+     */
+    public static function buildStatCards(array $cards): array
+    {
+        $out = [];
+        foreach ($cards as $card) {
+            $key = (string) ($card['key'] ?? '');
+            $label = (string) ($card['label'] ?? '');
+            $value = (int) ($card['value'] ?? 0);
+            if ($key === '' || $label === '' || $value <= 0) {
+                continue;
+            }
+            $row = ['key' => $key, 'label' => $label, 'value' => $value];
+            $subtitle = $card['subtitle'] ?? null;
+            if ($subtitle !== null && (string) $subtitle !== '') {
+                $row['subtitle'] = (string) $subtitle;
+            }
+            $out[] = $row;
+        }
+        return $out;
+    }
+
     /** Build resource type x language heatmap data. */
     public static function buildHeatmap(array $itemIds, array $links, array $items): ?array
     {

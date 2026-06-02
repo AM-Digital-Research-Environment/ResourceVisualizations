@@ -88,6 +88,14 @@ Parent/category items get aggregate dashboards spanning their entire item set. E
 | Tags | 22199 | Top tags (773) | Stacked timeline, types, languages, roles, heatmap, subjects, subject trends |
 | Research Project | 3346 | Top projects (36) | Stacked timeline, language timeline, gantt, beeswarm, types, languages, roles, heatmap, subjects, subject trends, choropleth |
 
+### Collection Overview
+
+A collection-wide dashboard added as a **site-page block** (Admin > Sites > [site] > Pages); it loads `asset/data/item-dashboards/collection-overview.json` and aggregates every research item into one view.
+
+It opens with a grid of **summary stat cards** — Research Items, Projects, People, Organisations, Locations (with the number of countries they span), Languages, Subjects & Tags, Resource Types, and Cluster Publications — each with a [lucide](https://lucide.dev) icon, mirroring the [amira dashboard](https://amira.africamultiple.uni-bayreuth.de/) overview. Counts come from the precompute (entities that have at least one linked research item), so each card equals what a reader gets by browsing that category; cards with a zero count are dropped. Beneath the cards sit the standard collection-wide charts (stacked timeline, resource-type / language breakdowns, subject trends, co-occurrence chord, sankey, sunburst, geo flows, choropleth, acquisition calendar, time-aware chord, and an items-per-project box plot).
+
+The stat cards are a **reusable component**: any dashboard that emits a precomputed `stats` array (`Aggregators::buildStatCards()` on the PHP side, `ns.renderStatCards()` on the front end) gets the same icon grid — see *Recipe C* in [ROADMAP.md](ROADMAP.md). Like every dataset in this module, the cards refresh on **"Regenerate now"** — until the first regeneration after installing this version, the overview renders its charts without the stat cards (the `stats` array is absent, so they are simply skipped).
+
 ### Project Explorer
 
 A single project selector that retunes a full project dashboard (~12 charts) beneath it — a meta-page over the precomputed per-project dashboards, with no navigation. Added as a **site-page block** (Admin > Sites > [site] > Pages); deep-links via `?project=ID`.
@@ -107,6 +115,7 @@ A collection-wide subject co-occurrence network: subjects that appear together a
 
 A bibliographic analytics view over every `fabio:`-classed publication (articles, books, chapters, working papers, …). Added as a **site-page block** (Admin > Sites > [site] > Pages), it loads `asset/data/item-dashboards/publications.json` and shows:
 
+- **summary stat cards** (publications, types, languages, authors matched to people) — the same reusable component as the Collection Overview;
 - a **by-resource-template** breakdown (Article vs. Book vs. Chapter …) and publications per year;
 - **top venues** (`dcterms:isPartOf`) and **top authors** (`bibo:authorList`, unifying literal names with linked Person records);
 - a **co-author network** — authors who appear together on a publication, clustered into collaboration communities (Louvain), with authors that match a Person record **ringed** to distinguish them from external names;
@@ -234,6 +243,7 @@ ResourceVisualizations/
 │   │   ├── dashboard-compare.js                  # Compare controller (any entity type)
 │   │   ├── dashboard-explorer.js                 # Project Explorer controller
 │   │   ├── item-set-photo-views.js               # Photo Browsing: masonry / map / timeline + lightbox
+│   │   ├── dashboard-stat-cards.js               # Reusable summary stat cards (lucide icon + value); renders any dashboard's `stats`
 │   │   ├── dashboard-registry.js                 # CHART_MAP, labels, descriptions
 │   │   └── dashboard.js                          # Orchestrator: render + async/inline init
 │   ├── css/

@@ -217,6 +217,19 @@ The module styles itself entirely from the [DRE theme](https://github.com/AM-Dig
 | 5 | *(if data-driven)* `src/Precompute/{Aggregators,Runner}.php` | New aggregator emitting an index/feed JSON under `asset/data/`. |
 | 6 | README | Document adding the block (Admin → Sites → [site] → Pages). |
 
+### Recipe C — add stat cards to a dashboard
+
+Stat cards (icon + value + label + optional subtitle) are a reusable component spanning precompute → JSON → render. Any dashboard that emits a `stats` array gets a card grid at the top — no template or controller change.
+
+| Step | File | Change |
+|---|---|---|
+| 1 | `src/Precompute/Runner.php` | In the generator, compute the counts (the standard precompute way) and `$dashboard['stats'] = Aggregators::buildStatCards([['key'=>…,'label'=>…,'value'=>…,'subtitle'=>…?], …]);`. The assembler casts values, drops non-positive cards and clears empty subtitles. |
+| 2 | `asset/js/dashboard-stat-cards.js` | *(only if a card needs a new glyph)* add the lucide path to `ICONS` under its `key`, or map a synonym in `ALIAS`. Unknown keys already fall back to a generic icon. |
+| 3 | `tests/AggregatorsTest.php` | Cover any non-trivial counting you added. (`buildStatCards` itself is already tested.) |
+| 4 | Admin → Regenerate now | Rebuild JSON in-Omeka. |
+
+The renderer (`ns.renderStatCards`, wired into `dashboard.js`) is shared, so the card grid is consistent everywhere and follows the DRE light/dark theme. The Collection Overview is the first consumer (`Runner::buildOverviewStats`).
+
 ## Regeneration
 
 After data changes, click **Admin → Modules → Resource Visualizations → "Regenerate now"** — one in-Omeka, pure-PHP job rebuilds the dashboards, communities, publications **and** the per-item knowledge graphs. No Python.

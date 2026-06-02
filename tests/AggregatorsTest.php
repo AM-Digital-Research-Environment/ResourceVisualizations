@@ -237,5 +237,24 @@ $w3 = $wn['windows'][0];
 check($w3['months'] === 3 && $w3['count'] === 2, 'buildWhatsNew 3-month window has 2 recent items');
 check(count($w3['topProjects']) === 1 && $w3['topProjects'][0]['itemId'] === 50 && $w3['topProjects'][0]['value'] === 2, 'buildWhatsNew top project counts recent items');
 
+// --- buildStatCards (reusable stat-card assembler) ---
+check(A::buildStatCards([
+    ['key' => 'researchItems', 'label' => 'Research Items', 'value' => 3975],
+    ['key' => 'projects', 'label' => 'Projects', 'value' => 92],
+]) === [
+    ['key' => 'researchItems', 'label' => 'Research Items', 'value' => 3975],
+    ['key' => 'projects', 'label' => 'Projects', 'value' => 92],
+], 'buildStatCards passes well-formed cards through in order');
+check(A::buildStatCards([
+    ['key' => 'a', 'label' => 'A', 'value' => 5],
+    ['key' => 'b', 'label' => 'B', 'value' => 0],
+    ['key' => 'c', 'label' => 'C', 'value' => -3],
+]) === [['key' => 'a', 'label' => 'A', 'value' => 5]], 'buildStatCards drops zero / negative cards');
+check(A::buildStatCards([['key' => 'x', 'label' => 'X', 'value' => '12']]) === [['key' => 'x', 'label' => 'X', 'value' => 12]], 'buildStatCards casts value to int');
+check(A::buildStatCards([['key' => 'loc', 'label' => 'Locations', 'value' => 142, 'subtitle' => 'in 57 countries']]) === [['key' => 'loc', 'label' => 'Locations', 'value' => 142, 'subtitle' => 'in 57 countries']], 'buildStatCards keeps a non-empty subtitle');
+check(A::buildStatCards([['key' => 'loc', 'label' => 'Locations', 'value' => 1, 'subtitle' => null]]) === [['key' => 'loc', 'label' => 'Locations', 'value' => 1]], 'buildStatCards strips a null subtitle');
+check(A::buildStatCards([['label' => 'No key', 'value' => 9], ['key' => 'k', 'value' => 9]]) === [], 'buildStatCards drops cards missing key or label');
+check(A::buildStatCards([]) === [], 'buildStatCards empty input -> empty list');
+
 echo $failures ? "\n$failures FAILURE(S)\n" : "\nALL PHP AGGREGATOR TESTS PASS\n";
 exit($failures ? 1 : 0);
