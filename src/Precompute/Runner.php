@@ -146,8 +146,8 @@ final class Runner
         $this->generateInstitutions();
         $this->generateLocations();
         $this->generateSubjects();
-        $this->statCounts['resourceTypes'] = $this->generateByItemSet(self::ITEM_SET_RESOURCE_TYPE, 'dcterms:type', 'Resource Types', 'authority', ['types']);
-        $this->statCounts['languages'] = $this->generateByItemSet(self::ITEM_SET_LANGUAGE, 'dcterms:language', 'Languages', 'authority', ['languages'], 'languages-index.json');
+        $this->generateByItemSet(self::ITEM_SET_RESOURCE_TYPE, 'dcterms:type', 'Resource Types', 'authority', ['types']);
+        $this->generateByItemSet(self::ITEM_SET_LANGUAGE, 'dcterms:language', 'Languages', 'authority', ['languages'], 'languages-index.json');
         $this->generateByItemSet(self::ITEM_SET_GENRE, 'dcterms:format', 'Genres', 'genre', []);
         $this->generateCategoryOverviews();
         $this->generateCollectionOverview();
@@ -484,8 +484,7 @@ final class Runner
         $this->saveIndex('subjects-index.json', $index);
     }
 
-    /** @return int Number of set members that have ≥1 linked item (used for stat cards). */
-    private function generateByItemSet(int $setId, string $term, string $label, string $resourceType, array $excludeKeys, ?string $indexFile = null): int
+    private function generateByItemSet(int $setId, string $term, string $label, string $resourceType, array $excludeKeys, ?string $indexFile = null): void
     {
         $setItems = $this->itemSets[$setId] ?? [];
         $this->log('=== ' . $label . ' (item set ' . $setId . ', ' . count($setItems) . ') ===');
@@ -506,7 +505,6 @@ final class Runner
         if ($indexFile !== null) {
             $this->saveIndex($indexFile, $index);
         }
-        return count($index);
     }
 
     /* ------------------------------------------------------------------ */
@@ -756,11 +754,11 @@ final class Runner
      */
     private function buildOverviewStats(int $researchItemCount, int $countries): array
     {
-        // People, Organisations, Subjects & Tags and Cluster Publications are the
-        // sizes of their authority item sets (Persons / Institutions / Subjects /
-        // Publications) — the full curated count, not just entities linked to a
-        // research item. Projects, Locations, Languages and Resource Types stay as
-        // the "present in the collection" counts gathered by the index passes.
+        // People, Organisations, Languages, Subjects & Tags, Resource Types and
+        // Cluster Publications are the sizes of their authority item sets — the
+        // full curated count, not just entities linked to a research item.
+        // Projects (with items) and Locations stay as the "present in the
+        // collection" counts gathered by the index passes.
         $setCount = fn (int $setId): int => count($this->itemSets[$setId] ?? []);
 
         // Assemble via the reusable component — it casts values, drops empty
@@ -772,9 +770,9 @@ final class Runner
             ['key' => 'organisations', 'label' => 'Organisations', 'value' => $setCount(self::ITEM_SET_INSTITUTION)],
             ['key' => 'locations', 'label' => 'Locations', 'value' => $this->statCounts['locations'] ?? 0,
                 'subtitle' => $countries > 0 ? ('in ' . $countries . ' ' . ($countries === 1 ? 'country' : 'countries')) : null],
-            ['key' => 'languages', 'label' => 'Languages', 'value' => $this->statCounts['languages'] ?? 0],
+            ['key' => 'languages', 'label' => 'Languages', 'value' => $setCount(self::ITEM_SET_LANGUAGE)],
             ['key' => 'subjectsTags', 'label' => 'Subjects & Tags', 'value' => $setCount(self::ITEM_SET_SUBJECT)],
-            ['key' => 'resourceTypes', 'label' => 'Resource Types', 'value' => $this->statCounts['resourceTypes'] ?? 0],
+            ['key' => 'resourceTypes', 'label' => 'Resource Types', 'value' => $setCount(self::ITEM_SET_RESOURCE_TYPE)],
             ['key' => 'publications', 'label' => 'Cluster Publications', 'value' => $setCount(self::ITEM_SET_PUBLICATIONS)],
         ]);
     }
