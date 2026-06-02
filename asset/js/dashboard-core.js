@@ -27,16 +27,33 @@
 
     var ns = window.RV = window.RV || {};
 
-    // Categorical palette for multi-series charts. Kept theme-independent: the
-    // DRE token set has a 6-colour brand family but charts need up to 20 stable,
-    // mutually-distinct hues, and compare-mode relies on a fixed colour-by-index
-    // mapping. The brand identity is carried by THEME.accent (= --primary).
-    ns.COLORS = [
-        '#22817b', '#e07c3e', '#6b5b95', '#d4a574', '#2c5f7c',
-        '#c5504d', '#4a8c6f', '#8b6f47', '#7c5295', '#cc8963',
-        '#5ba3a0', '#d49b6a', '#8e7cb8', '#e6c9a8', '#4a8aab',
-        '#d87e7a', '#6fb08e', '#a68e6d', '#9e7bb8', '#e0a88a'
+    // Categorical palette for multi-series charts — led by the Africa Multiple
+    // cluster brand colours, then harmonious extensions for charts with many
+    // series. Rebuilt per light/dark by readTheme() (via buildPalette) and
+    // mutated IN PLACE so modules that captured a reference see the update.
+    // Compare-mode still relies on a stable colour-by-index mapping.
+    //
+    //   Cluster brand: Uni-Grün #009260 · Gelb #F59C08 · Hellblau #44B8F2 ·
+    //                  Braun #D57912 · Dunkelblau #00268A · Gold #CCA352
+    //
+    // The dark variant lifts the two darkest brand hues (Uni-Grün, Dunkelblau),
+    // which are near-invisible on the forest-dark surface, and nudges the rest
+    // lighter so every series stays legible.
+    ns._PALETTE_LIGHT = [
+        '#009260', '#f59c08', '#44b8f2', '#d57912', '#00268a', '#cca352',
+        '#0e7c71', '#8a4fb0', '#6fa82e', '#b0392e', '#2e6fe0', '#8c6a2b'
     ];
+    ns._PALETTE_DARK = [
+        '#1fb083', '#f7ae3a', '#7ccbf7', '#ec9a4d', '#6e8ce8', '#dcc084',
+        '#3fb8a5', '#b49be6', '#9ccb4e', '#e8705a', '#6ba0f2', '#cba45e'
+    ];
+
+    /** The cluster categorical palette for the given mode (fresh copy). */
+    ns.buildPalette = function (dark) {
+        return (dark ? ns._PALETTE_DARK : ns._PALETTE_LIGHT).slice();
+    };
+
+    ns.COLORS = ns.buildPalette(false);
 
     // Shared design tokens. Colour values are placeholders here; readTheme()
     // overwrites them in place (so modules that captured `ns.THEME` see updates)
@@ -136,6 +153,33 @@
         }
     };
 
+    /** Parse an 'rgb(r,g,b)' / 'rgba(...)' string to a [r,g,b] array. */
+    function _parseRGB(s) {
+        var m = /(\d+)\D+(\d+)\D+(\d+)/.exec(s || '');
+        return m ? [+m[1], +m[2], +m[3]] : [0, 0, 0];
+    }
+
+    /** Lerp between two browser-parseable colours (incl. oklch / var()); → 'rgb()'. */
+    ns.mix = function (a, b, t) {
+        var pa = _parseRGB(ns.toRGB(a)), pb = _parseRGB(ns.toRGB(b));
+        return 'rgb(' + Math.round(pa[0] + (pb[0] - pa[0]) * t) + ','
+            + Math.round(pa[1] + (pb[1] - pa[1]) * t) + ','
+            + Math.round(pa[2] + (pb[2] - pa[2]) * t) + ')';
+    };
+
+    /**
+     * Five-stop sequential ramp from a faint surface tint (low values) to the
+     * brand accent / Uni-Grün (high values), resolved for the ACTIVE theme. Use
+     * for heatmap / density visualMaps so low cells sit quietly on the panel and
+     * the ramp follows light / dark instead of being locked to a light palette.
+     */
+    ns.accentRamp = function () {
+        var base = ns.cssColor('--surface', ns._darkMode ? '#1e1e1e' : '#ffffff');
+        return [0.86, 0.65, 0.44, 0.22, 0].map(function (r) {
+            return ns.mix(ns.THEME.accent, base, r);
+        });
+    };
+
     /** Whether the active theme is dark: body[data-theme] wins, else system. */
     ns.isDark = function () {
         var attr = document.body && document.body.getAttribute('data-theme');
@@ -147,6 +191,13 @@
     /** Read DRE theme tokens into THEME (in place) and rebuild the ECharts theme. */
     ns.readTheme = function () {
         ns._darkMode = ns.isDark();
+
+        // Re-point the categorical palette to the active light/dark cluster set,
+        // mutating the array in place so captured references stay valid.
+        var pal = ns.buildPalette(ns._darkMode);
+        ns.COLORS.length = 0;
+        Array.prototype.push.apply(ns.COLORS, pal);
+
         var t = ns.THEME;
         var c = ns.cssColor;
 
@@ -272,24 +323,52 @@
      * Re-apply the active theme to every live chart and map. Triggered when the
      * DRE theme toggles between light and dark (or the system preference does).
      */
+    /**
+     * Re-assert the ACTIVE theme's resolved style colours (tooltip, legend, base
+     * text, axes) onto a chart. Necessary because getOption() pins the PREVIOUS
+     * theme's resolved values, so re-applying that option (notMerge) would keep
+     * e.g. a light tooltip / light axis labels on the dark theme. A final merge
+     * setOption with the fresh theme styles overrides those stale pins — this is
+     * what makes the hover tooltip and axes follow light / dark.
+     */
+    ns._reapplyThemeStyles = function (c) {
+        var th = ns._echartsTheme, t = ns.THEME, opt = c.getOption();
+        var axisStyle = {
+            axisLabel: { color: t.textMuted },
+            axisLine: { lineStyle: { color: t.grid } },
+            axisTick: { lineStyle: { color: t.grid } }
+        };
+        var ov = {
+            color: ns.COLORS,
+            textStyle: { color: t.text },
+            tooltip: th.tooltip,
+            legend: th.legend,
+            title: th.title
+        };
+        ['xAxis', 'yAxis', 'radiusAxis', 'angleAxis', 'singleAxis', 'parallelAxis'].forEach(function (k) {
+            if (opt[k] && opt[k].length) ov[k] = opt[k].map(function () { return axisStyle; });
+        });
+        c.setOption(ov);
+    };
+
     ns.refresh = function () {
         ns.readTheme();
         ns.pruneCharts();
 
-        // ECharts 6: switch the instance theme live. Graph-type charts re-apply
-        // their structural (per-node/edge) colours via _rvRebuild; the rest get
-        // their current option re-applied with notMerge so setTheme can't discard
-        // it (the documented caveat after multiple merge-mode setOption calls).
+        // ECharts 6: switch the instance theme live, then re-assert the resolved
+        // theme styles. Graph-type charts re-apply their structural (per-node /
+        // edge) colours via _rvRebuild; the rest get their option re-applied with
+        // notMerge (setTheme's documented caveat after merge-mode setOptions).
+        // _reapplyThemeStyles then overrides the stale colours getOption() pinned.
         ns._allCharts.forEach(function (c) {
             try {
+                c.setTheme(ns._echartsTheme);
                 if (typeof c._rvRebuild === 'function') {
-                    c.setTheme(ns._echartsTheme);
                     c._rvRebuild();
                 } else {
-                    var opt = c.getOption();
-                    c.setTheme(ns._echartsTheme);
-                    c.setOption(opt, { notMerge: true });
+                    c.setOption(c.getOption(), { notMerge: true });
                 }
+                ns._reapplyThemeStyles(c);
             } catch (e) { /* keep going */ }
         });
 

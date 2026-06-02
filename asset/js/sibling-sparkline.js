@@ -85,7 +85,9 @@
                     symbolSize: 44, symbol: 'pin',
                     itemStyle: { color: ns.COLORS[1] },
                     data: markData,
-                    label: { formatter: 'this', color: '#fff', fontSize: THEME.fontSize - 2 }
+                    // Dark label: the pin is always a light amber (COLORS[1]) in
+                    // both themes, so near-black reads far better than white.
+                    label: { formatter: 'this', color: '#1a1a1a', fontSize: THEME.fontSize - 2 }
                 } : undefined
             }]
         });

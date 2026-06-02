@@ -39,7 +39,7 @@
             },
             visualMap: {
                 min: 0, max: maxVal || 1, calculable: true, orient: 'vertical', right: 0, top: 'center',
-                inRange: { color: ['#f0f9e8', '#bae4bc', '#7bccc4', '#43a2ca', '#0868ac'] }
+                inRange: { color: ns.accentRamp() }
             },
             series: [{
                 type: 'heatmap', data: data.values,
@@ -47,6 +47,10 @@
                 emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.3)' } }
             }]
         });
+        // Re-apply the theme-aware ramp when the light/dark theme toggles.
+        chart._rvRebuild = function () {
+            chart.setOption({ visualMap: { inRange: { color: ns.accentRamp() } } });
+        };
         return chart;
     };
 })();

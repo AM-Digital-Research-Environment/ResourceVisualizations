@@ -98,7 +98,7 @@
                 paint: {
                     'circle-color': ['step', ['get', 'point_count'], COLORS[0], 10, COLORS[1], 30, COLORS[5]],
                     'circle-radius': ['step', ['get', 'point_count'], 18, 10, 24, 30, 32],
-                    'circle-stroke-width': 2, 'circle-stroke-color': '#fff',
+                    'circle-stroke-width': 2, 'circle-stroke-color': THEME.border,
                 }
             });
 
@@ -106,7 +106,9 @@
                 id: 'cluster-count', type: 'symbol', source: 'locations',
                 filter: ['has', 'point_count'],
                 layout: { 'text-field': '{point_count_abbreviated}', 'text-size': 12 },
-                paint: { 'text-color': '#fff' }
+                // White count with a soft dark halo so it reads on every cluster
+                // brand colour (Uni-Grün through Gold) in both themes.
+                paint: { 'text-color': '#ffffff', 'text-halo-color': 'rgba(0,0,0,0.45)', 'text-halo-width': 1 }
             });
 
             map.addLayer({
@@ -115,7 +117,7 @@
                 paint: {
                     'circle-color': THEME.accent,
                     'circle-radius': ['interpolate', ['linear'], ['get', 'value'], 1, 7, 50, 18, 200, 28],
-                    'circle-stroke-width': 2, 'circle-stroke-color': '#fff', 'circle-opacity': 0.85,
+                    'circle-stroke-width': 2, 'circle-stroke-color': THEME.border, 'circle-opacity': 0.85,
                 }
             });
 
@@ -196,7 +198,7 @@
                         'circle-radius': 7,
                         'circle-color': currentColor,
                         'circle-stroke-width': 2,
-                        'circle-stroke-color': '#fff',
+                        'circle-stroke-color': THEME.border,
                         'circle-opacity': 0.85
                     }
                 });

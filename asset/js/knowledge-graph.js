@@ -395,21 +395,21 @@
                                 + '<span style="color:' + COLORS[p.data.category % COLORS.length] + '">'
                                 + echarts.format.encodeHTML(c ? c.name : '') + '</span>';
                             if (p.data.freqPct !== undefined && p.data.freqPct !== null) {
-                                t += '<br/><span style="font-size:11px;color:#888">Shared by '
+                                t += '<br/><span style="font-size:11px;color:var(--ink-light,#888)">Shared by '
                                     + p.data.freqPct + '% of items</span>';
                             }
                             if (p.data.strength !== undefined) {
-                                t += '<br/><span style="font-size:11px;color:#888">'
+                                t += '<br/><span style="font-size:11px;color:var(--ink-light,#888)">'
                                     + p.data.sharedCount + ' shared link' + (p.data.sharedCount > 1 ? 's' : '')
                                     + ' (strength ' + p.data.strength + ')</span>';
                             }
-                            if (p.data.url) t += '<br/><span style="font-size:11px;color:#888">Click to open</span>';
+                            if (p.data.url) t += '<br/><span style="font-size:11px;color:var(--ink-light,#888)">Click to open</span>';
                             return t;
                         }
                         if (p.dataType === 'edge') {
                             var lbl = echarts.format.encodeHTML(p.data.name || '');
                             if (p.data.isShared && p.data.freqPct !== undefined) {
-                                lbl += '<br/><span style="font-size:11px;color:#888">Resource shared by '
+                                lbl += '<br/><span style="font-size:11px;color:var(--ink-light,#888)">Resource shared by '
                                     + p.data.freqPct + '% of items</span>';
                             }
                             return lbl;
