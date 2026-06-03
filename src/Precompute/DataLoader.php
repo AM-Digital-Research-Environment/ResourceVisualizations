@@ -6,8 +6,7 @@ namespace ResourceVisualizations\Precompute;
 use Doctrine\DBAL\Connection;
 
 /**
- * Loads all data needed by the precompute into memory — a PHP port of
- * scripts/precompute/db.py load_all_data(), but using Omeka's own DBAL
+ * Loads all data needed by the precompute into memory, using Omeka's own DBAL
  * connection (so it reuses Omeka's configured MySQL credentials; no separate
  * variables, no `docker compose exec`).
  *

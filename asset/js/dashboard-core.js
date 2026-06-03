@@ -302,6 +302,31 @@
         return map;
     };
 
+    /**
+     * Mount a map legend BELOW the map — appended to the enclosing .chart-panel,
+     * not absolutely positioned over the basemap — so it never covers countries,
+     * markers or their labels. One placement shared by every map chart
+     * (choropleth, geographic origins, …) for consistency; the cluster-partner
+     * map builds its own toggleable legend the same way. Any stale legend (e.g.
+     * from the rebuild a light/dark theme toggle triggers) is removed first so
+     * duplicates never stack.
+     *
+     * @param {HTMLElement} el          the container the map was rendered into
+     * @param {string}      innerHtml   legend markup
+     * @param {string}     [extraClass] extra class, e.g. 'rv-choropleth-legend'
+     * @returns {HTMLElement} the legend element
+     */
+    ns.mountMapLegend = function (el, innerHtml, extraClass) {
+        var panel = el.closest('.chart-panel') || el.parentNode || el;
+        var stale = panel.querySelector('.rv-map-legend');
+        if (stale) stale.remove();
+        var legend = document.createElement('div');
+        legend.className = 'rv-map-legend' + (extraClass ? ' ' + extraClass : '');
+        legend.innerHTML = innerHtml;
+        panel.appendChild(legend);
+        return legend;
+    };
+
     /** Background colour to use when exporting a chart as a PNG. */
     ns.exportBg = function () {
         return ns.cssColor('--surface', ns._darkMode ? '#1e1e1e' : '#ffffff');

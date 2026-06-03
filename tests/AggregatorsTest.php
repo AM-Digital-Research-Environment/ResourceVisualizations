@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 /**
  * Dependency-free regression test for the PHP precompute aggregators
- * (src/Precompute/Aggregators.php), mirroring the Python pipeline's validation.
+ * (src/Precompute/Aggregators.php).
  *
  * No PHPUnit/Composer needed — run it in a throwaway PHP container from the
  * module root:
@@ -49,6 +49,46 @@ check($agg['totalItems'] === 2, 'aggregateItems totalItems=2');
 check($agg['types'][0] === ['name' => 'Book', 'value' => 2, 'itemId' => 10], 'types Book=2');
 check($agg['subjects'][0]['name'] === 'Islam' && $agg['subjects'][0]['value'] === 2, 'subjects Islam=2');
 check($agg['timeline'] == ['2018' => 1, '2020' => 1], 'timeline by year');
+
+// --- aggregateItems folds a synthetic resource type (publications) into the pie ---
+$synItems = [10 => ['title' => 'Book'], 30 => ['title' => 'English']];
+$synLinks = [
+    1 => [['dcterms:type', 'T', 10]],     // research item: real type Book
+    2 => [['dcterms:language', 'L', 30]],  // publication: no dcterms:type of its own
+];
+$synAgg = A::aggregateItems([1, 2], $synItems, $synLinks, [], [], [2 => 'Publication']);
+$synByName = [];
+foreach ($synAgg['types'] as $t) { $synByName[$t['name']] = $t; }
+check(($synByName['Book']['value'] ?? 0) === 1, 'aggregateItems keeps real linked type Book=1');
+check(($synByName['Publication']['value'] ?? 0) === 1, 'aggregateItems adds synthetic Publication=1');
+check(!isset($synByName['Publication']['itemId']), 'synthetic type carries no itemId (not click-through)');
+
+// --- buildHeatmap drops a resource type that never co-occurs with a language ---
+$hmItems = [10 => ['title' => 'Book'], 11 => ['title' => 'English'], 14 => ['title' => 'Map']];
+$hmLinks = [
+    1 => [['dcterms:type', 'T', 10], ['dcterms:language', 'L', 11]], // Book × English
+    2 => [['dcterms:type', 'T', 14]],                                // Map: no language
+];
+$hm = A::buildHeatmap([1, 2], $hmLinks, $hmItems);
+check($hm['rows'] === ['Book'], 'buildHeatmap drops a type with no language (Map excluded)');
+check($hm['cols'] === ['English'], 'buildHeatmap keeps only languages paired with a type');
+check($hm['values'] === [[0, 0, 1]], 'buildHeatmap Book × English = 1');
+
+// --- buildStackedTimeline: publications stack under their synthetic type, else "(no type)" ---
+$stItems = [10 => ['title' => 'Book']];
+$stLinks = [
+    1 => [['dcterms:type', 'T', 10]], // 2018, Book
+    2 => [],                          // 2018, no type, marked publication
+    3 => [],                          // 2019, no type, no synthetic -> "(no type)"
+];
+$st = A::buildStackedTimeline([1, 2, 3], $stLinks, $stItems, [1 => '2018', 2 => '2018', 3 => '2019'], [2 => 'Publication']);
+// Years come back as ints (PHP coerces the numeric-string year keys of $yearType).
+check($st['years'] === [2018, 2019], 'buildStackedTimeline years sorted');
+$stSeries = [];
+foreach ($st['series'] as $s) { $stSeries[$s['name']] = $s['data']; }
+check(($stSeries['Book'] ?? null) === [1, 0], 'buildStackedTimeline keeps real linked types');
+check(($stSeries['Publication'] ?? null) === [1, 0], 'buildStackedTimeline stacks a publication under "Publication"');
+check(($stSeries['(no type)'] ?? null) === [0, 1], 'buildStackedTimeline still falls back to "(no type)" without a synthetic label');
 
 // --- person-scoped roles ---
 $rlinks = [

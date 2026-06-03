@@ -91,12 +91,12 @@ Parent/category items get aggregate dashboards spanning their entire item set. E
 
 ### Collection Overview & Collection Dashboard
 
-Two collection-wide **site-page blocks** (Admin > Sites > [site] > Pages) that share one precomputed dataset (`asset/data/item-dashboards/collection-overview.json`, which aggregates every research item) but render different slices of it. The slice is chosen by a `data-layout` attribute on the block template, so both stay in sync from a single regeneration.
+Two collection-wide **site-page blocks** (Admin > Sites > [site] > Pages) that share one precomputed dataset (`asset/data/item-dashboards/collection-overview.json`, which aggregates every research item **and cluster publication**) but render different slices of it. The slice is chosen by a `data-layout` attribute on the block template, so both stay in sync from a single regeneration.
 
-- **Collection Overview** — a curated, home-page-friendly subset mirroring the [amira dashboard](https://amira.africamultiple.uni-bayreuth.de/) homepage, in this order: summary stat cards → **Africa Multiple Research Centres (AMRCs) and its partners** (cluster-geography map) → **Research Sections** (projects per section) → **Research Section × University** (research items by section and funding university) → **Items by Year and Type** → **Resource Type × Language** → **Languages** → **Resource Types** → **Subjects** → **Items by Country**. Uses the `collectionOverview` layout.
+- **Collection Overview** — a curated, home-page-friendly subset mirroring the [amira dashboard](https://amira.africamultiple.uni-bayreuth.de/) homepage, in this order: summary stat cards → **Africa Multiple Research Centres (AMRCs) and its partners** (cluster-geography map) → **Research Sections** (projects per section) → **Research Section × University** (research items by section and funding university) → **Items by Year and Type** → **Resource Type × Language** → **Languages** → **Resource Types** → **Subjects & Tags** → **Items by Country**. Uses the `collectionOverview` layout. Here "items" regroups research items **and** cluster publications: each publication is folded in under a single synthetic **Publication** resource type, so it appears in *Items by Year and Type* and *Resource Types* (publications carry no `dcterms:type` of their own). *Subjects & Tags* spans both controlled LCSH subjects and free tags (both are `dcterms:subject`). *Resource Type × Language* drops any resource type that never co-occurs with a language.
 - **Collection Dashboard** — the full set of collection-wide visualizations (the former "Collection Overview"): stacked timeline, resource-type / language breakdowns, subject trends, co-occurrence chord, sankey, sunburst, geo flows, choropleth, acquisition calendar, time-aware chord, items-per-project box plot, and more. Uses the full `section` layout.
 
-Both open with a grid of **summary stat cards** — Research Items, Projects (with items), People, Organisations, Locations (with the number of countries they span), Languages, Subjects & Tags, Resource Types, and Cluster Publications — each with a [lucide](https://lucide.dev) icon. All counts come from the precompute: **People, Organisations, Languages, Subjects & Tags, Resource Types and Cluster Publications** are the sizes of their authority item sets (Persons, Institutions, Languages, Subjects, Type of Resource, Publications); **Projects** counts projects that have research items; **Research Items and Locations** reflect what is present in the corpus. Cards with a zero count are dropped.
+Both open with a grid of **summary stat cards** — Research Items, Projects (with items), People, Organisations, Locations (with the number of countries they span), Languages, Subjects & Tags, Resource Types, and Cluster Publications — each with a [lucide](https://lucide.dev) icon. All counts come from the precompute: **People, Organisations, Languages, Subjects & Tags, Resource Types and Cluster Publications** are the sizes of their authority item sets (Persons, Institutions, Languages, Subjects, Type of Resource, Publications); **Projects** counts projects that have research items, plus each external partner collection (ILAM, BayGlo) — which the amira dashboard models as a virtual project but which has no template-5 project entity of its own; **Research Items and Locations** reflect what is present in the corpus. Cards with a zero count are dropped.
 
 The three Collection Overview-only charts come from the precompute too: **Research Sections** (`Aggregators::buildSectionsBar`) counts projects per `frapo:ResearchGroup`; **Research Section × University** (`Aggregators::buildSectionUniversity`) routes each project's items to its funding university, read from the project's `frapo:isFundedBy` link (UBT / UNILAG / UJKZ / UFBA / Rhodes); and the **AMRCs & partners** map (`Aggregators::clusterPartners`) is a static, curated geography rendered as colour-coded MapLibre markers with a toggleable legend. A project with no research-section assignment is omitted from the section charts.
 
@@ -259,7 +259,17 @@ ResourceVisualizations/
 │       └── item-dashboards/            # Dashboard JSON + {type}-index.json (projects/people/…)
 ├── src/Precompute/                     # PHP precompute engine (admin "Regenerate now")
 │   ├── DataLoader.php                  # Items/links/literals/geo via Omeka\Connection
-│   ├── Aggregators.php                 # aggregateItems(), all build*() (unit-tested)
+│   ├── Aggregators.php                 # Facade: composes the trait builders + shared constants (unit-tested)
+│   ├── Aggregators/                    # Builders split by concern (one trait per file)
+│   │   ├── SupportTrait.php            # sort/lookup + PageRank/Louvain primitives
+│   │   ├── BasicChartsTrait.php        # aggregateItems, heatmap, roles, templates
+│   │   ├── TemporalChartsTrait.php     # timelines, trends, calendar, boxplot, time-chord, what's-new
+│   │   ├── NetworkChartsTrait.php      # chord, sankey, contributor/affiliation/collab/co-author networks
+│   │   ├── GeoChartsTrait.php          # choropleth, geo-flows, country index
+│   │   ├── HierarchyChartsTrait.php    # sunburst, treemap
+│   │   ├── CommunityTrait.php          # discursive communities
+│   │   ├── PublicationChartsTrait.php  # top venues, top authors
+│   │   └── OverviewChartsTrait.php     # radar, stat cards, sections/section×university, cluster map
 │   ├── KnowledgeGraphs.php             # Per-item knowledge-graph builder (IDF-ranked)
 │   └── Runner.php                      # Entities, overviews, publications, knowledge graphs
 ├── ROADMAP.md                          # Full visualization roadmap

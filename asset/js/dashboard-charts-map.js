@@ -295,19 +295,12 @@
                 }
             }
 
-            // --- Legend ---
+            // --- Legend (rendered below the map; see ns.mountMapLegend) ---
             if (hasFlows) {
-                // Avoid stacking legends if the map is rebuilt on a theme change.
-                var existingLegend = el.querySelector('.rv-map-legend');
-                if (existingLegend) existingLegend.remove();
-                var legend = document.createElement('div');
-                legend.className = 'rv-map-legend';
-                legend.innerHTML =
+                ns.mountMapLegend(el,
                     '<div class="rv-map-legend-row"><span class="rv-map-legend-dot" style="background:' + THEME.accent + '"></span> Place of Origin</div>' +
                     '<div class="rv-map-legend-row"><span class="rv-map-legend-dot" style="background:' + currentColor + '"></span> Current Location</div>' +
-                    '<div class="rv-map-legend-row"><span class="rv-map-legend-line" style="background:' + THEME.accent + '"></span> Flow</div>';
-                el.style.position = 'relative';
-                el.appendChild(legend);
+                    '<div class="rv-map-legend-row"><span class="rv-map-legend-line" style="background:' + THEME.accent + '"></span> Flow</div>');
             }
         });
 

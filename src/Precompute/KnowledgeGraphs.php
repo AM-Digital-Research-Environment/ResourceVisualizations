@@ -4,10 +4,9 @@ declare(strict_types=1);
 namespace ResourceVisualizations\Precompute;
 
 /**
- * Per-item knowledge-graph builder — a dependency-free PHP port of the former
- * scripts/precompute-graphs.py. Produces one graph per Omeka item: its direct
- * relationships, items that link back to it, and IDF-ranked "shared" items that
- * co-occur through rare (distinctive) resources.
+ * Dependency-free per-item knowledge-graph builder. Produces one graph per
+ * Omeka item: its direct relationships, items that link back to it, and
+ * IDF-ranked "shared" items that co-occur through rare (distinctive) resources.
  *
  * Output matches the shape asset/js/knowledge-graph.js consumes exactly:
  *   { nodes:[{id,name,category,symbolSize,itemId,isCenter?,freqPct?,strength?,sharedCount?}],

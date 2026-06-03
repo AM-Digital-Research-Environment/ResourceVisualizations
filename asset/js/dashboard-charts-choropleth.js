@@ -208,19 +208,15 @@
                         map.fitBounds(bounds, { padding: 36, maxZoom: 5, duration: 0 });
                     }
 
-                    // --- Legend ---
-                    var oldLegend = el.querySelector('.rv-map-legend');
-                    if (oldLegend) oldLegend.remove();
-                    var legend = document.createElement('div');
-                    legend.className = 'rv-map-legend rv-choropleth-legend';
+                    // --- Legend (rendered below the map; see ns.mountMapLegend) ---
                     var swatches = ramp.stops.map(function (c) {
                         return '<span class="rv-map-legend-swatch" style="background:' + c + '"></span>';
                     }).join('');
-                    legend.innerHTML = '<div class="rv-map-legend-row"><span>1</span>'
-                        + swatches + '<span>' + maxCount + '</span></div>'
-                        + '<div class="rv-map-legend-caption">Items per country</div>';
-                    el.style.position = 'relative';
-                    el.appendChild(legend);
+                    ns.mountMapLegend(el,
+                        '<div class="rv-map-legend-row"><span>1</span>' + swatches
+                            + '<span>' + maxCount + '</span></div>'
+                            + '<div class="rv-map-legend-caption">Items per country</div>',
+                        'rv-choropleth-legend');
                 }).catch(function (err) {
                     if (window.console) console.error('Choropleth load failed:', err);
                 });

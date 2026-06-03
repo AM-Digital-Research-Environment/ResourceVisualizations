@@ -6,8 +6,7 @@ namespace ResourceVisualizations\Precompute;
 use Doctrine\DBAL\Connection;
 
 /**
- * Orchestrates the dashboard precompute — a PHP port of generators.py,
- * overviews.py and precompute-dashboards.py main(). Calls the pure
+ * Orchestrates the dashboard precompute: loads the data, calls the pure
  * {@see Aggregators} (unit-tested) and writes the JSON artefacts Omeka serves.
  *
  * Run from the admin "Regenerate" Job (reusing Omeka's DBAL connection) so the
@@ -15,7 +14,7 @@ use Doctrine\DBAL\Connection;
  */
 final class Runner
 {
-    // Resource template IDs (from config.py).
+    // Resource template IDs.
     private const TEMPLATE_ORGANISATION = 2;
     private const TEMPLATE_LOCATION = 3;
     private const TEMPLATE_PERSONS = 4;
@@ -40,12 +39,33 @@ final class Runner
     private const ITEM_SET_PROJECT = 20;
     private const ITEM_SET_PUBLICATIONS = 29918;
 
+    /**
+     * Synthetic resource-type label used to fold cluster publications into the
+     * Collection Overview's resource-type pie and year×type timeline (they carry
+     * no dcterms:type of their own). See generateCollectionOverview().
+     */
+    private const SYNTHETIC_TYPE_PUBLICATION = 'Publication';
+
     // External partner collections — their items reach the section×university
     // overview via item-set membership (they sit outside the section→project
     // hierarchy: ILAM items have no dcterms:isPartOf, the BayGlo project names no
     // section). Routed onto a partner-university column in generateCollectionOverview().
     private const ITEM_SET_ILAM = 27724;     // International Library of African Music → Rhodes University
     private const ITEM_SET_BAYGLO = 27601;   // Bayreuth Global/Postkolonial → University of Bayreuth
+
+    /**
+     * External partner collections, item-set id → routing. The amira dashboard
+     * models each as a virtual project (it has items but no projectsData /
+     * template-5 project entity), and its items sit outside the
+     * section→project→item hierarchy — so generateCollectionOverview() folds
+     * them onto a partner-university column of the section×university heatmap,
+     * and buildOverviewStats() adds each one (when it has items) to the
+     * "Projects (with items)" card. Single source of truth for both.
+     */
+    private const EXTERNAL_COLLECTIONS = [
+        self::ITEM_SET_ILAM => ['section' => 'External', 'university' => 'Rhodes University'],
+        self::ITEM_SET_BAYGLO => ['section' => 'External', 'university' => 'University of Bayreuth'],
+    ];
 
     // Parent item IDs for category overviews.
     private const OVERVIEW_GENRE = 22198;
@@ -515,7 +535,7 @@ final class Runner
     }
 
     /* ------------------------------------------------------------------ */
-    /*  Category overviews (mirrors overviews.py)                          */
+    /*  Category overviews                                                 */
     /* ------------------------------------------------------------------ */
 
     private function generateOverview(int $parentId, string $label, array $setItems, array $terms, string $resourceType, string $distributionKey, ?callable $filterFn = null, array $extra = []): void
@@ -691,45 +711,60 @@ final class Runner
     private function generateCollectionOverview(): void
     {
         $researchItems = array_keys($this->itemsWhere(fn ($info) => ($info['template_id'] ?? null) === self::TEMPLATE_RESEARCH_ITEMS));
-        $this->log('=== Collection Overview (' . count($researchItems) . ' research items) ===');
-        if (!$researchItems) {
+        // "Items" in the Collection Overview regroups research items AND cluster
+        // publications: the bibliographic (fabio:) corpus — the same definition
+        // generatePublications() uses — is folded into the same charts, with each
+        // publication bucketed under a synthetic "Publication" resource type
+        // (publications carry no dcterms:type of their own) so it shows in the
+        // resource-type pie and the year×type timeline.
+        $publications = array_keys($this->itemsWhere(static fn ($info) => str_starts_with($info['class_term'] ?? '', 'fabio:')));
+        $this->log('=== Collection Overview (' . count($researchItems) . ' research items + ' . count($publications) . ' publications) ===');
+        if (!$researchItems && !$publications) {
             return;
         }
-        $dashboard = Aggregators::aggregateItems($researchItems, $this->items, $this->links, $this->itemYear, $this->geo);
-        if ($v = Aggregators::buildStackedTimeline($researchItems, $this->links, $this->items, $this->itemYear)) {
+        // Combined corpus, de-duplicated (research items and fabio: publications
+        // are disjoint sets, but guard anyway).
+        $overviewItems = array_keys(array_flip(array_merge($researchItems, $publications)));
+        $syntheticTypes = [];
+        foreach ($publications as $pid) {
+            $syntheticTypes[$pid] = self::SYNTHETIC_TYPE_PUBLICATION;
+        }
+
+        $dashboard = Aggregators::aggregateItems($overviewItems, $this->items, $this->links, $this->itemYear, $this->geo, $syntheticTypes);
+        if ($v = Aggregators::buildStackedTimeline($overviewItems, $this->links, $this->items, $this->itemYear, $syntheticTypes)) {
             $dashboard['stackedTimeline'] = $v;
         }
-        if ($v = Aggregators::buildHeatmap($researchItems, $this->links, $this->items)) {
+        if ($v = Aggregators::buildHeatmap($overviewItems, $this->links, $this->items)) {
             $dashboard['heatmap'] = $v;
         }
-        if ($v = Aggregators::buildRoles($researchItems, $this->links, $this->items)) {
+        if ($v = Aggregators::buildRoles($overviewItems, $this->links, $this->items)) {
             $dashboard['roles'] = $v;
         }
-        if ($v = Aggregators::buildSubjectTrends($researchItems, $this->links, $this->items, $this->itemYear)) {
+        if ($v = Aggregators::buildSubjectTrends($overviewItems, $this->links, $this->items, $this->itemYear)) {
             $dashboard['subjectTrends'] = $v;
         }
-        if ($v = Aggregators::buildLanguageTimeline($researchItems, $this->links, $this->items, $this->itemYear)) {
+        if ($v = Aggregators::buildLanguageTimeline($overviewItems, $this->links, $this->items, $this->itemYear)) {
             $dashboard['languageTimeline'] = $v;
         }
-        if ($v = Aggregators::buildChord($researchItems, $this->links, $this->items)) {
+        if ($v = Aggregators::buildChord($overviewItems, $this->links, $this->items)) {
             $dashboard['chord'] = $v;
         }
-        if ($v = Aggregators::buildSankey($researchItems, $this->links, $this->items)) {
+        if ($v = Aggregators::buildSankey($overviewItems, $this->links, $this->items)) {
             $dashboard['sankey'] = $v;
         }
-        if ($v = Aggregators::buildSunburst($researchItems, $this->links, $this->items)) {
+        if ($v = Aggregators::buildSunburst($overviewItems, $this->links, $this->items)) {
             $dashboard['sunburst'] = $v;
         }
-        if ($v = Aggregators::buildGeoFlows($researchItems, $this->links, $this->items, $this->geo)) {
+        if ($v = Aggregators::buildGeoFlows($overviewItems, $this->links, $this->items, $this->geo)) {
             $dashboard['geoFlows'] = $v;
         }
-        if ($v = Aggregators::buildChoropleth($researchItems, $this->links, $this->countryIndex)) {
+        if ($v = Aggregators::buildChoropleth($overviewItems, $this->links, $this->countryIndex)) {
             $dashboard['choropleth'] = $v;
         }
-        if ($v = Aggregators::buildCalendarHeatmap($researchItems, $this->items)) {
+        if ($v = Aggregators::buildCalendarHeatmap($overviewItems, $this->items)) {
             $dashboard['calendar'] = $v;
         }
-        if ($v = Aggregators::buildTimeChord($researchItems, $this->links, $this->items, $this->itemYear)) {
+        if ($v = Aggregators::buildTimeChord($overviewItems, $this->links, $this->items, $this->itemYear)) {
             $dashboard['timeChord'] = $v;
         }
         $sections = $this->itemsWhere(fn ($info) => ($info['class_term'] ?? '') === 'frapo:ResearchGroup');
@@ -747,10 +782,14 @@ final class Runner
         // External partner collections are folded onto a partner-university column
         // (ILAM → Rhodes University, BayGlo → University of Bayreuth) under an
         // "External" row; their items sit outside the section→project hierarchy.
-        $externalBuckets = [
-            ['itemIds' => $this->itemSets[self::ITEM_SET_ILAM] ?? [], 'section' => 'External', 'university' => 'Rhodes University'],
-            ['itemIds' => $this->itemSets[self::ITEM_SET_BAYGLO] ?? [], 'section' => 'External', 'university' => 'University of Bayreuth'],
-        ];
+        $externalBuckets = [];
+        foreach (self::EXTERNAL_COLLECTIONS as $setId => $route) {
+            $externalBuckets[] = [
+                'itemIds' => $this->itemSets[$setId] ?? [],
+                'section' => $route['section'],
+                'university' => $route['university'],
+            ];
+        }
         if ($v = Aggregators::buildSectionUniversity($sections, $this->childrenOf, $this->items, $this->links, $externalBuckets)) {
             $dashboard['sectionUniversity'] = $v;
         }
@@ -787,11 +826,23 @@ final class Runner
         // collection" counts gathered by the index passes.
         $setCount = fn (int $setId): int => count($this->itemSets[$setId] ?? []);
 
+        // Internal template-5 projects with items (from the generateProjects index
+        // pass) plus each external partner collection that has items — the amira
+        // dashboard counts ILAM and BayGlo as virtual projects, but they have no
+        // template-5 project entity so the index pass misses them.
+        $externalProjects = 0;
+        foreach (array_keys(self::EXTERNAL_COLLECTIONS) as $extSet) {
+            if (!empty($this->itemSets[$extSet])) {
+                $externalProjects++;
+            }
+        }
+        $projectsWithItems = ($this->statCounts['projects'] ?? 0) + $externalProjects;
+
         // Assemble via the reusable component — it casts values, drops empty
         // cards (Research Items aside, always > 0) and clears null subtitles.
         return Aggregators::buildStatCards([
             ['key' => 'researchItems', 'label' => 'Research Items', 'value' => $researchItemCount],
-            ['key' => 'projects', 'label' => 'Projects (with items)', 'value' => $this->statCounts['projects'] ?? 0],
+            ['key' => 'projects', 'label' => 'Projects (with items)', 'value' => $projectsWithItems],
             ['key' => 'people', 'label' => 'People', 'value' => $setCount(self::ITEM_SET_PERSON)],
             ['key' => 'organisations', 'label' => 'Organisations', 'value' => $setCount(self::ITEM_SET_INSTITUTION)],
             ['key' => 'locations', 'label' => 'Locations', 'value' => $this->statCounts['locations'] ?? 0,
@@ -895,10 +946,9 @@ final class Runner
     }
 
     /**
-     * Per-item knowledge graphs (one JSON each) — a PHP port of the former
-     * precompute-graphs.py, run from the same job. Writes to a directory that is
-     * NOT committed to the repo; the front-end falls back to the live REST API
-     * until this has run at least once.
+     * "What's New" — recent additions in 3/6/12-month windows back from the most
+     * recent creation date, with the most-active projects per window. Written to
+     * whats-new.json and rendered by the What's New site-page block.
      */
     private function generateWhatsNew(): void
     {
