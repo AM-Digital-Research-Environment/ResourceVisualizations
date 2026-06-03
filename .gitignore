@@ -16,3 +16,12 @@ asset/data/knowledge-graphs/
 # regenerated in-Omeka by the same job. The Photo Browsing block falls back to
 # live API resolution until it has been generated.
 asset/data/photo-galleries/
+
+# Per-item + collection dashboard JSON (~2,500 files, ~17 MB), the
+# {type}-index.json / beeswarm / what's-new artefacts, and the discursive-
+# communities graph are all install-specific and rebuilt in-Omeka by the same
+# "Regenerate now" job — not committed. The dashboard / communities blocks
+# render empty until it has run once. The static geo/countries.geojson INPUT is
+# not generated and stays committed.
+asset/data/item-dashboards/
+asset/data/communities/
