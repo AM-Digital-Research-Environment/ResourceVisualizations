@@ -729,6 +729,18 @@ final class Runner
         if ($v = Aggregators::buildBoxplot($sections, $this->childrenOf)) {
             $dashboard['boxplot'] = $v;
         }
+        // Curated home-overview charts (amira homepage parity): projects per
+        // research section, research items by section × funding university, and
+        // the static cluster-partner geography. The full "Collection Dashboard"
+        // (section) layout ignores these keys; the curated "Collection Overview"
+        // layout renders them — see dashboard-layouts.js.
+        if ($v = Aggregators::buildSectionsBar($sections, $this->childrenOf, $this->items)) {
+            $dashboard['sectionsBar'] = $v;
+        }
+        if ($v = Aggregators::buildSectionUniversity($sections, $this->childrenOf, $this->items, $this->links)) {
+            $dashboard['sectionUniversity'] = $v;
+        }
+        $dashboard['clusterPartners'] = Aggregators::clusterPartners();
         // amira-style summary stat cards. Country count comes from the choropleth
         // just built above (one entry per distinct country of origin).
         $countries = is_array($dashboard['choropleth'] ?? null) ? count($dashboard['choropleth']) : 0;

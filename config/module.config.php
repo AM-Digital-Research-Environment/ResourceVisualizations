@@ -6,6 +6,7 @@ return [
         'invokables' => [
             'compareProjects' => Site\BlockLayout\CompareProjects::class,
             'collectionOverview' => Site\BlockLayout\CollectionOverview::class,
+            'collectionDashboard' => Site\BlockLayout\CollectionDashboard::class,
             'discursiveCommunities' => Site\BlockLayout\DiscursiveCommunities::class,
             'publications' => Site\BlockLayout\Publications::class,
             'projectExplorer' => Site\BlockLayout\ProjectExplorer::class,

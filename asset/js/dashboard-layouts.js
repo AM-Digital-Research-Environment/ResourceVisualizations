@@ -15,6 +15,19 @@
     var ns = window.RV = window.RV || {};
 
     ns.LAYOUTS = {
+        // Curated home-page overview (amira homepage parity). Reads the same
+        // collection-overview.json as the full `section` layout but shows only
+        // this trimmed, ordered subset. Summary stat cards render above the grid
+        // automatically (data.stats), so they are not listed here.
+        collectionOverview: {
+            order: ['clusterPartners', 'sectionsBar', 'sectionUniversity',
+                    'stackedTimeline', 'heatmap', 'languages', 'types',
+                    'subjects', 'choropleth'],
+            wide:  ['clusterPartners', 'sectionsBar', 'sectionUniversity',
+                    'stackedTimeline', 'heatmap', 'subjects', 'choropleth'],
+            tall:  ['clusterPartners', 'sectionUniversity', 'subjects',
+                    'choropleth']
+        },
         organisation: {
             order: ['timeline', 'types', 'templates', 'languages', 'roles', 'radar',
                     'contributors', 'subjects', 'collabNetwork',

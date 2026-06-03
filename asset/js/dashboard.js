@@ -26,7 +26,12 @@
     /* ------------------------------------------------------------------ */
 
     function renderDashboard(container, data, siteBase, collapsible) {
-        var layout = (ns.LAYOUTS && ns.LAYOUTS[data.resourceType]) || ns.DEFAULT_LAYOUT;
+        // A block template may pin a specific layout via `data-layout` (e.g. the
+        // curated "Collection Overview" sets data-layout="collectionOverview" so
+        // it renders a trimmed subset of the same JSON the full "Collection
+        // Dashboard" shows). Otherwise fall back to the data's own resourceType.
+        var layoutKey = (container && container.dataset && container.dataset.layout) || data.resourceType;
+        var layout = (ns.LAYOUTS && ns.LAYOUTS[layoutKey]) || ns.DEFAULT_LAYOUT;
         var chartKeys = layout.order;
 
         // Summary stat cards (Collection Overview only — other dashboards carry

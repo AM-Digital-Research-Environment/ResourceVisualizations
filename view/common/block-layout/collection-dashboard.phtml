@@ -1,16 +1,12 @@
 <?php
 /**
- * Collection Overview page block — a curated subset for the home page.
+ * Collection Dashboard page block — the full set of visualizations.
  *
- * Loads the precomputed collection-overview.json (same artifact as the full
- * "Collection Dashboard" block) but renders only the home-page-friendly charts,
- * in the amira homepage order: summary cards, AMRCs & partners map, research
- * sections, section × university, item timeline by type, resource-type ×
- * language, languages, resource types, subjects, and items by country.
- *
- * The curated selection/order lives in the `collectionOverview` layout
- * (dashboard-layouts.js); `data-layout` below tells the orchestrator to use it
- * instead of the JSON's `resourceType` (which is "section", the full layout).
+ * Loads the precomputed collection-overview.json and renders every chart using
+ * the standard dashboard orchestrator with the complete `section` layout (the
+ * JSON carries `resourceType: "section"`). The curated home-page subset lives in
+ * the sibling "Collection Overview" block (collection-overview.phtml), which
+ * loads the SAME JSON but overrides the layout via `data-layout`.
  *
  * @var \Laminas\View\Renderer\PhpRenderer $this
  * @var \Omeka\Api\Representation\SitePageBlockRepresentation $block
@@ -27,12 +23,11 @@ $siteSlug = $this->currentSite()->slug();
 <div class="resource-vis-block dashboard-block">
     <div class="dashboard-async-container"
          data-item-id="collection-overview"
-         data-layout="collectionOverview"
          data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
          data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">
         <div class="rv-loading">
             <div class="rv-spinner"></div>
-            <span><?= $this->translate('Loading collection overview…') ?></span>
+            <span><?= $this->translate('Loading collection dashboard…') ?></span>
         </div>
     </div>
 </div>

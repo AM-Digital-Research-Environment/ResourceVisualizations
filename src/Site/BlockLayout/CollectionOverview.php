@@ -17,7 +17,7 @@ class CollectionOverview extends AbstractBlockLayout
     public function form(PhpRenderer $view, SiteRepresentation $site,
         ?SitePageRepresentation $page = null, ?SitePageBlockRepresentation $block = null)
     {
-        return '<p>' . $view->translate('Aggregate visualizations across the entire collection. No configuration needed.') . '</p>';
+        return '<p>' . $view->translate('A curated overview for the home page: summary cards, the Africa Multiple Research Centres (AMRCs) & partners map, research sections, the section × university breakdown, an item timeline, resource types, languages, subjects and a map of items by country. For the full set of visualizations use the "Collection Dashboard" block instead. No configuration needed.') . '</p>';
     }
 
     public function render(PhpRenderer $view, SitePageBlockRepresentation $block,
