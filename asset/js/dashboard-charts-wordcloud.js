@@ -41,9 +41,11 @@
 
         function wordCloudOption(count) {
             var slice = entries.slice(0, count);
-            var minFont = count > 100 ? 8 : count > 50 ? 10 : 12;
-            var maxFont = count > 100 ? 45 : count > 50 ? 55 : (count > 10 ? 60 : 80);
-            var grid = count > 100 ? 4 : count > 50 ? 6 : 8;
+            // Larger fonts fill more of the (wide) panel and read better; the grid
+            // scales with them so words still don't collide after the bump.
+            var minFont = count > 100 ? 12 : count > 50 ? 14 : 16;
+            var maxFont = count > 100 ? 72 : count > 50 ? 84 : (count > 10 ? 96 : 110);
+            var grid = count > 100 ? 6 : count > 50 ? 8 : 10;
             return {
                 tooltip: {
                     confine: true,
@@ -79,7 +81,8 @@
             if (panel) {
                 var slider = document.createElement('div');
                 slider.className = 'rv-word-slider';
-                slider.innerHTML = '<label><input type="range" min="5" max="' + total + '" value="' + defaultCount + '" step="1">'
+                slider.innerHTML = '<label><span class="rv-word-slider-caption">Words</span>'
+                    + '<input type="range" min="5" max="' + total + '" value="' + defaultCount + '" step="1">'
                     + '<span class="rv-word-slider-value">' + defaultCount + '</span></label>';
                 var desc = panel.querySelector('.chart-description');
                 var insertRef = desc ? desc.nextSibling : el;

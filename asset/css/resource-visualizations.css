@@ -506,24 +506,29 @@ details.rv-collapsible[open] > .rv-collapsible__head .rv-collapsible__chevron {
 }
 
 .rv-word-slider label {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    width: 100%;
+}
+
+.rv-word-slider-caption {
+    color: var(--rv-text-color);
+    white-space: nowrap;
 }
 
 .rv-word-slider input[type="range"] {
-    /* Fill the panel width: a fixed max-width left a large empty gap to the
-       right of the slider on wide word-cloud panels. */
-    flex: 1;
+    /* A compact, fixed-width control — the slider is not meant to span the whole
+       panel (a full-width track reads as a dead gap on the right). */
+    width: 220px;
+    max-width: 100%;
     height: 4px;
     accent-color: var(--rv-accent);
     cursor: pointer;
 }
 
 .rv-word-slider-value {
-    min-width: 2.5em;
-    text-align: center;
+    min-width: 3ch;
+    text-align: left;
     font-variant-numeric: tabular-nums;
 }
 
