@@ -42,7 +42,7 @@ Finished.
 ### Architecture notes
 
 - **Beeswarm**: new `dashboard-charts-beeswarm.js` module. Precompute adds `beeswarm` key to section dashboards. Uses ECharts scatter with jitter.
-- **Compare View**: new `CompareProjects` block layout + `dashboard-compare.js`. Selector UI for picking two projects, fetches both JSONs, renders 2-column comparison grid.
+- **Compare View**: new `CompareProjects` block layout + `dashboard-compare.js`. Selector UI for picking two projects, fetches both JSONs, renders 2-column comparison grid. _(Later generalised to all entity types and consolidated into the single **Compare (any entity)** block — the project-only `CompareProjects` block was removed in v1.30.0, since Compare (any entity) opens on projects by default.)_
 
 ---
 

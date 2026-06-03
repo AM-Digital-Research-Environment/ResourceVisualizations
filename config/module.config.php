@@ -4,7 +4,6 @@ namespace ResourceVisualizations;
 return [
     'block_layouts' => [
         'invokables' => [
-            'compareProjects' => Site\BlockLayout\CompareProjects::class,
             'collectionOverview' => Site\BlockLayout\CollectionOverview::class,
             'collectionDashboard' => Site\BlockLayout\CollectionDashboard::class,
             'discursiveCommunities' => Site\BlockLayout\DiscursiveCommunities::class,

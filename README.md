@@ -108,10 +108,7 @@ A single project selector that retunes a full project dashboard (~12 charts) ben
 
 ### Compare
 
-Side-by-side comparison of two entities of the **same type** — paired charts, an overlaid A/B **radar** profile, and overlap statistics (shared-item percentage + shared badges). Two **site-page blocks** (Admin > Sites > [site] > Pages):
-
-- **Compare Projects** — locked to project × project (stacked timeline, types, languages, subjects; subject overlap).
-- **Compare (any entity)** — an in-page type switcher across **projects, people, institutions, subjects, languages**, each with its own paired-chart set + overlap key (e.g. co-occurring subjects when comparing subjects). Loads the matching `{type}-index.json`.
+Side-by-side comparison of two entities of the **same type** — paired charts, an overlaid A/B **radar** profile, and overlap statistics (shared-item percentage + shared badges). Added as the **Compare (any entity)** site-page block (Admin > Sites > [site] > Pages): an in-page type switcher across **projects, people, institutions, subjects, languages** (opens on projects by default), each with its own paired-chart set + overlap key (e.g. co-occurring subjects when comparing subjects). Loads the matching `{type}-index.json`.
 
 ### Discursive Communities
 
@@ -171,7 +168,7 @@ Then activate in **Admin > Modules**.
 
 Go to **Admin > Sites > [site] > Theme > Configure resource pages**:
 
-- **Item page**: add "Knowledge Graph", "Visualizations", and optionally "Compare Projects" blocks
+- **Item page**: add "Knowledge Graph" and "Visualizations" blocks
 - **Item set page**: add "Item Set Dashboard" block (optional)
 
 ## Pre-computing Data
@@ -212,12 +209,10 @@ ResourceVisualizations/
 ├── src/Site/ResourcePageBlockLayout/
 │   ├── KnowledgeGraph.php              # Item pages — graph block
 │   ├── LinkedItemsDashboard.php        # Item pages — visualizations block
-│   ├── CompareProjects.php             # Item pages — project comparison block
 │   └── ItemSetDashboard.php            # Item set pages — dashboard block
 ├── view/common/resource-page-block-layout/
 │   ├── knowledge-graph.phtml           # Lightweight async container
 │   ├── linked-items-dashboard.phtml    # Lightweight async container
-│   ├── compare-projects.phtml          # Compare view async container
 │   ├── item-set-dashboard.phtml        # Server-side rendered
 │   └── partials/dashboard-charts.phtml # Shared chart rendering (inline mode)
 ├── asset/
