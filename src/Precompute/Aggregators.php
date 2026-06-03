@@ -1740,8 +1740,9 @@ final class Aggregators
     /**
      * Projects per research section — the amira homepage "Research Sections" bar.
      * A section's children are projects (`frapo:ResearchGroup` → project via
-     * `dcterms:isPartOf`); each item-bearing project counts once. The pseudo-
-     * section "External" is excluded so the six thematic sections stand alone.
+     * `dcterms:isPartOf`); every project that is part of the section counts once,
+     * whether or not it has digitised items yet. The pseudo-section "External" is
+     * excluded so the thematic sections stand alone.
      *
      * @param array<int,array> $sections  Section items, keyed by id (class_term frapo:ResearchGroup).
      * @return list<array{name:string,value:int,itemId:int}>|null
@@ -1756,8 +1757,7 @@ final class Aggregators
             }
             $projects = 0;
             foreach ($childrenOf[$sid] ?? [] as $pid) {
-                if (($items[$pid]['template_id'] ?? null) === self::TEMPLATE_PROJECT
-                    && !empty($childrenOf[$pid])) {
+                if (($items[$pid]['template_id'] ?? null) === self::TEMPLATE_PROJECT) {
                     $projects++;
                 }
             }
@@ -1775,15 +1775,20 @@ final class Aggregators
     }
 
     /**
-     * Research items by research section × funding university — the amira homepage
-     * heatmap. For each section's project children, the project's item count flows
-     * into the column of its funding university (first `frapo:isFundedBy`). Axes
-     * are ordered by total volume so the matrix reads densest-first.
+     * Research items by research section × university — the amira homepage heatmap.
+     * For each section's project children, the project's item count flows into the
+     * column of its university (first `frapo:isFundedBy`). External partner
+     * collections that sit outside the section→project hierarchy are supplied as
+     * `$externalBuckets` (each `{itemIds, section, university}`) and folded in
+     * directly — e.g. ILAM → Rhodes University and BayGlo → University of Bayreuth,
+     * both under an "External" row. Axes are ordered by total volume so the matrix
+     * reads densest-first.
      *
      * @param array<int,array> $sections  Section items, keyed by id.
+     * @param list<array{itemIds:list<int>,section:string,university:string}> $externalBuckets
      * @return array{rows:list<string>,cols:list<string>,values:list<array{0:int,1:int,2:int}>}|null
      */
-    public static function buildSectionUniversity(array $sections, array $childrenOf, array $items, array $links): ?array
+    public static function buildSectionUniversity(array $sections, array $childrenOf, array $items, array $links, array $externalBuckets = []): ?array
     {
         $matrix = [];        // "section\0university" => item count
         $secTotals = [];
@@ -1810,6 +1815,27 @@ final class Aggregators
                 $secTotals[$section] = ($secTotals[$section] ?? 0) + $itemCount;
                 $uniTotals[$uni] = ($uniTotals[$uni] ?? 0) + $itemCount;
             }
+        }
+        // External partner collections (ILAM, BayGlo) reach the heatmap through
+        // item-set membership, not the section→project→item hierarchy: ILAM items
+        // carry no dcterms:isPartOf at all, and the BayGlo project names no research
+        // section. Pin each bucket's items onto a partner-university column under
+        // its given row (mirrors the dashboard's synthetic Rhodes/UBT routing in
+        // buildResearchSectionUniversityHeatmap).
+        foreach ($externalBuckets as $bucket) {
+            $n = count($bucket['itemIds'] ?? []);
+            if ($n === 0) {
+                continue;
+            }
+            $section = (string) ($bucket['section'] ?? '');
+            $uni = (string) ($bucket['university'] ?? '');
+            if ($section === '' || $uni === '') {
+                continue;
+            }
+            $key = $section . "\0" . $uni;
+            $matrix[$key] = ($matrix[$key] ?? 0) + $n;
+            $secTotals[$section] = ($secTotals[$section] ?? 0) + $n;
+            $uniTotals[$uni] = ($uniTotals[$uni] ?? 0) + $n;
         }
         if (!$matrix) {
             return null;
@@ -1863,7 +1889,7 @@ final class Aggregators
     {
         $amrc = 'African Cluster Centre (AMRC)';
         $coop = 'Cooperation partner';
-        $glob = 'Global partner Center of African Studies';
+        $glob = 'Global partner Centre of African Studies';
         return [
             // AMRCs + privileged partner.
             ['category' => 'amrc', 'latitude' => 49.9457, 'longitude' => 11.5775, 'label' => 'University of Bayreuth', 'sublabel' => 'Cluster lead'],

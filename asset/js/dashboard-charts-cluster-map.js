@@ -25,7 +25,7 @@
     var LEGEND_LABELS = {
         amrc: 'AMRCs & privileged partner',
         cooperation: 'Cooperation partners',
-        global: 'Global partner Centers of African Studies'
+        global: 'Global partner Centres of African Studies'
     };
 
     function esc(s) {
@@ -56,8 +56,11 @@
         // Wrapped so the theme engine can rebuild the map (new basemap + marker
         // colours) on a live light/dark toggle — see dashboard-core ns.refresh().
         function create() {
-            // Drop a stale legend left from a previous (pre-rebuild) render.
-            var staleLegend = el.querySelector('.rv-cluster-legend');
+            // The legend renders BELOW the map (in the panel, not over it) so it
+            // never hides markers. Drop a stale one from a previous (pre-rebuild)
+            // render before building the new map.
+            var panel = el.closest('.chart-panel') || el.parentNode || el;
+            var staleLegend = panel.querySelector('.rv-cluster-legend');
             if (staleLegend) staleLegend.remove();
 
             var map = new maplibregl.Map({
@@ -71,7 +74,6 @@
             map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
             map.addControl(new maplibregl.FullscreenControl(), 'top-right');
             if (maplibregl.GlobeControl) map.addControl(new maplibregl.GlobeControl(), 'top-right');
-            map.addControl(new maplibregl.ScaleControl({ maxWidth: 100, unit: 'metric' }), 'bottom-left');
 
             var markers = [];
 
@@ -145,7 +147,7 @@
                 });
                 legend.appendChild(btn);
             });
-            el.appendChild(legend);
+            panel.appendChild(legend);
 
             ns.trackMap(map, create);
             return { resize: function () { map.resize(); } };

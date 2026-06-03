@@ -32,7 +32,6 @@
         });
 
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
-        map.addControl(new maplibregl.ScaleControl({ maxWidth: 120 }));
 
         map.on('load', function () {
             // Build GeoJSON for flow arcs.

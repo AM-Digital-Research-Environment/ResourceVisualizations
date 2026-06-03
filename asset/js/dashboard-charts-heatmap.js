@@ -28,17 +28,25 @@
                 }
             },
             aria: { enabled: true },
-            grid: { left: 120, right: 60, top: 10, bottom: 80 },
+            // Extra right margin keeps the calculable visualMap (the draggable
+            // slider) clear of the cells; extra bottom margin gives the angled
+            // x-axis labels room so none are clipped.
+            grid: { left: 130, right: 92, top: 12, bottom: 104 },
             xAxis: {
                 type: 'category', data: data.cols,
-                axisLabel: { rotate: 35, fontSize: THEME.fontSize, formatter: function (v) { return truncateLabel(v, 15); } }
+                // interval: 0 forces every column label to render (ECharts otherwise
+                // drops some when they crowd); a longer truncation keeps them legible.
+                axisLabel: {
+                    interval: 0, rotate: 35, fontSize: THEME.fontSize,
+                    formatter: function (v) { return truncateLabel(v, 22); }
+                }
             },
             yAxis: {
                 type: 'category', data: data.rows,
-                axisLabel: { fontSize: THEME.fontSize, formatter: function (v) { return truncateLabel(v, 15); } }
+                axisLabel: { fontSize: THEME.fontSize, formatter: function (v) { return truncateLabel(v, 22); } }
             },
             visualMap: {
-                min: 0, max: maxVal || 1, calculable: true, orient: 'vertical', right: 0, top: 'center',
+                min: 0, max: maxVal || 1, calculable: true, orient: 'vertical', right: 12, top: 'center',
                 inRange: { color: ns.accentRamp() }
             },
             series: [{

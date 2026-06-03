@@ -140,7 +140,6 @@
             map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
             map.addControl(new maplibregl.FullscreenControl(), 'top-right');
             if (maplibregl.GlobeControl) map.addControl(new maplibregl.GlobeControl(), 'top-right');
-            map.addControl(new maplibregl.ScaleControl({ maxWidth: 100, unit: 'metric' }), 'bottom-left');
 
             map.on('load', function () {
                 loadCountries().then(function (geo) {

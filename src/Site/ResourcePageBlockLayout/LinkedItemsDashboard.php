@@ -9,7 +9,7 @@ class LinkedItemsDashboard implements ResourcePageBlockLayoutInterface
 {
     public function getLabel(): string
     {
-        return 'Visualizations'; // @translate
+        return 'Visualisations'; // @translate
     }
 
     public function getCompatibleResourceNames(): array

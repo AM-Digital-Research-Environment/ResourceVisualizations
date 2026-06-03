@@ -40,6 +40,13 @@ final class Runner
     private const ITEM_SET_PROJECT = 20;
     private const ITEM_SET_PUBLICATIONS = 29918;
 
+    // External partner collections — their items reach the section×university
+    // overview via item-set membership (they sit outside the section→project
+    // hierarchy: ILAM items have no dcterms:isPartOf, the BayGlo project names no
+    // section). Routed onto a partner-university column in generateCollectionOverview().
+    private const ITEM_SET_ILAM = 27724;     // International Library of African Music → Rhodes University
+    private const ITEM_SET_BAYGLO = 27601;   // Bayreuth Global/Postkolonial → University of Bayreuth
+
     // Parent item IDs for category overviews.
     private const OVERVIEW_GENRE = 22198;
     private const OVERVIEW_LANGUAGE = 2039;
@@ -737,7 +744,14 @@ final class Runner
         if ($v = Aggregators::buildSectionsBar($sections, $this->childrenOf, $this->items)) {
             $dashboard['sectionsBar'] = $v;
         }
-        if ($v = Aggregators::buildSectionUniversity($sections, $this->childrenOf, $this->items, $this->links)) {
+        // External partner collections are folded onto a partner-university column
+        // (ILAM → Rhodes University, BayGlo → University of Bayreuth) under an
+        // "External" row; their items sit outside the section→project hierarchy.
+        $externalBuckets = [
+            ['itemIds' => $this->itemSets[self::ITEM_SET_ILAM] ?? [], 'section' => 'External', 'university' => 'Rhodes University'],
+            ['itemIds' => $this->itemSets[self::ITEM_SET_BAYGLO] ?? [], 'section' => 'External', 'university' => 'University of Bayreuth'],
+        ];
+        if ($v = Aggregators::buildSectionUniversity($sections, $this->childrenOf, $this->items, $this->links, $externalBuckets)) {
             $dashboard['sectionUniversity'] = $v;
         }
         $dashboard['clusterPartners'] = Aggregators::clusterPartners();

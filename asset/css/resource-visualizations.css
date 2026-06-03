@@ -426,6 +426,9 @@ details.rv-collapsible[open] > .rv-collapsible__head .rv-collapsible__chevron {
     color: var(--rv-heading-color);
 }
 
+/* Inline count/meta badge used by the Discursive Communities, What's New and
+   item-page dashboard headers (the Collection Overview "Visualisations" header
+   no longer shows one). */
 .dashboard-total {
     font-size: 0.9rem;
     color: var(--rv-text-color);
@@ -510,8 +513,9 @@ details.rv-collapsible[open] > .rv-collapsible__head .rv-collapsible__chevron {
 }
 
 .rv-word-slider input[type="range"] {
+    /* Fill the panel width: a fixed max-width left a large empty gap to the
+       right of the slider on wide word-cloud panels. */
     flex: 1;
-    max-width: 300px;
     height: 4px;
     accent-color: var(--rv-accent);
     cursor: pointer;
@@ -802,21 +806,14 @@ button.rv-toolbar-btn:focus-visible,
 }
 
 .rv-cluster-legend {
-    position: absolute;
-    bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
+    /* Sits below the map (within the panel) so it never covers markers. */
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
     gap: 4px 14px;
-    max-width: calc(100% - 100px);
+    margin-top: 0.6rem;
     padding: 6px 12px;
-    background: var(--rv-overlay);
-    border-radius: 6px;
-    box-shadow: var(--rv-shadow-sm);
-    z-index: 2;
 }
 
 .rv-cluster-legend__item {

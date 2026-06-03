@@ -38,8 +38,7 @@
         // no `stats` array, so this is empty for them).
         var statsHtml = (ns.renderStatCards && data.stats) ? ns.renderStatCards(data.stats) : '';
 
-        var headInner = '<h3>Visualizations</h3>'
-            + '<span class="dashboard-total">' + (data.totalItems || 0) + ' items</span>';
+        var headInner = '<h3>Visualisations</h3>';
 
         var chartsHtml = '<div class="dashboard-charts">';
         chartKeys.forEach(function (key) {
@@ -60,7 +59,7 @@
         chartsHtml += '</div>';
 
         // The async dashboards (Collection Overview, Publications, item-page
-        // Visualizations) wrap their header + charts in a collapsible disclosure
+        // Visualisations) wrap their header + charts in a collapsible disclosure
         // that matches the DRE theme's "Linked resources" accordion. The shared
         // render path (inline mode, Project Explorer) leaves `collapsible`
         // undefined and keeps the flat layout it has always used.

@@ -49,7 +49,7 @@ class MaintenanceController extends AbstractActionController
 
         $jobUrl = $this->url()->fromRoute('admin/id', ['controller' => 'job', 'id' => $job->getId()]);
         $message = new Message(
-            'Dashboard regeneration queued — rebuilds every precomputed visualization (entities, overviews, communities). Track progress: %1$sjob #%2$d%3$s', // @translate
+            'Dashboard regeneration queued — rebuilds every precomputed visualisation (entities, overviews, communities). Track progress: %1$sjob #%2$d%3$s', // @translate
             sprintf('<a href="%s">', htmlspecialchars($jobUrl, ENT_QUOTES, 'UTF-8')),
             $job->getId(),
             '</a>'

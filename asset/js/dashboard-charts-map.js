@@ -71,7 +71,6 @@
         map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
         map.addControl(new maplibregl.FullscreenControl(), 'top-right');
         if (maplibregl.GlobeControl) map.addControl(new maplibregl.GlobeControl(), 'top-right');
-        map.addControl(new maplibregl.ScaleControl({ maxWidth: 100, unit: 'metric' }), 'bottom-left');
         // Attribution hidden — source info in map tiles. Users can inspect via browser.
 
         map.on('load', function () {
@@ -335,7 +334,6 @@
         });
         map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
         map.addControl(new maplibregl.FullscreenControl(), 'top-right');
-        map.addControl(new maplibregl.ScaleControl({ maxWidth: 80, unit: 'metric' }), 'bottom-left');
         new maplibregl.Marker({ color: THEME.accent })
             .setLngLat([data.lon, data.lat])
             .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML('<strong>' + (data.name || '') + '</strong>'))

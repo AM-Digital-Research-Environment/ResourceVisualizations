@@ -571,7 +571,6 @@
                 scrollZoom: false,
             });
             map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
-            map.addControl(new maplibregl.ScaleControl({ maxWidth: 80, unit: 'metric' }), 'bottom-left');
 
             map.on('load', function () {
                 // Origin markers (brand accent).

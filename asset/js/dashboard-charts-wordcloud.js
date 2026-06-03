@@ -86,10 +86,23 @@
                 panel.insertBefore(slider, insertRef);
 
                 var input = slider.querySelector('input');
+                var valueEl = slider.querySelector('.rv-word-slider-value');
+                // echarts-wordcloud lays out asynchronously. Firing setOption on
+                // every drag tick starts overlapping layout passes that paint on
+                // top of one another (the "words stacked on each other" bug). Debounce
+                // so only the settled value relayouts, and chart.clear() first so the
+                // previous pass's canvas is discarded rather than drawn over.
+                var relayoutTimer = null;
                 input.addEventListener('input', function () {
                     var n = parseInt(this.value, 10);
-                    slider.querySelector('.rv-word-slider-value').textContent = n;
-                    chart.setOption(wordCloudOption(n), true);
+                    valueEl.textContent = n;
+                    clearTimeout(relayoutTimer);
+                    relayoutTimer = setTimeout(function () {
+                        // clear() discards the old display list but keeps the
+                        // click/hover handlers bound above, so no re-binding needed.
+                        chart.clear();
+                        chart.setOption(wordCloudOption(n));
+                    }, 180);
                 });
             }
         }

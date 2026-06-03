@@ -134,7 +134,7 @@
                 load(selectedId);
             } else {
                 content.innerHTML = '<div class="rv-no-data">'
-                    + 'Select a project to explore its visualizations.</div>';
+                    + 'Select a project to explore its visualisations.</div>';
             }
         }).catch(function () {
             container.innerHTML = '<div class="rv-error">Could not load project data.</div>';

@@ -25,7 +25,7 @@ class CollectionDashboard extends AbstractBlockLayout
     public function form(PhpRenderer $view, SiteRepresentation $site,
         ?SitePageRepresentation $page = null, ?SitePageBlockRepresentation $block = null)
     {
-        return '<p>' . $view->translate('The full set of aggregate visualizations across the entire collection. For a curated, home-page-friendly subset use the "Collection Overview" block instead. No configuration needed.') . '</p>';
+        return '<p>' . $view->translate('The full set of aggregate visualisations across the entire collection. For a curated, home-page-friendly subset use the "Collection Overview" block instead. No configuration needed.') . '</p>';
     }
 
     public function render(PhpRenderer $view, SitePageBlockRepresentation $block,
