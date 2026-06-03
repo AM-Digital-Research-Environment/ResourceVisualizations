@@ -142,58 +142,196 @@
         return wrap;
     }
 
+    /** Per-page unique id seed for combobox ARIA wiring. */
+    var _cbUid = 0;
+    /** Cap rendered options so a long index (e.g. ~700 people) stays snappy;
+     *  the user narrows by typing. A note shows how many more matched. */
+    var COMBO_MAX_VISIBLE = 100;
+
+    /**
+     * A type-to-search combobox replacing the old native <select>. Filters the
+     * index by name as you type, supports full keyboard navigation, and keeps the
+     * project section grouping. Follows the ARIA combobox/listbox pattern.
+     * Signature (entries, side, cfg, onChange) and onChange(id, entry) are
+     * unchanged, so the caller is untouched.
+     */
     function buildSelector(entries, side, cfg, onChange) {
         var wrap = document.createElement('div');
         wrap.className = 'compare-selector';
 
+        var uid = 'rv-cb-' + (++_cbUid);
+        var listId = uid + '-list';
+
         var label = document.createElement('label');
+        label.id = uid + '-label';
         label.textContent = cfg.singular + (side === 'left' ? ' A' : ' B');
         label.className = 'compare-selector-label';
+        label.setAttribute('for', uid + '-input');
 
-        var select = document.createElement('select');
-        select.className = 'compare-select';
+        var combo = document.createElement('div');
+        combo.className = 'rv-combobox';
 
-        var placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.textContent = 'Select a ' + cfg.singular.toLowerCase() + '…';
-        placeholder.disabled = true;
-        placeholder.selected = true;
-        select.appendChild(placeholder);
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.id = uid + '-input';
+        input.className = 'rv-combobox-input';
+        input.setAttribute('role', 'combobox');
+        input.setAttribute('autocomplete', 'off');
+        input.setAttribute('aria-autocomplete', 'list');
+        input.setAttribute('aria-expanded', 'false');
+        input.setAttribute('aria-controls', listId);
+        input.setAttribute('aria-labelledby', uid + '-label');
+        input.placeholder = 'Search a ' + cfg.singular.toLowerCase() + '…';
 
-        function makeOption(p) {
-            var opt = document.createElement('option');
-            opt.value = p.id;
-            opt.textContent = truncate(p.name, 70) + ' (' + p.items + ' items)';
-            opt.title = p.name;
-            return opt;
-        }
+        var list = document.createElement('ul');
+        list.className = 'rv-combobox-list';
+        list.id = listId;
+        list.setAttribute('role', 'listbox');
+        list.hidden = true;
 
-        if (cfg.grouped) {
-            var sections = {};
-            entries.forEach(function (p) {
-                var sec = (p.sections && p.sections[0]) || 'Other';
-                (sections[sec] = sections[sec] || []).push(p);
-            });
-            Object.keys(sections).sort().forEach(function (sec) {
-                var group = document.createElement('optgroup');
-                group.label = sec;
-                sections[sec].forEach(function (p) { group.appendChild(makeOption(p)); });
-                select.appendChild(group);
-            });
-        } else {
-            entries.forEach(function (p) { select.appendChild(makeOption(p)); });
-        }
+        combo.appendChild(input);
+        combo.appendChild(list);
 
-        select.addEventListener('change', function () {
-            var id = select.value, entry = null;
+        var selectedId = null;
+        var activeOptions = [];   // option <li>s currently shown (excludes headers)
+        var activeIndex = -1;
+
+        function findEntry(id) {
             for (var i = 0; i < entries.length; i++) {
-                if (String(entries[i].id) === String(id)) { entry = entries[i]; break; }
+                if (String(entries[i].id) === String(id)) return entries[i];
             }
-            onChange(id, entry);
+            return null;
+        }
+
+        function optionText(p) {
+            return truncate(p.name, 70) + ' (' + p.items + ' item' + (p.items === 1 ? '' : 's') + ')';
+        }
+
+        function makeOptionEl(p) {
+            var li = document.createElement('li');
+            li.className = 'rv-combobox-option';
+            li.id = uid + '-opt-' + activeOptions.length;
+            li.setAttribute('role', 'option');
+            li.setAttribute('aria-selected', String(String(p.id) === String(selectedId)));
+            li.dataset.id = p.id;
+            li.textContent = optionText(p);
+            li.title = p.name;
+            // mousedown (not click) so selection runs before the input's blur
+            // handler can close the list.
+            li.addEventListener('mousedown', function (e) { e.preventDefault(); choose(p); });
+            activeOptions.push(li);
+            return li;
+        }
+
+        function renderList(query) {
+            list.innerHTML = '';
+            activeOptions = [];
+            var q = (query || '').toLowerCase().trim();
+            var matched = q
+                ? entries.filter(function (p) { return (p.name || '').toLowerCase().indexOf(q) >= 0; })
+                : entries.slice();
+
+            if (!matched.length) {
+                var none = document.createElement('li');
+                none.className = 'rv-combobox-empty';
+                none.setAttribute('role', 'presentation');
+                none.textContent = 'No matches';
+                list.appendChild(none);
+                setActive(-1);
+                return;
+            }
+
+            var shown = matched.slice(0, COMBO_MAX_VISIBLE);
+            if (cfg.grouped) {
+                var groups = {};
+                shown.forEach(function (p) {
+                    var sec = (p.sections && p.sections[0]) || 'Other';
+                    (groups[sec] = groups[sec] || []).push(p);
+                });
+                Object.keys(groups).sort().forEach(function (sec) {
+                    var header = document.createElement('li');
+                    header.className = 'rv-combobox-group';
+                    header.setAttribute('role', 'presentation');
+                    header.textContent = sec;
+                    list.appendChild(header);
+                    groups[sec].forEach(function (p) { list.appendChild(makeOptionEl(p)); });
+                });
+            } else {
+                shown.forEach(function (p) { list.appendChild(makeOptionEl(p)); });
+            }
+
+            if (matched.length > shown.length) {
+                var more = document.createElement('li');
+                more.className = 'rv-combobox-more';
+                more.setAttribute('role', 'presentation');
+                more.textContent = '+' + (matched.length - shown.length) + ' more — keep typing to narrow';
+                list.appendChild(more);
+            }
+            setActive(activeOptions.length ? 0 : -1);
+        }
+
+        function setActive(i) {
+            if (activeIndex >= 0 && activeOptions[activeIndex]) {
+                activeOptions[activeIndex].classList.remove('is-active');
+            }
+            activeIndex = i;
+            if (i >= 0 && activeOptions[i]) {
+                var el = activeOptions[i];
+                el.classList.add('is-active');
+                input.setAttribute('aria-activedescendant', el.id);
+                var top = el.offsetTop, bottom = top + el.offsetHeight;
+                if (top < list.scrollTop) list.scrollTop = top;
+                else if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight;
+            } else {
+                input.removeAttribute('aria-activedescendant');
+            }
+        }
+
+        function open() {
+            if (!list.hidden) return;
+            list.hidden = false;
+            input.setAttribute('aria-expanded', 'true');
+        }
+        function close() {
+            if (list.hidden) return;
+            list.hidden = true;
+            input.setAttribute('aria-expanded', 'false');
+            input.removeAttribute('aria-activedescendant');
+        }
+        function openAll() { renderList(''); open(); }
+
+        function choose(p) {
+            selectedId = p.id;
+            input.value = p.name;
+            close();
+            onChange(p.id, p);
+        }
+
+        input.addEventListener('focus', function () { openAll(); input.select(); });
+        input.addEventListener('click', function () { if (list.hidden) openAll(); });
+        input.addEventListener('input', function () { renderList(input.value); open(); });
+        input.addEventListener('blur', function () { setTimeout(close, 120); });
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (list.hidden) { openAll(); return; }
+                setActive(Math.min(activeIndex + 1, activeOptions.length - 1));
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setActive(Math.max(activeIndex - 1, 0));
+            } else if (e.key === 'Enter') {
+                if (!list.hidden && activeIndex >= 0 && activeOptions[activeIndex]) {
+                    e.preventDefault();
+                    var entry = findEntry(activeOptions[activeIndex].dataset.id);
+                    if (entry) choose(entry);
+                }
+            } else if (e.key === 'Escape') {
+                if (!list.hidden) { e.stopPropagation(); close(); }
+            }
         });
 
         wrap.appendChild(label);
-        wrap.appendChild(select);
+        wrap.appendChild(combo);
         return wrap;
     }
 

@@ -101,8 +101,11 @@ body {
 }
 
 .resource-vis-block h3 {
-    font-size: 1.25rem;
-    font-weight: 600;
+    /* Inherit the host theme's global h3 size/weight (DRE theme: 1.5rem, and
+       1.875rem from >=768px, weight 700) so the module's section headings match
+       the theme's own headings and the "Linked resources" disclosure, stepping
+       cleanly down from the page h1/h2. Chart titles are <h4>, so they are
+       unaffected. */
     color: var(--rv-heading-color);
     margin: 0 0 0.75rem;
 }
@@ -418,9 +421,8 @@ details.rv-collapsible[open] > .rv-collapsible__head .rv-collapsible__chevron {
 }
 
 .dashboard-header h3 {
+    /* Inherit the host theme's global h3 scale -- see .resource-vis-block h3. */
     margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
     color: var(--rv-heading-color);
 }
 
@@ -973,6 +975,96 @@ button.rv-toolbar-btn:focus-visible,
     flex-shrink: 0;
     align-self: flex-end;
     padding-bottom: 0.45rem;
+}
+
+/* Searchable entity picker (Compare) — an ARIA combobox replacing the native
+   <select>: type to filter the index, arrow keys to navigate, Enter to choose. */
+.rv-combobox {
+    position: relative;
+}
+
+.rv-combobox-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--rv-border);
+    border-radius: var(--rv-radius);
+    background: var(--rv-bg);
+    color: var(--rv-heading-color);
+    font-size: 0.88rem;
+    font-family: inherit;
+}
+
+.rv-combobox-input::placeholder {
+    color: var(--rv-text-color);
+    opacity: 0.85;
+}
+
+.rv-combobox-input:focus {
+    outline: none;
+    border-color: var(--rv-accent);
+    box-shadow: var(--rv-focus-ring);
+}
+
+.rv-combobox-list {
+    position: absolute;
+    z-index: 30;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 0.25rem 0;
+    list-style: none;
+    max-height: 18rem;
+    overflow-y: auto;
+    background: var(--rv-bg-raised);
+    border: 1px solid var(--rv-border);
+    border-radius: var(--rv-radius-sm);
+    box-shadow: var(--rv-shadow);
+}
+
+.rv-combobox-list[hidden] {
+    display: none;
+}
+
+.rv-combobox-option {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.85rem;
+    color: var(--rv-text-strong);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.rv-combobox-option.is-active,
+.rv-combobox-option:hover {
+    background: var(--rv-bg-sunken);
+    color: var(--rv-heading-color);
+}
+
+.rv-combobox-option[aria-selected="true"] {
+    font-weight: 600;
+    color: var(--rv-accent);
+}
+
+.rv-combobox-group {
+    position: sticky;
+    top: 0;
+    padding: 0.4rem 0.75rem 0.2rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--rv-text-color);
+    background: var(--rv-bg-raised);
+}
+
+.rv-combobox-empty,
+.rv-combobox-more {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    color: var(--rv-text-color);
+    font-style: italic;
 }
 
 /* Compare: in-page entity-type switcher (Compare any-entity block) — a row of
