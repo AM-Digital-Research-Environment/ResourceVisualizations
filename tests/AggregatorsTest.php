@@ -77,6 +77,45 @@ check(($ovByName['Publication'] ?? 0) === 1, 'aggregateItems: synthetic type rep
 check(!isset($ovByName['Article']), 'aggregateItems: real type suppressed when synthetic present (no Article)');
 check(($ovByName['Book'] ?? 0) === 1, 'aggregateItems: non-synthetic item keeps its real type (Book=1)');
 
+// --- aggregateItems splits origin (dcterms:spatial) vs current (dcterms:provenance) ---
+// $geo is template-agnostic, so an Institution used as a Current Location is
+// geocoded just like a Location item.
+$geoItems = [
+    50 => ['title' => 'Bayreuth', 'class_term' => 'dcterms:Location'],
+    51 => ['title' => 'University of Bayreuth', 'class_term' => 'foaf:Organization'],
+];
+$geoLinks = [
+    1 => [['dcterms:spatial', 'Origin', 50], ['dcterms:provenance', 'Current', 51]],
+];
+$geo = [
+    50 => ['name' => 'Bayreuth', 'lat' => 49.95, 'lon' => 11.58, 'itemId' => 50],
+    51 => ['name' => 'University of Bayreuth', 'lat' => 49.92885, 'lon' => 11.5859, 'itemId' => 51],
+];
+$geoAgg = A::aggregateItems([1], $geoItems, $geoLinks, [], $geo);
+check(count($geoAgg['locations']) === 1 && $geoAgg['locations'][0]['name'] === 'Bayreuth',
+    'aggregateItems origin location = Bayreuth');
+check(count($geoAgg['currentLocations']) === 1 && $geoAgg['currentLocations'][0]['name'] === 'University of Bayreuth',
+    'aggregateItems current location resolves an institution');
+check($geoAgg['currentLocations'][0]['value'] === 1, 'aggregateItems current location count = 1');
+
+// --- buildAffiliationMap: a person's geocoded institution affiliations ---
+$afItems = [
+    60 => ['title' => 'Jane Doe', 'template_id' => 4, 'class_term' => 'foaf:Person'],
+    51 => ['title' => 'University of Bayreuth', 'template_id' => 2, 'class_term' => 'foaf:Organization'],
+    52 => ['title' => 'Uncharted Institute', 'template_id' => 2, 'class_term' => 'foaf:Organization'],
+];
+$afLinks = [
+    60 => [['dcterms:isPartOf', 'Affiliation', 51], ['dcterms:isPartOf', 'Affiliation', 52]],
+];
+$afMap = A::buildAffiliationMap(60, $afLinks, $afItems, $geo); // only 51 is in $geo
+check($afMap !== null && count($afMap) === 1, 'buildAffiliationMap keeps only geocoded affiliations');
+check($afMap[0]['name'] === 'University of Bayreuth' && $afMap[0]['itemId'] === 51,
+    'buildAffiliationMap marker is the geocoded org');
+check(A::buildAffiliationMap(999, $afLinks, $afItems, $geo) === null,
+    'buildAffiliationMap null when the person has no affiliations');
+check(A::buildAffiliationMap(60, $afLinks, $afItems, []) === null,
+    'buildAffiliationMap null when no affiliation is geocoded');
+
 // --- buildHeatmap drops a resource type that never co-occurs with a language ---
 $hmItems = [10 => ['title' => 'Book'], 11 => ['title' => 'English'], 14 => ['title' => 'Map']];
 $hmLinks = [

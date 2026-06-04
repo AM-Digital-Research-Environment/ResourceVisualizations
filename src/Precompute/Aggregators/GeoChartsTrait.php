@@ -64,6 +64,30 @@ trait GeoChartsTrait
         return $flowLinks ? ['nodes' => $nodes, 'links' => $flowLinks] : null;
     }
 
+    /**
+     * A person's affiliated organisations (dcterms:isPartOf → foaf:Organization)
+     * that carry coordinates, as map markers. Returns null when no affiliation is
+     * geocoded, so the orchestrator hides the panel.
+     */
+    public static function buildAffiliationMap(int $personId, array $links, array $items, array $geo): ?array
+    {
+        $markers = [];
+        $seen = [];
+        foreach ($links[$personId] ?? [] as [$term, $label, $vrid]) {
+            if ($term !== 'dcterms:isPartOf' || isset($seen[$vrid]) || !isset($geo[$vrid])) {
+                continue;
+            }
+            // Only map institution affiliations (not, e.g., a linked place).
+            if (($items[$vrid]['class_term'] ?? '') !== 'foaf:Organization') {
+                continue;
+            }
+            $seen[$vrid] = true;
+            $g = $geo[$vrid];
+            $markers[] = ['name' => $g['name'], 'lat' => $g['lat'], 'lon' => $g['lon'], 'itemId' => $g['itemId']];
+        }
+        return $markers ?: null;
+    }
+
     /** Even-odd ray-casting test across all rings of a polygon (handles holes). */
     private static function pointInPolygon(float $x, float $y, array $rings): bool
     {

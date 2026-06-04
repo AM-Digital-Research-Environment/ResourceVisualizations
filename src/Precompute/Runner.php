@@ -368,6 +368,10 @@ final class Runner
             if ($v = Aggregators::buildTemplates($itemIds, $this->items, $this->templateLabels)) {
                 $dashboard['templates'] = $v;
             }
+            // Map of the person's geocoded institution affiliations (dcterms:isPartOf).
+            if ($affMap = Aggregators::buildAffiliationMap($pid, $this->links, $this->items, $this->geo)) {
+                $dashboard['affiliationMap'] = $affMap;
+            }
 
             $coauthors = [];
             foreach ($itemIds as $iid) {
@@ -436,6 +440,12 @@ final class Runner
             }
             $index[] = ['id' => $iid, 'name' => $iinfo['title'], 'items' => count($itemIds)];
             $dashboard = Aggregators::aggregateItems($itemIds, $this->items, $this->links, $this->itemYear, $this->geo);
+            // The institution's own location (it now carries geo:lat/long like a
+            // Location), shown as a self-location mini-map on its page.
+            if (isset($this->geo[$iid])) {
+                $g = $this->geo[$iid];
+                $dashboard['selfLocation'] = ['name' => $g['name'], 'lat' => $g['lat'], 'lon' => $g['lon'], 'itemId' => $iid];
+            }
             if ($v = Aggregators::buildTemplates($itemIds, $this->items, $this->templateLabels)) {
                 $dashboard['templates'] = $v;
             }

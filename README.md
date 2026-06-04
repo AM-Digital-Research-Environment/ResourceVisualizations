@@ -24,7 +24,7 @@ Automatically rendered below the knowledge graph when an item has geographic dat
 - **Origin** (teal) — where the resource was produced/fieldwork conducted (`dcterms:spatial`)
 - **Current location** (orange) — where the resource is currently held (`dcterms:provenance`)
 
-Coordinates are resolved from linked Location items with `geo:lat`/`geo:long`. 2,898 items have location map data.
+Coordinates are resolved from linked Location **or Institution** items with `geo:lat`/`geo:long` — so an item held at a geocoded institution (an archive, museum, or university) now shows a current-location marker too, not just origins.
 
 ### Sibling-items Sparkline (Item Pages)
 
@@ -51,10 +51,11 @@ Contextual charts adapted per entity type. All chart elements are clickable, lin
 | Subject Trends over Time | x | x | | | | | | | |
 | Sunburst (type > language > subject) | x | x | | | | | | | |
 | Treemap (project x type) | x | x | | | | | | | |
-| Geographic Origins (map) | x | x | x | x | | | x | x | |
+| Geographic Origins & Current Locations (map) | x | x | x | x | | | x | x | |
 | Origin > Current Location (flow map) | x | x | | | x | | | | |
 | Items by Country (choropleth) | x | x | | | | | | | |
-| Self-location MiniMap | | | | | x | | | | |
+| Self-location MiniMap | | | | x | x | | | | |
+| Affiliation Map | | | x | | | | | | |
 | Profile (radar) | | x | x | x | | | | | |
 | Subject Co-occurrence (chord) | x | x | | | | | | | |
 | Collaboration Network | | | | x | | | | | |

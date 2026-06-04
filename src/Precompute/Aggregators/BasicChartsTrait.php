@@ -32,6 +32,7 @@ trait BasicChartsTrait
         $subjects = [];
         $contributors = [];
         $locations = [];
+        $currentLocations = [];
 
         foreach ($itemIds as $iid) {
             $year = $itemYear[$iid] ?? null;
@@ -74,6 +75,22 @@ trait BasicChartsTrait
                         $itTitle = $items[$iid]['title'] ?? ('Item ' . $iid);
                         $locations[$vrid]['items'][] = ['id' => $iid, 'title' => $itTitle];
                     }
+                } elseif ($term === 'dcterms:provenance') {
+                    // Current location (where the item is held now). Resolved via
+                    // $geo, which is template-agnostic, so an Institution used as a
+                    // Current Location is geocoded just like a Location item.
+                    if (isset($geo[$vrid])) {
+                        if (!isset($currentLocations[$vrid])) {
+                            $g = $geo[$vrid];
+                            $currentLocations[$vrid] = [
+                                'name' => $g['name'], 'lat' => $g['lat'], 'lon' => $g['lon'],
+                                'itemId' => $g['itemId'], 'value' => 0, 'items' => [],
+                            ];
+                        }
+                        $currentLocations[$vrid]['value']++;
+                        $itTitle = $items[$iid]['title'] ?? ('Item ' . $iid);
+                        $currentLocations[$vrid]['items'][] = ['id' => $iid, 'title' => $itTitle];
+                    }
                 }
             }
             // Synthetic resource type (e.g. publications → "Publication"). Keyed by
@@ -96,6 +113,7 @@ trait BasicChartsTrait
             'subjects' => array_slice($subjectsSorted, 0, 200),
             'contributors' => array_slice($contributorsSorted, 0, 30),
             'locations' => self::sortByValueDesc(array_values($locations)),
+            'currentLocations' => self::sortByValueDesc(array_values($currentLocations)),
             'totalItems' => count($itemIds),
         ];
     }

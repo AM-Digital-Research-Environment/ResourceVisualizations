@@ -53,6 +53,12 @@
         chartKeys.forEach(function (key) {
             var d = data[key];
             var hasData = Array.isArray(d) ? d.length > 0 : (d && Object.keys(d).length > 0);
+            // The geographic map ('locations') also renders a current-location
+            // overlay, so keep its panel when only current locations are present
+            // (an item held somewhere with no recorded origin).
+            if (key === 'locations' && !hasData && data.currentLocations && data.currentLocations.length) {
+                hasData = true;
+            }
             if (!hasData) return;
             // Skip basic timeline when stacked timeline is available (redundant).
             if (key === 'timeline' && data.stackedTimeline && data.stackedTimeline.years && data.stackedTimeline.years.length > 0) return;

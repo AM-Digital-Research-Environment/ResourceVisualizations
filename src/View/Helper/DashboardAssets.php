@@ -48,6 +48,7 @@ class DashboardAssets extends AbstractHelper
         'js/dashboard-charts-beeswarm.js',
         'js/dashboard-charts-map.js',
         'js/dashboard-charts-cluster-map.js',
+        'js/dashboard-charts-affiliation-map.js',
         'js/dashboard-collab-network.js',
         'js/dashboard-charts-contributor-network.js',
         'js/dashboard-charts-stacked-area.js',

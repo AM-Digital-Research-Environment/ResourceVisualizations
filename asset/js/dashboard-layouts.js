@@ -29,17 +29,18 @@
                     'choropleth']
         },
         organisation: {
-            order: ['timeline', 'types', 'templates', 'languages', 'roles', 'radar',
-                    'contributors', 'subjects', 'collabNetwork',
+            order: ['selfLocation', 'timeline', 'types', 'templates', 'languages',
+                    'roles', 'radar', 'contributors', 'subjects', 'collabNetwork',
                     'affiliationNetwork', 'locations'],
-            wide:  ['subjects', 'collabNetwork', 'affiliationNetwork', 'locations'],
-            tall:  ['subjects', 'collabNetwork', 'affiliationNetwork', 'locations']
+            wide:  ['selfLocation', 'subjects', 'collabNetwork', 'affiliationNetwork', 'locations'],
+            tall:  ['selfLocation', 'subjects', 'collabNetwork', 'affiliationNetwork', 'locations']
         },
         person: {
             order: ['timeline', 'types', 'templates', 'languages', 'roles', 'radar',
-                    'coAuthors', 'subjects', 'contributorNetwork', 'locations'],
-            wide:  ['subjects', 'contributorNetwork', 'locations'],
-            tall:  ['subjects', 'contributorNetwork', 'locations']
+                    'coAuthors', 'subjects', 'contributorNetwork', 'locations',
+                    'affiliationMap'],
+            wide:  ['subjects', 'contributorNetwork', 'locations', 'affiliationMap'],
+            tall:  ['subjects', 'contributorNetwork', 'locations', 'affiliationMap']
         },
         section: {
             order: ['selfLocation', 'stackedTimeline', 'languageTimeline',

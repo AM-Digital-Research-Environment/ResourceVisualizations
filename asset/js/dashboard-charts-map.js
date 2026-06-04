@@ -53,7 +53,10 @@
     /* -- Geographic origins map -- */
 
     ns.charts.buildMap = function (el, data, siteBase, allData) {
-        if (!data || !data.length || typeof maplibregl === 'undefined') return null;
+        var hasOriginData = data && data.length;
+        var hasCurrentData = allData && allData.currentLocations && allData.currentLocations.length;
+        if ((!hasOriginData && !hasCurrentData) || typeof maplibregl === 'undefined') return null;
+        data = data || [];
 
         el.style.borderRadius = '6px';
 
@@ -132,10 +135,69 @@
                 if (loc.items && loc.items.length) locationItems[loc.name] = loc.items;
             });
 
-            // --- GeoFlows overlay (origin → current location) ---
+            // --- Current-location layer (orange) ---
+            // Where items are *held now* (dcterms:provenance) — Locations AND
+            // Institutions, both geocoded. Its own clustered layer, so it shows on
+            // every dashboard map, with or without origin→current flows.
+            var currentData = (allData && allData.currentLocations) || [];
+            var hasCurrent = currentData.length > 0;
+            var currentColor = COLORS[2];
+            var currentItems = {};
+
+            if (hasCurrent) {
+                var curFeatures = currentData.map(function (loc) {
+                    if (loc.items && loc.items.length) currentItems[loc.name] = loc.items;
+                    return {
+                        type: 'Feature',
+                        geometry: { type: 'Point', coordinates: [loc.lon, loc.lat] },
+                        properties: { name: loc.name, value: loc.value, itemId: loc.itemId }
+                    };
+                });
+
+                map.addSource('currentLocations', {
+                    type: 'geojson',
+                    data: { type: 'FeatureCollection', features: curFeatures },
+                    cluster: true, clusterMaxZoom: 8, clusterRadius: 40,
+                });
+
+                map.addLayer({
+                    id: 'cur-clusters', type: 'circle', source: 'currentLocations',
+                    filter: ['has', 'point_count'],
+                    paint: {
+                        'circle-color': currentColor,
+                        'circle-radius': ['step', ['get', 'point_count'], 16, 10, 22, 30, 30],
+                        'circle-stroke-width': 2, 'circle-stroke-color': THEME.border,
+                    }
+                });
+
+                map.addLayer({
+                    id: 'cur-cluster-count', type: 'symbol', source: 'currentLocations',
+                    filter: ['has', 'point_count'],
+                    layout: { 'text-field': '{point_count_abbreviated}', 'text-size': 12 },
+                    paint: { 'text-color': '#ffffff', 'text-halo-color': 'rgba(0,0,0,0.45)', 'text-halo-width': 1 }
+                });
+
+                map.addLayer({
+                    id: 'cur-points', type: 'circle', source: 'currentLocations',
+                    filter: ['!', ['has', 'point_count']],
+                    paint: {
+                        'circle-color': currentColor,
+                        'circle-radius': ['interpolate', ['linear'], ['get', 'value'], 1, 7, 50, 16, 200, 26],
+                        'circle-stroke-width': 2, 'circle-stroke-color': THEME.border, 'circle-opacity': 0.85,
+                    }
+                });
+
+                map.addLayer({
+                    id: 'cur-point-labels', type: 'symbol', source: 'currentLocations',
+                    filter: ['!', ['has', 'point_count']],
+                    layout: { 'text-field': '{name}', 'text-size': 11, 'text-offset': [0, 1.8], 'text-anchor': 'top' },
+                    paint: { 'text-color': THEME.text, 'text-halo-color': THEME.border, 'text-halo-width': 1.5 }
+                });
+            }
+
+            // --- GeoFlows overlay (origin → current location arcs) ---
             var geoFlows = allData && allData.geoFlows;
             var hasFlows = geoFlows && geoFlows.links && geoFlows.links.length > 0;
-            var currentColor = COLORS[2];
 
             if (hasFlows) {
                 var flowFeatures = geoFlows.links.map(function (l) {
@@ -169,7 +231,10 @@
                     }
                 }, 'clusters'); // insert before clusters layer
 
-                // Current-location dots.
+                // Current-location dots — only when there is no standalone current
+                // layer (older precomputes without `currentLocations`); otherwise the
+                // orange clustered layer above already renders them.
+                if (!hasCurrent) {
                 var seenCurrents = {};
                 var currentFeatures = [];
                 geoFlows.links.forEach(function (l) {
@@ -209,6 +274,7 @@
                     layout: { 'text-field': '{name}', 'text-size': 11, 'text-offset': [0, 1.8], 'text-anchor': 'top' },
                     paint: { 'text-color': THEME.text, 'text-halo-color': THEME.border, 'text-halo-width': 1.5 }
                 });
+                }
             }
 
             // --- Popup management (single popup at a time) ---
@@ -276,6 +342,40 @@
             map.on('mouseenter', 'clusters', function () { map.getCanvas().style.cursor = 'pointer'; });
             map.on('mouseleave', 'clusters', function () { map.getCanvas().style.cursor = ''; });
 
+            // --- Current-location interactions (item-list popups + cluster zoom) ---
+            if (hasCurrent) {
+                map.on('click', 'cur-points', function (e) {
+                    var props = e.features[0].properties;
+                    var locItems = currentItems[props.name] || [];
+                    var perPage = 8;
+                    showPopup(e.lngLat, buildMapPopup(props, locItems, 0, perPage, siteBase));
+                    (function attach() {
+                        var pe = activePopup && activePopup.getElement();
+                        if (!pe) return;
+                        pe.querySelectorAll('[data-page]').forEach(function (btn) {
+                            btn.addEventListener('click', function (evt) {
+                                evt.stopPropagation();
+                                activePopup.setHTML(buildMapPopup(props, locItems, parseInt(btn.dataset.page, 10), perPage, siteBase));
+                                attach();
+                            });
+                        });
+                    })();
+                });
+
+                map.on('click', 'cur-clusters', function (e) {
+                    var clusterId = e.features[0].properties.cluster_id;
+                    map.getSource('currentLocations').getClusterExpansionZoom(clusterId, function (err, zoom) {
+                        if (err) return;
+                        map.easeTo({ center: e.lngLat, zoom: zoom });
+                    });
+                });
+
+                ['cur-points', 'cur-clusters'].forEach(function (layerId) {
+                    map.on('mouseenter', layerId, function () { map.getCanvas().style.cursor = 'pointer'; });
+                    map.on('mouseleave', layerId, function () { map.getCanvas().style.cursor = ''; });
+                });
+            }
+
             // --- Fit bounds ---
             var bounds = new maplibregl.LngLatBounds();
             if (features.length) {
@@ -286,8 +386,11 @@
                     bounds.extend([l.toLon, l.toLat]);
                 });
             }
+            if (hasCurrent) {
+                currentData.forEach(function (loc) { bounds.extend([loc.lon, loc.lat]); });
+            }
             if (!bounds.isEmpty()) {
-                if (features.length === 1 && !hasFlows) {
+                if (features.length === 1 && !hasFlows && !hasCurrent) {
                     map.setCenter(features[0].geometry.coordinates);
                     map.setZoom(4);
                 } else {
@@ -296,11 +399,14 @@
             }
 
             // --- Legend (rendered below the map; see ns.mountMapLegend) ---
-            if (hasFlows) {
-                ns.mountMapLegend(el,
+            if (hasCurrent || hasFlows) {
+                var legendHtml =
                     '<div class="rv-map-legend-row"><span class="rv-map-legend-dot" style="background:' + THEME.accent + '"></span> Place of Origin</div>' +
-                    '<div class="rv-map-legend-row"><span class="rv-map-legend-dot" style="background:' + currentColor + '"></span> Current Location</div>' +
-                    '<div class="rv-map-legend-row"><span class="rv-map-legend-line" style="background:' + THEME.accent + '"></span> Flow</div>');
+                    '<div class="rv-map-legend-row"><span class="rv-map-legend-dot" style="background:' + currentColor + '"></span> Current Location</div>';
+                if (hasFlows) {
+                    legendHtml += '<div class="rv-map-legend-row"><span class="rv-map-legend-line" style="background:' + THEME.accent + '"></span> Flow</div>';
+                }
+                ns.mountMapLegend(el, legendHtml);
             }
         });
 
