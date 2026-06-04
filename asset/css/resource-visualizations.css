@@ -32,33 +32,33 @@
 /* ------------------------------------------------------------------ */
 
 body {
-    /* Surfaces */
-    --rv-bg:              var(--surface, #fafafa);          /* cards, panels      */
-    --rv-bg-raised:       var(--surface-raised, #ffffff);   /* hovered / floating */
-    --rv-bg-sunken:       var(--surface-sunken, #f0f0f0);   /* wells, chips       */
-    --rv-overlay:         var(--surface-overlay, rgba(255, 255, 255, 0.92));
+    /* Surfaces — warm stone (mirrors the DRE light theme, never cold grey) */
+    --rv-bg:              var(--surface, #fdfcfa);          /* cards, panels      */
+    --rv-bg-raised:       var(--surface-raised, #fffefb);   /* hovered / floating */
+    --rv-bg-sunken:       var(--surface-sunken, #f1ede6);   /* wells, chips       */
+    --rv-overlay:         var(--surface-overlay, rgba(253, 252, 250, 0.92));
 
-    /* Borders */
-    --rv-border:          var(--border, #e0e0e0);
-    --rv-border-light:    var(--border-light, #f0f0f0);
-    --rv-border-strong:   var(--border-strong, #c4c4c4);
+    /* Borders — warm low-chroma neutrals */
+    --rv-border:          var(--border, #dcd6cb);
+    --rv-border-light:    var(--border-light, #eae5dd);
+    --rv-border-strong:   var(--border-strong, #c3b9a9);
 
-    /* Text */
-    --rv-heading-color:   var(--ink-strong, #333333);
-    --rv-text-strong:     var(--ink, #444444);
-    --rv-text-color:      var(--ink-light, #666666);
+    /* Text — warm near-neutral inks */
+    --rv-heading-color:   var(--ink-strong, #33291f);
+    --rv-text-strong:     var(--ink, #473e33);
+    --rv-text-color:      var(--ink-light, #6c6357);
 
-    /* Brand accent (Uni-Grün via the theme) */
-    --rv-accent:          var(--primary, #22817b);
-    --rv-accent-hover:    var(--primary-hover, #1a655f);
-    --rv-accent-contrast: var(--primary-contrast, #ffffff);
+    /* Brand accent (Uni-Grün via the theme; the fallback IS Uni-Grün) */
+    --rv-accent:          var(--primary, #007a50);
+    --rv-accent-hover:    var(--primary-hover, #00633f);
+    --rv-accent-contrast: var(--primary-contrast, #fffef9);
 
     /* Radii, shadows, focus — straight from the theme's token set */
-    --rv-radius:          var(--radius-lg, 8px);
+    --rv-radius:          var(--radius-lg, 12px);
     --rv-radius-sm:       var(--radius-sm, 6px);
     --rv-shadow:          var(--shadow-lg, 0 4px 16px rgba(0, 0, 0, 0.12));
     --rv-shadow-sm:       var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.12));
-    --rv-focus-ring:      var(--ring-focus, 0 0 0 3px rgba(34, 129, 123, 0.32));
+    --rv-focus-ring:      var(--ring-focus, 0 0 0 3px rgba(0, 122, 80, 0.32));
 }
 
 /*
@@ -70,22 +70,23 @@ body {
  */
 @media (prefers-color-scheme: dark) {
     body {
-        --rv-bg:            var(--surface, #1e1e1e);
-        --rv-bg-raised:     var(--surface-raised, #2a2a2a);
-        --rv-bg-sunken:     var(--surface-sunken, #161616);
-        --rv-overlay:       var(--surface-overlay, rgba(42, 42, 42, 0.92));
+        /* Forest-dark (mirrors the DRE dark theme), lifted green accent. */
+        --rv-bg:            var(--surface, #1b211e);
+        --rv-bg-raised:     var(--surface-raised, #212724);
+        --rv-bg-sunken:     var(--surface-sunken, #161b18);
+        --rv-overlay:       var(--surface-overlay, rgba(27, 33, 30, 0.92));
 
-        --rv-border:        var(--border, #3a3a3a);
-        --rv-border-light:  var(--border-light, #333333);
-        --rv-border-strong: var(--border-strong, #4a4a4a);
+        --rv-border:        var(--border, #39423d);
+        --rv-border-light:  var(--border-light, #2c3531);
+        --rv-border-strong: var(--border-strong, #4c554f);
 
-        --rv-heading-color: var(--ink-strong, #e0e0e0);
-        --rv-text-strong:   var(--ink, #dddddd);
-        --rv-text-color:    var(--ink-light, #aaaaaa);
+        --rv-heading-color: var(--ink-strong, #f3f1ec);
+        --rv-text-strong:   var(--ink, #e3e0d9);
+        --rv-text-color:    var(--ink-light, #aaa498);
 
-        --rv-accent:          var(--primary, #4db6ac);
-        --rv-accent-hover:    var(--primary-hover, #6ec7be);
-        --rv-accent-contrast: var(--primary-contrast, #1e1e1e);
+        --rv-accent:          var(--primary, #3fb488);
+        --rv-accent-hover:    var(--primary-hover, #5cc49d);
+        --rv-accent-contrast: var(--primary-contrast, #14201a);
 
         --rv-shadow:    var(--shadow-lg, 0 4px 16px rgba(0, 0, 0, 0.5));
         --rv-shadow-sm: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.45));
