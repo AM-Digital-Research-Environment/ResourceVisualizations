@@ -379,5 +379,36 @@ check(A::buildStatCards([['key' => 'loc', 'label' => 'Locations', 'value' => 1, 
 check(A::buildStatCards([['label' => 'No key', 'value' => 9], ['key' => 'k', 'value' => 9]]) === [], 'buildStatCards drops cards missing key or label');
 check(A::buildStatCards([]) === [], 'buildStatCards empty input -> empty list');
 
+// --- clusterPartners (data-driven from isPartOf -> category authority) ---
+$cpItems = [
+    37685 => ['title' => 'Africa Multiple Research Centres', 'class_term' => ''],
+    39072 => ['title' => 'Cooperation partners', 'class_term' => ''],
+    39071 => ['title' => 'Global partner Centres of African Studies', 'class_term' => ''],
+    100 => ['title' => 'University of Bayreuth', 'class_term' => 'foaf:Organization'],
+    101 => ['title' => 'University of Dar es Salaam', 'class_term' => 'foaf:Organization'],
+    102 => ['title' => 'No-geo Institute', 'class_term' => 'foaf:Organization'],
+    103 => ['title' => 'Uncategorised Org', 'class_term' => 'foaf:Organization'],
+    104 => ['title' => 'A Person', 'class_term' => 'foaf:Person'],
+];
+$cpLinks = [
+    100 => [['dcterms:isPartOf', 'Is Part Of', 37685]],
+    101 => [['dcterms:isPartOf', 'Is Part Of', 39072]],
+    102 => [['dcterms:isPartOf', 'Is Part Of', 37685]],   // categorised but no geo -> excluded
+    103 => [['dcterms:isPartOf', 'Is Part Of', 999]],      // isPartOf a non-category -> excluded
+    104 => [['dcterms:isPartOf', 'Is Part Of', 37685]],    // not an Organization -> excluded
+];
+$cpGeo = [
+    100 => ['name' => 'University of Bayreuth', 'lat' => 49.92885, 'lon' => 11.5859],
+    101 => ['name' => 'University of Dar es Salaam', 'lat' => -6.7816, 'lon' => 39.2057],
+    104 => ['name' => 'A Person', 'lat' => 1.0, 'lon' => 2.0],
+];
+$cpAuth = [37685 => 'amrc', 39072 => 'cooperation', 39071 => 'global']; // ordered
+$cp = A::clusterPartners($cpItems, $cpLinks, $cpGeo, $cpAuth);
+check(count($cp['points']) === 2, 'clusterPartners: only geocoded, categorised Organizations (2)');
+check($cp['points'][0]['category'] === 'amrc' && $cp['points'][0]['label'] === 'University of Bayreuth', 'clusterPartners: AMRC sorts first, label from geo name');
+check($cp['points'][0]['sublabel'] === 'Africa Multiple Research Centres' && $cp['points'][0]['itemId'] === 100, 'clusterPartners: sublabel = authority title, itemId set');
+check($cp['categories'] === [['key' => 'amrc', 'label' => 'Africa Multiple Research Centres'], ['key' => 'cooperation', 'label' => 'Cooperation partners']], 'clusterPartners: ordered categories labelled from authorities, empty "global" dropped');
+check(A::clusterPartners([], [], [], $cpAuth) === [], 'clusterPartners: empty when no partners');
+
 echo $failures ? "\n$failures FAILURE(S)\n" : "\nALL PHP AGGREGATOR TESTS PASS\n";
 exit($failures ? 1 : 0);

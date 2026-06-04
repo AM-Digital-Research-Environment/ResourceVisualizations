@@ -79,6 +79,20 @@ final class Runner
     private const OVERVIEW_TAG = 22199;
     private const OVERVIEW_PROJECT = 3346;
 
+    /**
+     * Cluster-partner category authority records (children of "African Multiple
+     * Partners" 39074) → the legend category key, in display order. Any
+     * Organisation item that `dcterms:isPartOf` one of these and carries
+     * coordinates becomes a data-driven marker on the Collection Overview cluster
+     * map (see Aggregators::clusterPartners), replacing the former hard-coded list.
+     */
+    private const CLUSTER_CATEGORY_AUTHORITIES = [
+        37685 => 'amrc',         // Africa Multiple Research Centres
+        39073 => 'privileged',   // Privileged partner
+        39072 => 'cooperation',  // Cooperation partners
+        39071 => 'global',       // Global partner Centres of African Studies
+    ];
+
     private array $items = [];
     private array $links = [];
     private array $reverseLinks = [];
@@ -806,7 +820,9 @@ final class Runner
         if ($v = Aggregators::buildSectionUniversity($sections, $this->childrenOf, $this->items, $this->links, $externalBuckets)) {
             $dashboard['sectionUniversity'] = $v;
         }
-        $dashboard['clusterPartners'] = Aggregators::clusterPartners();
+        if ($cp = Aggregators::clusterPartners($this->items, $this->links, $this->geo, self::CLUSTER_CATEGORY_AUTHORITIES)) {
+            $dashboard['clusterPartners'] = $cp;
+        }
         // amira-style summary stat cards. Country count comes from the choropleth
         // just built above (one entry per distinct country of origin).
         $countries = is_array($dashboard['choropleth'] ?? null) ? count($dashboard['choropleth']) : 0;

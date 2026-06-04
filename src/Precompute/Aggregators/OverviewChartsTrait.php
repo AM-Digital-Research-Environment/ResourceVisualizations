@@ -263,49 +263,65 @@ trait OverviewChartsTrait
     }
 
     /**
-     * Static, curated geography of the Africa Multiple cluster — ported verbatim
-     * from the amira dashboard's clusterPartners.ts: the AMRCs and privileged
-     * partner, cooperation partners, and global partner Centers of African
-     * Studies. Marker colours are assigned per `category` by the front-end
-     * (dashboard-charts-cluster-map.js) so they follow the active light/dark theme.
+     * Data-driven geography of the Africa Multiple cluster: every Organisation
+     * item that `dcterms:isPartOf` one of the four "African Multiple Partners"
+     * category authority records (``$authorityKeys``: authority item id => legend
+     * category key, in display order) and that carries coordinates. Replaces the
+     * former hard-coded list — the partners, their coordinates, and their category
+     * now come straight from Omeka, so curation happens there. Category labels are
+     * read from each authority record's title; marker colours are assigned by the
+     * front-end (dashboard-charts-cluster-map.js) per category order.
      *
-     * @return list<array{category:string,latitude:float,longitude:float,label:string,sublabel:string}>
+     * @param array<int,array> $items item id => info (class_term, title, …)
+     * @param array<int,list<array{0:string,1:string,2:int}>> $links item id => [term,label,vrid]
+     * @param array<int,array{name:string,lat:float,lon:float}> $geo geocoded items
+     * @param array<int,string> $authorityKeys authority item id => category key (ordered)
+     * @return array{categories:list<array{key:string,label:string}>,points:list<array{category:string,latitude:float,longitude:float,label:string,sublabel:string,itemId:int}>}|array{}
      */
-    public static function clusterPartners(): array
+    public static function clusterPartners(array $items, array $links, array $geo, array $authorityKeys): array
     {
-        $amrc = 'African Cluster Centre (AMRC)';
-        $coop = 'Cooperation partner';
-        $glob = 'Global partner Centre of African Studies';
-        return [
-            // AMRCs + privileged partner.
-            ['category' => 'amrc', 'latitude' => 49.9457, 'longitude' => 11.5775, 'label' => 'University of Bayreuth', 'sublabel' => 'Cluster lead'],
-            ['category' => 'amrc', 'latitude' => 12.3714, 'longitude' => -1.5197, 'label' => 'Université Joseph Ki-Zerbo', 'sublabel' => $amrc],
-            ['category' => 'amrc', 'latitude' => 6.5244, 'longitude' => 3.3792, 'label' => 'University of Lagos', 'sublabel' => $amrc],
-            ['category' => 'amrc', 'latitude' => 0.5143, 'longitude' => 35.2698, 'label' => 'Moi University', 'sublabel' => $amrc],
-            ['category' => 'amrc', 'latitude' => -33.3117, 'longitude' => 26.5197, 'label' => 'Rhodes University', 'sublabel' => $amrc],
-            ['category' => 'amrc', 'latitude' => -12.9974, 'longitude' => -38.5124, 'label' => 'Centro de Estudos Afro-Orientais (CEAO) at the Universidade Federal da Bahia (UFBA)', 'sublabel' => 'Privileged partner'],
-            // Cooperation partners.
-            ['category' => 'cooperation', 'latitude' => 44.8073, 'longitude' => -0.6024, 'label' => 'Les Afriques dans le Monde (LAM), Sciences Po Bordeaux', 'sublabel' => $coop],
-            ['category' => 'cooperation', 'latitude' => 14.6921, 'longitude' => -17.4467, 'label' => 'Council for the Development of Social Science Research in Africa (CODESRIA), Dakar, Senegal', 'sublabel' => $coop],
-            ['category' => 'cooperation', 'latitude' => 6.4156, 'longitude' => 2.3447, 'label' => 'Université d’Abomey-Calavi, Cotonou, Benin', 'sublabel' => $coop],
-            ['category' => 'cooperation', 'latitude' => -6.779, 'longitude' => 39.2083, 'label' => 'University of Dar es Salaam, Tanzania', 'sublabel' => $coop],
-            ['category' => 'cooperation', 'latitude' => 33.9716, 'longitude' => -6.8498, 'label' => 'Mohammed V University of Rabat, Morocco', 'sublabel' => $coop],
-            ['category' => 'cooperation', 'latitude' => 35.8245, 'longitude' => 10.6346, 'label' => 'Université de Sousse, Tunisia', 'sublabel' => $coop],
-            ['category' => 'cooperation', 'latitude' => -25.951, 'longitude' => 32.6053, 'label' => 'Universidade Eduardo Mondlane, Maputo, Mozambique', 'sublabel' => $coop],
-            ['category' => 'cooperation', 'latitude' => 37.5973, 'longitude' => 127.0586, 'label' => 'Institute of African Studies, Hankuk University of Foreign Studies, Seoul, South Korea', 'sublabel' => $coop],
-            ['category' => 'cooperation', 'latitude' => 28.5403, 'longitude' => 77.167, 'label' => 'Centre for African Studies, Jawaharlal Nehru University, New Delhi, India', 'sublabel' => $coop],
-            ['category' => 'cooperation', 'latitude' => 12.6392, 'longitude' => -8.0029, 'label' => 'Point Sud — Centre for Research on Local Knowledge, Bamako, Mali', 'sublabel' => $coop],
-            ['category' => 'cooperation', 'latitude' => 5.651, 'longitude' => -0.1864, 'label' => 'Merian Institute for Advanced Studies in Africa (MIASA), University of Ghana, Legon', 'sublabel' => $coop],
-            // Global partner Centers of African Studies.
-            ['category' => 'global', 'latitude' => 45.5048, 'longitude' => -73.6131, 'label' => 'Université de Montréal, Canada', 'sublabel' => $glob],
-            ['category' => 'global', 'latitude' => 43.6629, 'longitude' => -79.3957, 'label' => 'University of Toronto, Canada', 'sublabel' => $glob],
-            ['category' => 'global', 'latitude' => 39.1683, 'longitude' => -86.5235, 'label' => 'African Studies Program, Indiana University Bloomington, USA', 'sublabel' => $glob],
-            ['category' => 'global', 'latitude' => 20.0263, 'longitude' => -75.8242, 'label' => 'Universidad de Oriente (UO), Santiago de Cuba, Cuba', 'sublabel' => $glob],
-            ['category' => 'global', 'latitude' => 9.9377, 'longitude' => -84.05, 'label' => 'Universidad de Costa Rica (UCR), San José, Costa Rica', 'sublabel' => $glob],
-            ['category' => 'global', 'latitude' => 10.4236, 'longitude' => -75.544, 'label' => 'Universidad de Cartagena, Colombia', 'sublabel' => $glob],
-            ['category' => 'global', 'latitude' => 35.0264, 'longitude' => 135.7813, 'label' => 'Center for African Area Studies, Kyoto University, Japan', 'sublabel' => $glob],
-            ['category' => 'global', 'latitude' => -32.0058, 'longitude' => 115.8949, 'label' => 'Curtin University, Perth, Australia', 'sublabel' => $glob],
-            ['category' => 'global', 'latitude' => -29.8676, 'longitude' => 30.981, 'label' => 'African Institute in Indigenous Knowledge Systems, University of KwaZulu-Natal, Durban, South Africa', 'sublabel' => $glob],
-        ];
+        $points = [];
+        foreach ($items as $iid => $info) {
+            if (($info['class_term'] ?? '') !== 'foaf:Organization' || !isset($geo[$iid])) {
+                continue;
+            }
+            foreach ($links[$iid] ?? [] as [$term, , $vrid]) {
+                if ($term !== 'dcterms:isPartOf' || !isset($authorityKeys[$vrid])) {
+                    continue;
+                }
+                $g = $geo[$iid];
+                $points[] = [
+                    'category' => $authorityKeys[$vrid],
+                    'latitude' => $g['lat'],
+                    'longitude' => $g['lon'],
+                    'label' => $g['name'] ?? ($info['title'] ?? ''),
+                    'sublabel' => $items[$vrid]['title'] ?? '',
+                    'itemId' => (int) $iid,
+                ];
+                break; // one category per partner
+            }
+        }
+        if (!$points) {
+            return [];
+        }
+
+        // Ordered legend categories — only those that actually have points, each
+        // labelled from its authority record's title (data-driven).
+        $categories = [];
+        foreach ($authorityKeys as $authId => $key) {
+            foreach ($points as $p) {
+                if ($p['category'] === $key) {
+                    $categories[] = ['key' => $key, 'label' => $items[$authId]['title'] ?? $key];
+                    break;
+                }
+            }
+        }
+
+        // Stable order: by category order, then label.
+        $rank = array_flip(array_values($authorityKeys));
+        usort($points, static fn (array $a, array $b): int =>
+            [$rank[$a['category']] ?? 99, $a['label']] <=> [$rank[$b['category']] ?? 99, $b['label']]);
+
+        return ['categories' => $categories, 'points' => $points];
     }
 }

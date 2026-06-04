@@ -2,11 +2,15 @@
  * Cluster-partner map builder: the Africa Multiple Research Centres (AMRCs) and
  * their partners as colour-coded MapLibre markers with a toggleable legend.
  *
- * Data is the static, curated `clusterPartners` array emitted by the precompute
- * (Aggregators::clusterPartners) — a list of
- * `{category, latitude, longitude, label, sublabel}`. Marker colour is assigned
- * here, per `category`, from the theme palette (ns.COLORS) so it follows the
- * active light/dark theme; the precompute carries no colours.
+ * DATA-DRIVEN from the precompute (Aggregators::clusterPartners): the institutions
+ * that `dcterms:isPartOf` one of the four "African Multiple Partners" category
+ * authority records, shaped as
+ *   { categories: [{ key, label }, …],   // ordered → legend order + colour order
+ *     points: [{ category, latitude, longitude, label, sublabel, itemId }, …] }
+ * Category labels come straight from the authority records, and colours are
+ * assigned here by category order from the theme palette (ns.COLORS) so they track
+ * the active light/dark theme — so adding or renaming a category needs no
+ * front-end change. (Previously this list, and its 3 categories, were hard-coded.)
  *
  * Registers into window.RV.charts for the dashboard orchestrator.
  */
@@ -19,14 +23,10 @@
 
     ns.charts = ns.charts || {};
 
-    // Canonical category order and palette index (into ns.COLORS).
-    var ORDER = ['amrc', 'cooperation', 'global'];
-    var COLOR_INDEX = { amrc: 0, cooperation: 7, global: 5 };
-    var LEGEND_LABELS = {
-        amrc: 'AMRCs & privileged partner',
-        cooperation: 'Cooperation partners',
-        global: 'Global partner Centres of African Studies'
-    };
+    // Palette indices into ns.COLORS, applied in category order. Keeps the
+    // original AMRC / cooperation / global hues (0 / 7 / 5) and gives further
+    // categories distinct ones; wraps if there are more categories than entries.
+    var PALETTE = [0, 3, 7, 5, 2, 8, 1, 6];
 
     function esc(s) {
         return String(s == null ? '' : s).replace(/[&<>"']/g, function (ch) {
@@ -34,31 +34,44 @@
         });
     }
 
-    ns.charts.buildClusterMap = function (el, data) {
-        if (!data || !data.length || typeof maplibregl === 'undefined') return null;
+    ns.charts.buildClusterMap = function (el, data, siteBase) {
+        // Accept the data-driven { categories, points } shape; tolerate a bare
+        // points array for safety.
+        var categories = (data && data.categories) || [];
+        var points = (data && data.points) || (Array.isArray(data) ? data : []);
+        if (!points.length || typeof maplibregl === 'undefined') return null;
+
+        // Derive category order/labels from the data. If categories weren't
+        // supplied, fall back to the distinct keys present in the points.
+        if (!categories.length) {
+            var seen = {};
+            points.forEach(function (p) {
+                if (p.category != null && !seen[p.category]) {
+                    seen[p.category] = true;
+                    categories.push({ key: p.category, label: String(p.category) });
+                }
+            });
+        }
+        var order = categories.map(function (c) { return c.key; });
+        var labelFor = {}, colorFor = {};
+        categories.forEach(function (c, i) {
+            labelFor[c.key] = c.label;
+            colorFor[c.key] = ns.COLORS[PALETTE[i % PALETTE.length] % ns.COLORS.length] || ns.COLORS[0];
+        });
+        var emphasised = order[0]; // the first category (AMRCs) reads larger
 
         el.style.borderRadius = '6px';
         el.style.position = 'relative';
 
-        // Categories present, in canonical order. Visibility persists across the
-        // map rebuilds that a light/dark theme toggle triggers (closure state).
-        var cats = ORDER.filter(function (c) {
-            return data.some(function (p) { return p.category === c; });
-        });
+        // Visibility persists across the map rebuilds a light/dark toggle triggers.
         var visible = {};
-        cats.forEach(function (c) { visible[c] = true; });
-
-        function colorFor(cat) {
-            var idx = COLOR_INDEX[cat];
-            return ns.COLORS[idx % ns.COLORS.length] || ns.COLORS[0];
-        }
+        order.forEach(function (k) { visible[k] = true; });
 
         // Wrapped so the theme engine can rebuild the map (new basemap + marker
         // colours) on a live light/dark toggle — see dashboard-core ns.refresh().
         function create() {
-            // The legend renders BELOW the map (in the panel, not over it) so it
-            // never hides markers. Drop a stale one from a previous (pre-rebuild)
-            // render before building the new map.
+            // The legend renders BELOW the map (in the panel). Drop a stale one
+            // from a previous (pre-rebuild) render before building the new map.
             var panel = el.closest('.chart-panel') || el.parentNode || el;
             var staleLegend = panel.querySelector('.rv-cluster-legend');
             if (staleLegend) staleLegend.remove();
@@ -84,21 +97,24 @@
 
             function renderMarkers(fit) {
                 clearMarkers();
-                data.forEach(function (p) {
+                points.forEach(function (p) {
                     if (!visible[p.category]) return;
-                    // AMRCs read larger so the cluster's own centres stand out
-                    // among the partner dots.
-                    var size = p.category === 'amrc' ? 18 : 13;
+                    // The cluster's own centres (first category) stand out among
+                    // the partner dots.
+                    var size = p.category === emphasised ? 18 : 13;
                     var dot = document.createElement('div');
                     dot.className = 'rv-cluster-marker';
                     dot.style.width = size + 'px';
                     dot.style.height = size + 'px';
-                    dot.style.backgroundColor = colorFor(p.category);
+                    dot.style.backgroundColor = colorFor[p.category] || ns.COLORS[0];
                     dot.style.borderColor = THEME.border;
 
                     var marker = new maplibregl.Marker({ element: dot })
                         .setLngLat([p.longitude, p.latitude]);
-                    var html = '<div class="rv-popup-content"><strong>' + esc(p.label) + '</strong>'
+                    var title = (siteBase && p.itemId)
+                        ? '<a href="' + esc(siteBase) + '/item/' + encodeURIComponent(p.itemId) + '">' + esc(p.label) + '</a>'
+                        : esc(p.label);
+                    var html = '<div class="rv-popup-content"><strong>' + title + '</strong>'
                         + (p.sublabel ? '<div class="rv-popup-sub">' + esc(p.sublabel) + '</div>' : '')
                         + '</div>';
                     marker.setPopup(new maplibregl.Popup({
@@ -111,7 +127,7 @@
             }
 
             function fitToVisible() {
-                var pts = data.filter(function (p) { return visible[p.category]; });
+                var pts = points.filter(function (p) { return visible[p.category]; });
                 if (!pts.length) return;
                 var bounds = new maplibregl.LngLatBounds();
                 pts.forEach(function (p) { bounds.extend([p.longitude, p.latitude]); });
@@ -121,28 +137,26 @@
             }
 
             // Markers are HTML overlays, so — unlike GeoJSON sources/layers — they
-            // do NOT need the style to have loaded (matching ns.charts.buildMiniMap).
-            // Adding them immediately means the partner pins still show even if the
-            // basemap tiles are slow or unreachable.
+            // do NOT need the style to have loaded, so the partner pins still show
+            // even if the basemap tiles are slow or unreachable.
             renderMarkers(true);
 
-            // Legend with per-category toggles. Toggling re-renders the marker
-            // set but leaves the camera put (no re-fit), matching the amira
-            // overview's `fitOnUpdate={false}` behaviour.
+            // Legend with per-category toggles. Toggling re-renders the marker set
+            // but leaves the camera put (no re-fit), matching the amira overview.
             var legend = document.createElement('div');
             legend.className = 'rv-cluster-legend';
-            cats.forEach(function (c) {
+            order.forEach(function (k) {
                 var btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'rv-cluster-legend__item';
-                btn.setAttribute('aria-pressed', String(visible[c]));
-                if (!visible[c]) btn.classList.add('is-off');
-                btn.innerHTML = '<span class="rv-cluster-legend__dot" style="background:' + colorFor(c) + '"></span>'
-                    + '<span class="rv-cluster-legend__label">' + esc(LEGEND_LABELS[c]) + '</span>';
+                btn.setAttribute('aria-pressed', String(visible[k]));
+                if (!visible[k]) btn.classList.add('is-off');
+                btn.innerHTML = '<span class="rv-cluster-legend__dot" style="background:' + colorFor[k] + '"></span>'
+                    + '<span class="rv-cluster-legend__label">' + esc(labelFor[k] || k) + '</span>';
                 btn.addEventListener('click', function () {
-                    visible[c] = !visible[c];
-                    btn.classList.toggle('is-off', !visible[c]);
-                    btn.setAttribute('aria-pressed', String(visible[c]));
+                    visible[k] = !visible[k];
+                    btn.classList.toggle('is-off', !visible[k]);
+                    btn.setAttribute('aria-pressed', String(visible[k]));
                     renderMarkers(false);
                 });
                 legend.appendChild(btn);
