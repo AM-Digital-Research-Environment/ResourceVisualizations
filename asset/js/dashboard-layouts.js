@@ -191,14 +191,18 @@
             wide:  ['subjects', 'contributors', 'locations'],
             tall:  ['subjects', 'locations']
         },
+        // Half-width charts are paired consecutively (types+languages,
+        // topVenues+topAuthors) so neither sits alone on a row; every other key is
+        // full-width. `templates` and the (empty) `locations`/`timeline` are
+        // intentionally omitted — `types` already breaks publications down by type,
+        // and publications carry no geography.
         publications: {
-            order: ['templates', 'stackedTimeline', 'timeline', 'types',
-                    'topVenues', 'topAuthors', 'coAuthorNetwork', 'chord',
-                    'languages', 'subjects', 'subjectTrends', 'locations'],
-            wide:  ['stackedTimeline', 'coAuthorNetwork', 'chord', 'subjects',
-                    'subjectTrends', 'locations'],
-            tall:  ['coAuthorNetwork', 'chord', 'subjects', 'subjectTrends',
-                    'locations']
+            order: ['types', 'languages', 'stackedTimeline',
+                    'topVenues', 'topAuthors', 'coAuthorNetwork',
+                    'chord', 'subjects', 'subjectTrends'],
+            wide:  ['stackedTimeline', 'coAuthorNetwork', 'chord',
+                    'subjects', 'subjectTrends'],
+            tall:  ['coAuthorNetwork', 'chord', 'subjects', 'subjectTrends']
         }
     };
 

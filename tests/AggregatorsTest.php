@@ -60,8 +60,22 @@ $synAgg = A::aggregateItems([1, 2], $synItems, $synLinks, [], [], [2 => 'Publica
 $synByName = [];
 foreach ($synAgg['types'] as $t) { $synByName[$t['name']] = $t; }
 check(($synByName['Book']['value'] ?? 0) === 1, 'aggregateItems keeps real linked type Book=1');
-check(($synByName['Publication']['value'] ?? 0) === 1, 'aggregateItems adds synthetic Publication=1');
+check(($synByName['Publication']['value'] ?? 0) === 1, 'aggregateItems counts synthetic Publication=1');
 check(!isset($synByName['Publication']['itemId']), 'synthetic type carries no itemId (not click-through)');
+
+// A synthetic type REPLACES the item's own dcterms:type (no double count): a
+// publication that carries a real type still shows only as one "Publication" slice.
+$ovItems = [10 => ['title' => 'Book'], 40 => ['title' => 'Article']];
+$ovLinks = [
+    1 => [['dcterms:type', 'T', 10]],   // research item -> Book
+    2 => [['dcterms:type', 'T', 40]],   // publication with a real type Article, overridden
+];
+$ovAgg = A::aggregateItems([1, 2], $ovItems, $ovLinks, [], [], [2 => 'Publication']);
+$ovByName = [];
+foreach ($ovAgg['types'] as $t) { $ovByName[$t['name']] = $t['value']; }
+check(($ovByName['Publication'] ?? 0) === 1, 'aggregateItems: synthetic type replaces real type (Publication=1)');
+check(!isset($ovByName['Article']), 'aggregateItems: real type suppressed when synthetic present (no Article)');
+check(($ovByName['Book'] ?? 0) === 1, 'aggregateItems: non-synthetic item keeps its real type (Book=1)');
 
 // --- buildHeatmap drops a resource type that never co-occurs with a language ---
 $hmItems = [10 => ['title' => 'Book'], 11 => ['title' => 'English'], 14 => ['title' => 'Map']];
@@ -89,6 +103,19 @@ foreach ($st['series'] as $s) { $stSeries[$s['name']] = $s['data']; }
 check(($stSeries['Book'] ?? null) === [1, 0], 'buildStackedTimeline keeps real linked types');
 check(($stSeries['Publication'] ?? null) === [1, 0], 'buildStackedTimeline stacks a publication under "Publication"');
 check(($stSeries['(no type)'] ?? null) === [0, 1], 'buildStackedTimeline still falls back to "(no type)" without a synthetic label');
+
+// buildStackedTimeline: a synthetic type overrides the item's own dcterms:type
+$stOvLinks = [
+    1 => [['dcterms:type', 'T', 10]],   // Book (research item)
+    2 => [['dcterms:type', 'T', 40]],   // Article, but synthetic "Publication" overrides
+];
+$stOvItems = [10 => ['title' => 'Book'], 40 => ['title' => 'Article']];
+$stOv = A::buildStackedTimeline([1, 2], $stOvLinks, $stOvItems, [1 => '2020', 2 => '2020'], [2 => 'Publication']);
+$stOvSeries = [];
+foreach ($stOv['series'] as $s) { $stOvSeries[$s['name']] = array_sum($s['data']); }
+check(($stOvSeries['Publication'] ?? 0) === 1, 'buildStackedTimeline: synthetic overrides real type (Publication=1)');
+check(!isset($stOvSeries['Article']), 'buildStackedTimeline: real type suppressed under synthetic (no Article series)');
+check(($stOvSeries['Book'] ?? 0) === 1, 'buildStackedTimeline: research item keeps real type (Book=1)');
 
 // --- person-scoped roles ---
 $rlinks = [
@@ -207,6 +234,23 @@ $mNet = A::buildCoAuthorNetwork([300, 301, 302], $mLinks, $mLits, $mItems);
 $lp = null;
 foreach (($mNet['nodes'] ?? []) as $nd) { if ($nd['name'] === 'Linked Person') { $lp = $nd; } }
 check($lp !== null && $lp['matched'] === true && ($lp['itemId'] ?? null) === 100, 'coAuthorNetwork: linked author marked matched with itemId');
+
+// --- buildCoAuthorNetwork distinguishes author / editor relationships ---
+$relLits = [];
+for ($k = 0; $k < 3; $k++) { $relLits[400 + $k] = ['bibo:authorList' => ['A', 'B']]; }              // A–B co-authorship
+for ($k = 0; $k < 3; $k++) { $relLits[410 + $k] = ['bibo:editorList' => ['C', 'D']]; }              // C–D co-editorship
+for ($k = 0; $k < 3; $k++) { $relLits[420 + $k] = ['bibo:authorList' => ['A'], 'bibo:editorList' => ['C']]; } // A–C author–editor
+$relLits[430] = ['bibo:authorList' => ['C', 'D']];  // C & D also co-author once → role 'both'; C–D still dominant co-editorship (3 vs 1)
+$relNet = A::buildCoAuthorNetwork(array_keys($relLits), [], $relLits, []);
+$relOf = [];
+foreach (($relNet['links'] ?? []) as $l) { $p = [$l['source'], $l['target']]; sort($p); $relOf[implode('-', $p)] = $l['relation']; }
+check(($relOf['A-B'] ?? null) === 'coauthor', 'coAuthorNetwork: A–B edge is co-authorship');
+check(($relOf['C-D'] ?? null) === 'coeditor', 'coAuthorNetwork: C–D edge is co-editorship (dominant)');
+check(($relOf['A-C'] ?? null) === 'mixed', 'coAuthorNetwork: A–C edge is author–editor');
+$roleOf = [];
+foreach (($relNet['nodes'] ?? []) as $nd) { $roleOf[$nd['name']] = $nd['role']; }
+check(($roleOf['A'] ?? null) === 'author', 'coAuthorNetwork: A role is author');
+check(($roleOf['C'] ?? null) === 'both', 'coAuthorNetwork: C role is both (author and editor)');
 
 // --- knowledge graph (IDF-ranked shared-item discovery) ---
 $kgItems = [

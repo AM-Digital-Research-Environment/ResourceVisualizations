@@ -712,18 +712,21 @@ final class Runner
     {
         $researchItems = array_keys($this->itemsWhere(fn ($info) => ($info['template_id'] ?? null) === self::TEMPLATE_RESEARCH_ITEMS));
         // "Items" in the Collection Overview regroups research items AND cluster
-        // publications: the bibliographic (fabio:) corpus — the same definition
-        // generatePublications() uses — is folded into the same charts, with each
-        // publication bucketed under a synthetic "Publication" resource type
-        // (publications carry no dcterms:type of their own) so it shows in the
-        // resource-type pie and the year×type timeline.
-        $publications = array_keys($this->itemsWhere(static fn ($info) => str_starts_with($info['class_term'] ?? '', 'fabio:')));
+        // publications: the curated Publications item set (same corpus as the
+        // Publications block — see publicationIds()) is folded into the same
+        // charts, with each publication bucketed under a synthetic "Publication"
+        // resource type that overrides its bibliographic type, so it shows as one
+        // "Publication" category in the resource-type pie and the year×type
+        // timeline. (A `fabio:` class filter is NOT used here: FaBiO classes are
+        // also carried by research items and authority records, which would inflate
+        // the "Publication" slice ~12× — see publicationIds().)
+        $publications = $this->publicationIds();
         $this->log('=== Collection Overview (' . count($researchItems) . ' research items + ' . count($publications) . ' publications) ===');
         if (!$researchItems && !$publications) {
             return;
         }
-        // Combined corpus, de-duplicated (research items and fabio: publications
-        // are disjoint sets, but guard anyway).
+        // Combined corpus, de-duplicated (research items are template 10 and
+        // publications are template 11–20, so the sets are disjoint — guard anyway).
         $overviewItems = array_keys(array_flip(array_merge($researchItems, $publications)));
         $syntheticTypes = [];
         foreach ($publications as $pid) {
@@ -878,22 +881,31 @@ final class Runner
     }
 
     /**
-     * Publications overview — every bibliographic (fabio:) item as one corpus.
-     * Adds the by-template breakdown, top venues/authors, co-author network and
-     * keyword co-occurrence on top of the standard aggregation. Saved under
+     * Item ids of the curated Publications item set (29918) — the cluster
+     * bibliography landed by the ERef/EPub pipeline. This is the authoritative
+     * ~250-item corpus: a `fabio:` resource-class filter is NOT equivalent, since
+     * FaBiO classes are also carried by ordinary research items and authority
+     * records, which would sweep thousands of non-publications into the set.
+     */
+    private function publicationIds(): array
+    {
+        return array_values($this->itemSets[self::ITEM_SET_PUBLICATIONS] ?? []);
+    }
+
+    /**
+     * Publications overview — the curated Publications item set (29918) as one
+     * corpus. Adds top venues/authors, the author/editor collaboration network
+     * and keyword co-occurrence on top of the standard aggregation. Saved under
      * 'publications' and rendered by the Publications site-page block.
      */
     private function generatePublications(): void
     {
-        $pubs = array_keys($this->itemsWhere(static fn ($info) => str_starts_with($info['class_term'] ?? '', 'fabio:')));
-        $this->log('=== Publications (' . count($pubs) . ' fabio: items) ===');
+        $pubs = $this->publicationIds();
+        $this->log('=== Publications (' . count($pubs) . ' items in set ' . self::ITEM_SET_PUBLICATIONS . ') ===');
         if (count($pubs) < 3) {
             return;
         }
         $dashboard = Aggregators::aggregateItems($pubs, $this->items, $this->links, $this->itemYear, $this->geo);
-        if ($v = Aggregators::buildTemplates($pubs, $this->items, $this->templateLabels)) {
-            $dashboard['templates'] = $v;
-        }
         if ($v = Aggregators::buildTopLiteral($pubs, $this->literals, 'dcterms:isPartOf')) {
             $dashboard['topVenues'] = $v;
         }
@@ -913,32 +925,48 @@ final class Runner
             $dashboard['subjectTrends'] = $v;
         }
 
-        // Reusable stat cards, mirroring the amira Publications overview: total,
-        // distinct resource templates (types), languages, and authors matched to
-        // a Person record. "Matched" mirrors buildTopAuthors — a bibo:authorList
-        // link to a titled resource, deduped by name.
-        $templateIds = [];
-        $matchedAuthors = [];
+        // Summary stat cards: total publications, distinct publication types
+        // (dcterms:type), languages, and the people credited as authors or editors
+        // — distinct linked Person records across bibo:authorList + bibo:editorList.
+        $peopleIds = [];
         foreach ($pubs as $iid) {
-            $tid = $this->items[$iid]['template_id'] ?? null;
-            if ($tid !== null) {
-                $templateIds[$tid] = true;
-            }
             foreach ($this->links[$iid] ?? [] as [$term, , $vrid]) {
-                if ($term === 'bibo:authorList') {
-                    $name = trim((string) ($this->items[$vrid]['title'] ?? ''));
-                    if ($name !== '') {
-                        $matchedAuthors[$name] = true;
-                    }
+                if ($term === 'bibo:authorList' || $term === 'bibo:editorList') {
+                    $peopleIds[$vrid] = true;
                 }
             }
         }
         $dashboard['stats'] = Aggregators::buildStatCards([
             ['key' => 'publications', 'label' => 'Publications', 'value' => count($pubs)],
-            ['key' => 'types', 'label' => 'Types', 'value' => count($templateIds)],
+            ['key' => 'types', 'label' => 'Types', 'value' => count($dashboard['types'] ?? [])],
             ['key' => 'languages', 'label' => 'Languages', 'value' => count($dashboard['languages'] ?? [])],
-            ['key' => 'authors', 'label' => 'Authors', 'value' => count($matchedAuthors), 'subtitle' => 'matched to people'],
+            ['key' => 'people', 'label' => 'Authors & Editors', 'value' => count($peopleIds)],
         ]);
+
+        // Publications-specific chart wording, plus the Languages pie. The shared
+        // registry renders Languages as a bar chart and titles charts for research
+        // items; these per-dashboard overrides retitle them for the bibliography
+        // and swap Languages to a pie. Read by renderDashboard() in dashboard.js.
+        $dashboard['builders'] = ['languages' => 'buildPieChart'];
+        $dashboard['labels'] = [
+            'types' => 'Publication Types',
+            'stackedTimeline' => 'Publications by Year and Type',
+            'coAuthorNetwork' => 'Collaboration Network',
+            'chord' => 'Keyword Co-occurrence',
+            'subjects' => 'Keywords',
+            'subjectTrends' => 'Keyword Trends over Time',
+        ];
+        $dashboard['descriptions'] = [
+            'types' => 'Breakdown of publications by type (article, book, chapter, thesis, …).',
+            'languages' => 'Languages the publications are written in.',
+            'stackedTimeline' => 'Publications per year, broken down by type.',
+            'topVenues' => 'Journals and book series in which these publications most often appear.',
+            'topAuthors' => 'Authors credited on the most publications.',
+            'coAuthorNetwork' => 'Authors and editors linked when they appear together on a publication. Edge colour marks the relationship: co-authorship, author–editor, or co-editorship.',
+            'chord' => 'Keywords that frequently appear together across these publications.',
+            'subjects' => 'Most frequent keywords assigned to these publications.',
+            'subjectTrends' => 'How the most frequent keywords evolve over time.',
+        ];
 
         $dashboard['resourceType'] = 'publications';
         $this->save('publications', $dashboard);

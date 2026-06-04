@@ -34,6 +34,15 @@
         var layout = (ns.LAYOUTS && ns.LAYOUTS[layoutKey]) || ns.DEFAULT_LAYOUT;
         var chartKeys = layout.order;
 
+        // Optional per-dashboard overrides over the shared registry: retitle a
+        // chart (`labels`), reword its subheader (`descriptions`), or swap its
+        // builder (`builders`, e.g. the Publications page renders Languages as a
+        // pie instead of the registry's bar). Absent on every other dashboard, so
+        // they all keep the registry defaults unchanged.
+        var labelOverrides = data.labels || {};
+        var descOverrides = data.descriptions || {};
+        var builderOverrides = data.builders || {};
+
         // Summary stat cards (Collection Overview only — other dashboards carry
         // no `stats` array, so this is empty for them).
         var statsHtml = (ns.renderStatCards && data.stats) ? ns.renderStatCards(data.stats) : '';
@@ -49,9 +58,12 @@
             if (key === 'timeline' && data.stackedTimeline && data.stackedTimeline.years && data.stackedTimeline.years.length > 0) return;
             var wide = layout.wide.indexOf(key) >= 0 ? ' chart-panel-wide' : '';
             var tall = layout.tall.indexOf(key) >= 0 ? ' chart-container-tall' : '';
-            var desc = (ns.CHART_DESCRIPTIONS && ns.CHART_DESCRIPTIONS[key]) || '';
+            var label = labelOverrides[key] || (ns.CHART_LABELS && ns.CHART_LABELS[key]) || key;
+            var desc = Object.prototype.hasOwnProperty.call(descOverrides, key)
+                ? descOverrides[key]
+                : ((ns.CHART_DESCRIPTIONS && ns.CHART_DESCRIPTIONS[key]) || '');
             chartsHtml += '<div class="chart-panel' + wide + '">'
-                + '<h4>' + ((ns.CHART_LABELS && ns.CHART_LABELS[key]) || key) + '</h4>'
+                + '<h4>' + label + '</h4>'
                 + (desc ? '<p class="chart-description">' + desc + '</p>' : '')
                 + '<div class="chart-container' + tall + '" data-chart="' + key + '"></div>'
                 + '</div>';
@@ -82,11 +94,15 @@
 
         chartKeys.forEach(function (key) {
             var el = container.querySelector('[data-chart="' + key + '"]');
-            if (el && data[key] && ns.CHART_MAP && ns.CHART_MAP[key]) {
-                var chart = ns.CHART_MAP[key](el, data[key], siteBase, data);
-                if (chart) {
-                    ns.attachToolbar(el.closest('.chart-panel'), chart);
-                }
+            if (!el || !data[key]) return;
+            // Honour a per-dashboard builder override, else the registry default.
+            var builderName = builderOverrides[key];
+            var builder = (builderName && ns.charts && ns.charts[builderName])
+                || (ns.CHART_MAP && ns.CHART_MAP[key]);
+            if (!builder) return;
+            var chart = builder(el, data[key], siteBase, data);
+            if (chart) {
+                ns.attachToolbar(el.closest('.chart-panel'), chart);
             }
         });
         // Window resizing + light/dark theme changes are handled globally in

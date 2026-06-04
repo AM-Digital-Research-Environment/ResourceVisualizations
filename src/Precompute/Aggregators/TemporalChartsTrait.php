@@ -17,9 +17,10 @@ trait TemporalChartsTrait
      * Build stacked timeline: items by year, stacked by resource type.
      *
      * `$syntheticTypes` maps an item id to a resource-type label used as its
-     * stack when the item carries no dcterms:type (e.g. publications →
-     * "Publication"); typeless items without a synthetic label fall back to the
-     * generic "(no type)" bucket. Pass `[]` to disable.
+     * stack in place of (overriding) the item's own dcterms:type — e.g. every
+     * publication stacks under one "Publication" series, whatever its
+     * bibliographic type. Items with neither a synthetic label nor a dcterms:type
+     * fall back to the generic "(no type)" bucket. Pass `[]` to disable.
      *
      * @param array<int,string> $syntheticTypes
      */
@@ -32,21 +33,27 @@ trait TemporalChartsTrait
             if (!$year) {
                 continue;
             }
+            $synType = $syntheticTypes[$iid] ?? null;
             $itemTypes = [];
-            foreach ($links[$iid] ?? [] as [$term, $label, $vrid]) {
-                if ($term === 'dcterms:type') {
-                    $title = $items[$vrid]['title'] ?? '';
-                    if ($title !== '') {
-                        $itemTypes[] = $title;
-                        $allTypes[$title] = true;
+            if ($synType !== null && $synType !== '') {
+                // Synthetic type overrides the item's own dcterms:type(s): the item
+                // stacks under this single label (e.g. publications → "Publication").
+                $itemTypes[] = $synType;
+                $allTypes[$synType] = true;
+            } else {
+                foreach ($links[$iid] ?? [] as [$term, $label, $vrid]) {
+                    if ($term === 'dcterms:type') {
+                        $title = $items[$vrid]['title'] ?? '';
+                        if ($title !== '') {
+                            $itemTypes[] = $title;
+                            $allTypes[$title] = true;
+                        }
                     }
                 }
-            }
-            if (!$itemTypes) {
-                $synType = $syntheticTypes[$iid] ?? null;
-                $fallback = ($synType !== null && $synType !== '') ? $synType : '(no type)';
-                $itemTypes = [$fallback];
-                $allTypes[$fallback] = true;
+                if (!$itemTypes) {
+                    $itemTypes = ['(no type)'];
+                    $allTypes['(no type)'] = true;
+                }
             }
             foreach ($itemTypes as $t) {
                 $yearType[$year][$t] = ($yearType[$year][$t] ?? 0) + 1;

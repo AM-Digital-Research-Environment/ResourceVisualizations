@@ -16,10 +16,11 @@ trait BasicChartsTrait
     /**
      * Aggregate dashboard data from a list of item IDs.
      *
-     * `$syntheticTypes` maps an item id to a resource-type label to count for
-     * items that carry no dcterms:type of their own (e.g. publications grouped
-     * under "Publication"); the label is folded into the resource-type pie
-     * alongside the real, linked types. Pass `[]` to disable.
+     * `$syntheticTypes` maps an item id to a single resource-type label that
+     * REPLACES that item's own dcterms:type in the resource-type pie (e.g. every
+     * publication shown as one "Publication" category, whatever its bibliographic
+     * type), so the item is counted once. Items without a synthetic label keep
+     * their real linked type(s). Pass `[]` to disable.
      *
      * @param array<int,string> $syntheticTypes
      */
@@ -37,14 +38,20 @@ trait BasicChartsTrait
             if ($year) {
                 $timeline[$year] = ($timeline[$year] ?? 0) + 1;
             }
+            // A synthetic type stands in for (and overrides) the item's own
+            // dcterms:type, so the item is counted once under that single label.
+            $synType = $syntheticTypes[$iid] ?? null;
+            $hasSyn = $synType !== null && $synType !== '';
             foreach ($links[$iid] ?? [] as [$term, $label, $vrid]) {
                 $title = $items[$vrid]['title'] ?? '';
                 if ($title === '') {
                     continue;
                 }
                 if ($term === 'dcterms:type') {
-                    $types[$vrid] ??= ['name' => $title, 'value' => 0, 'itemId' => $vrid];
-                    $types[$vrid]['value']++;
+                    if (!$hasSyn) {
+                        $types[$vrid] ??= ['name' => $title, 'value' => 0, 'itemId' => $vrid];
+                        $types[$vrid]['value']++;
+                    }
                 } elseif ($term === 'dcterms:language') {
                     $languages[$vrid] ??= ['name' => $title, 'value' => 0, 'itemId' => $vrid];
                     $languages[$vrid]['value']++;
@@ -69,11 +76,9 @@ trait BasicChartsTrait
                     }
                 }
             }
-            // Synthetic resource type for items with no dcterms:type of their own
-            // (e.g. publications → "Publication"). Keyed by label, no itemId — the
-            // pie slice is informational, not click-through to a type item.
-            $synType = $syntheticTypes[$iid] ?? null;
-            if ($synType !== null && $synType !== '') {
+            // Synthetic resource type (e.g. publications → "Publication"). Keyed by
+            // label, no itemId — the pie slice is informational, not click-through.
+            if ($hasSyn) {
                 $synKey = 'syn:' . $synType;
                 $types[$synKey] ??= ['name' => $synType, 'value' => 0];
                 $types[$synKey]['value']++;

@@ -766,6 +766,29 @@ button.rv-toolbar-btn:focus-visible,
     opacity: 0.75;
 }
 
+/* Co-author network relationship key — the colour legend for the edges, mounted
+   below the graph (in the .chart-panel) like the map legends. Reuses
+   .rv-map-legend-row / .rv-map-legend-line for each swatch, but lays them out in
+   one horizontal, wrapping row. */
+.rv-edge-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    margin-top: 0.6rem;
+    padding: 6px 10px;
+    background: var(--rv-bg-sunken);
+    color: var(--rv-text-strong);
+    border-radius: 4px;
+    font-size: 0.78rem;
+    line-height: 1.6;
+}
+
+.rv-edge-legend .rv-map-legend-line {
+    width: 18px;
+    height: 3px;
+    opacity: 1;
+}
+
 .rv-map-popup {
     max-width: 320px !important;
 }

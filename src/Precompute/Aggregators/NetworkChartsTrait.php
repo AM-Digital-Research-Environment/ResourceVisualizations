@@ -327,40 +327,49 @@ trait NetworkChartsTrait
     }
 
     /**
-     * Co-author network: authors co-occurring on the same publication, as a
-     * force graph in the {nodes, links, communities} shape buildCommunities
-     * consumes. Authors come from both literal bibo:authorList names and
-     * Person-linked authors; nodes carry a `matched` flag (true = linked Person)
-     * so the front-end can mark matched persons distinctly. Communities use the
-     * same Louvain + weighted-PageRank as the subject graph.
+     * Co-author network: authors and editors co-occurring on the same publication,
+     * as a force graph in the {nodes, links, communities} shape buildCommunities
+     * consumes. Contributors come from both literal and Person-linked
+     * bibo:authorList / bibo:editorList values; nodes carry a `matched` flag (true
+     * = linked Person) and a `role` ('author' | 'editor' | 'both'), and each link
+     * carries a `relation` ('coauthor' | 'coeditor' | 'mixed') — its dominant
+     * relationship across the publications the pair shares — so the front-end can
+     * tell co-authorship apart from author–editor and co-editorship ties.
+     * Communities use the same Louvain + weighted-PageRank as the subject graph.
      *
      * @return array{nodes:list<array>,links:list<array>,communities:list<array>}|null
      */
     public static function buildCoAuthorNetwork(array $itemIds, array $links, array $literals, array $items, int $minCooccurrence = 1, int $maxNodes = 60): ?array
     {
-        // Map each distinct author name to an integer node id so the integer-
-        // keyed louvain()/weightedPagerank() helpers apply unchanged.
+        // Map each distinct contributor name to an integer node id so the integer-
+        // keyed louvain()/weightedPagerank() helpers apply unchanged. Each node
+        // tracks a role mask (bit 1 = listed as author, bit 2 = listed as editor)
+        // and whether it resolved to a linked Person record (matched).
         $nameId = [];
         $idName = [];
         $matched = [];
         $personId = [];
+        $roleMask = [];
         $next = 0;
-        $ensure = static function (string $name) use (&$nameId, &$idName, &$matched, &$next): int {
+        $ensure = static function (string $name) use (&$nameId, &$idName, &$matched, &$roleMask, &$next): int {
             if (!isset($nameId[$name])) {
                 $nameId[$name] = $next;
                 $idName[$next] = $name;
                 $matched[$next] = false;
+                $roleMask[$next] = 0;
                 $next++;
             }
             return $nameId[$name];
         };
 
-        $pairCounts = [];
+        $pairCounts = [];   // "a,b" => number of publications the pair shares
+        $pairRel = [];      // "a,b" => [relation => count] across those publications
         $nodeCounts = [];
         foreach ($itemIds as $iid) {
-            $authors = [];
+            $authorIds = [];
+            $editorIds = [];
             foreach ($links[$iid] ?? [] as [$term, $label, $vrid]) {
-                if ($term !== 'bibo:authorList') {
+                if ($term !== 'bibo:authorList' && $term !== 'bibo:editorList') {
                     continue;
                 }
                 $title = trim((string) ($items[$vrid]['title'] ?? ''));
@@ -370,28 +379,57 @@ trait NetworkChartsTrait
                 $aid = $ensure($title);
                 $matched[$aid] = true;
                 $personId[$aid] = $vrid;
-                $authors[$aid] = true;
+                if ($term === 'bibo:authorList') {
+                    $roleMask[$aid] |= 1;
+                    $authorIds[$aid] = true;
+                } else {
+                    $roleMask[$aid] |= 2;
+                    $editorIds[$aid] = true;
+                }
             }
             foreach ($literals[$iid]['bibo:authorList'] ?? [] as $name) {
                 $name = trim((string) $name);
                 if ($name === '') {
                     continue;
                 }
-                $authors[$ensure($name)] = true;
+                $aid = $ensure($name);
+                $roleMask[$aid] |= 1;
+                $authorIds[$aid] = true;
             }
-            $authors = array_keys($authors);
-            foreach ($authors as $a) {
+            foreach ($literals[$iid]['bibo:editorList'] ?? [] as $name) {
+                $name = trim((string) $name);
+                if ($name === '') {
+                    continue;
+                }
+                $aid = $ensure($name);
+                $roleMask[$aid] |= 2;
+                $editorIds[$aid] = true;
+            }
+
+            // Contributors on this publication = the union of its authors and editors.
+            $contribs = array_keys($authorIds + $editorIds);
+            foreach ($contribs as $a) {
                 $nodeCounts[$a] = ($nodeCounts[$a] ?? 0) + 1;
             }
-            $n = count($authors);
+            $n = count($contribs);
             for ($i = 0; $i < $n; $i++) {
                 for ($j = $i + 1; $j < $n; $j++) {
-                    $a = $authors[$i];
-                    $b = $authors[$j];
+                    $a = $contribs[$i];
+                    $b = $contribs[$j];
                     if ($a > $b) {
                         [$a, $b] = [$b, $a];
                     }
-                    $pairCounts[$a . ',' . $b] = ($pairCounts[$a . ',' . $b] ?? 0) + 1;
+                    $key = $a . ',' . $b;
+                    $pairCounts[$key] = ($pairCounts[$key] ?? 0) + 1;
+                    // Relationship on THIS publication: co-authorship when both are
+                    // listed as authors, co-editorship when both editors, else an
+                    // author–editor (mixed) tie. Someone listed as both on one item
+                    // counts as an author for that item.
+                    $ra = isset($authorIds[$a]) ? 'a' : 'e';
+                    $rb = isset($authorIds[$b]) ? 'a' : 'e';
+                    $rel = ($ra === 'a' && $rb === 'a') ? 'coauthor'
+                        : (($ra === 'e' && $rb === 'e') ? 'coeditor' : 'mixed');
+                    $pairRel[$key][$rel] = ($pairRel[$key][$rel] ?? 0) + 1;
                 }
             }
         }
@@ -432,12 +470,19 @@ trait NetworkChartsTrait
         $ranked = array_slice($rankNodes, 0, $maxNodes);
         $topSet = array_flip($ranked);
 
+        $roleName = static function (int $mask): string {
+            if ($mask === 3) {
+                return 'both';
+            }
+            return $mask === 2 ? 'editor' : 'author';
+        };
+
         $nodes = [];
         foreach ($ranked as $nd) {
             $node = [
                 'name' => $idName[$nd], 'value' => $nodeCounts[$nd] ?? 0,
                 'community' => $commOf[$nd] ?? 0, 'rank' => round($pr[$nd] ?? 0, 6),
-                'matched' => $matched[$nd] ?? false,
+                'matched' => $matched[$nd] ?? false, 'role' => $roleName($roleMask[$nd] ?? 1),
             ];
             if (!empty($matched[$nd]) && isset($personId[$nd])) {
                 $node['itemId'] = $personId[$nd];
@@ -452,7 +497,11 @@ trait NetworkChartsTrait
             }
             [$a, $b] = array_map('intval', explode(',', $key));
             if (isset($topSet[$a], $topSet[$b])) {
-                $outLinks[] = ['source' => $idName[$a], 'target' => $idName[$b], 'value' => $w];
+                // Dominant relationship across the publications this pair shares.
+                $rels = $pairRel[$key] ?? [];
+                arsort($rels);
+                $relation = $rels ? (string) array_key_first($rels) : 'coauthor';
+                $outLinks[] = ['source' => $idName[$a], 'target' => $idName[$b], 'value' => $w, 'relation' => $relation];
             }
         }
 
