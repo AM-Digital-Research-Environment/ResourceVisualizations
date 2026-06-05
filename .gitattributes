@@ -1,0 +1,4 @@
+# Vendored third-party libraries (self-hosted ECharts / MapLibre): keep them
+# byte-identical to upstream — no EOL conversion — and exclude from GitHub's
+# language statistics and diffs.
+asset/vendor/** -text -diff linguist-vendored

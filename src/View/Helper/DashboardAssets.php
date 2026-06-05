@@ -20,10 +20,16 @@ use Laminas\View\Helper\AbstractHelper;
  */
 class DashboardAssets extends AbstractHelper
 {
-    const ECHARTS_JS   = 'https://cdn.jsdelivr.net/npm/echarts@6/dist/echarts.min.js';
-    const WORDCLOUD_JS = 'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2/dist/echarts-wordcloud.min.js';
-    const MAPLIBRE_CSS = 'https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.css';
-    const MAPLIBRE_JS  = 'https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js';
+    // Vendored under asset/vendor/ — self-hosted for same-origin delivery (the
+    // Omeka server gzips them to the same wire size jsDelivr served), server-side
+    // caching, and no third-party dependency (consistent with the privacy-first
+    // posture). Paths are relative to the module asset root: resolve with
+    // assetUrl()/the $asset() helper before use. Pinned: echarts 6.1.0,
+    // echarts-wordcloud 2.1.0, maplibre-gl 5.24.0.
+    const ECHARTS_JS   = 'vendor/echarts.min.js';
+    const WORDCLOUD_JS = 'vendor/echarts-wordcloud.min.js';
+    const MAPLIBRE_CSS = 'vendor/maplibre-gl.css';
+    const MAPLIBRE_JS  = 'vendor/maplibre-gl.js';
 
     /**
      * The chart-builder chain in load order: layouts first, then every builder
@@ -119,21 +125,20 @@ class DashboardAssets extends AbstractHelper
                 // still loads (deferred) so the theme-token probe and watchers are
                 // ready, but it pulls in no heavy library on its own.
                 $headScript->appendScript('window.RV_LIBS=window.RV_LIBS||' . json_encode([
-                    'echarts'     => self::ECHARTS_JS,
-                    'wordcloud'   => self::WORDCLOUD_JS,
-                    'maplibre'    => self::MAPLIBRE_JS,
-                    'maplibreCss' => self::MAPLIBRE_CSS,
+                    'echarts'     => $asset(self::ECHARTS_JS),
+                    'wordcloud'   => $asset(self::WORDCLOUD_JS),
+                    'maplibre'    => $asset(self::MAPLIBRE_JS),
+                    'maplibreCss' => $asset(self::MAPLIBRE_CSS),
                 ], JSON_UNESCAPED_SLASHES) . ';');
                 $headScript->appendFile($asset('js/dashboard-core.js'), 'text/javascript', $defer);
             } else {
                 // Dedicated dashboard pages (compare / explorer / communities /
                 // whatsNew): the dashboard IS the page content and sits in the
                 // viewport, so load the libraries eagerly (deferred) up front.
-                $view->headLink(['rel' => 'preconnect', 'href' => 'https://cdn.jsdelivr.net']);
-                $headScript->appendFile(self::ECHARTS_JS, 'text/javascript', $defer);
-                $headScript->appendFile(self::WORDCLOUD_JS, 'text/javascript', $defer);
-                $headLink->appendStylesheet(self::MAPLIBRE_CSS);
-                $headScript->appendFile(self::MAPLIBRE_JS, 'text/javascript', $defer);
+                $headScript->appendFile($asset(self::ECHARTS_JS), 'text/javascript', $defer);
+                $headScript->appendFile($asset(self::WORDCLOUD_JS), 'text/javascript', $defer);
+                $headLink->appendStylesheet($asset(self::MAPLIBRE_CSS));
+                $headScript->appendFile($asset(self::MAPLIBRE_JS), 'text/javascript', $defer);
                 $headScript->appendFile($asset('js/dashboard-core.js'), 'text/javascript', $defer);
             }
         }

@@ -197,7 +197,7 @@ $payload = json_encode($photos,
 // Lean asset prelude — masonry & timeline are pure DOM, the map lazy-loads
 // MapLibre on demand, so we skip the full chart-builder chain and only inject
 // the stylesheet, the shared RV core helpers, and this block's engine. The
-// MapLibre CDN URLs ride along as data-attributes (single source of truth:
+// MapLibre asset URLs ride along as data-attributes (single source of truth:
 // DashboardAssets) so the engine can inject them when the Map tab is opened.
 $this->headLink()->appendStylesheet(
     $this->assetUrl('css/resource-visualizations.css', 'ResourceVisualizations'));
@@ -214,8 +214,8 @@ $this->headScript()->appendFile(
 
     <div class="photo-browse-container"
          data-default-view="<?= $this->escapeHtmlAttr($defaultView) ?>"
-         data-maplibre-css="<?= $this->escapeHtmlAttr(DashboardAssets::MAPLIBRE_CSS) ?>"
-         data-maplibre-js="<?= $this->escapeHtmlAttr(DashboardAssets::MAPLIBRE_JS) ?>">
+         data-maplibre-css="<?= $this->escapeHtmlAttr($this->assetUrl(DashboardAssets::MAPLIBRE_CSS, 'ResourceVisualizations')) ?>"
+         data-maplibre-js="<?= $this->escapeHtmlAttr($this->assetUrl(DashboardAssets::MAPLIBRE_JS, 'ResourceVisualizations')) ?>">
 
         <div class="photo-browse-toolbar">
             <?php if (count($views) > 1): ?>
