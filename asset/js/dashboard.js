@@ -160,12 +160,34 @@
     /*  Init                                                               */
     /* ------------------------------------------------------------------ */
 
+    // Lazy-mount: render a dashboard only once it nears the viewport, loading the
+    // heavy chart/map libraries on demand at that moment (ns.ensureLibs). Home and
+    // landing dashboards sit below the fold, so this keeps ECharts + MapLibre and
+    // the chart-render work off the initial load entirely. A dashboard already in
+    // view (a dedicated dashboard page, or libraries loaded eagerly) fires the
+    // observer at once and ensureLibs resolves immediately — unchanged there.
+    function mountWhenVisible(container, render) {
+        var run = function () {
+            (ns.ensureLibs ? ns.ensureLibs() : Promise.resolve()).then(render).catch(function () {});
+        };
+        if (!('IntersectionObserver' in window)) { run(); return; }
+        var io = new IntersectionObserver(function (entries) {
+            for (var i = 0; i < entries.length; i++) {
+                if (entries[i].isIntersecting) { io.disconnect(); run(); break; }
+            }
+        }, { rootMargin: '600px 0px' });
+        io.observe(container);
+    }
+
     function init() {
-        if (typeof echarts === 'undefined') return;
         var async = document.querySelectorAll('.dashboard-async-container');
-        for (var i = 0; i < async.length; i++) initAsyncDashboard(async[i]);
+        for (var i = 0; i < async.length; i++) {
+            (function (c) { mountWhenVisible(c, function () { initAsyncDashboard(c); }); })(async[i]);
+        }
         var inline = document.querySelectorAll('.dashboard-container');
-        for (var j = 0; j < inline.length; j++) initInlineDashboard(inline[j]);
+        for (var j = 0; j < inline.length; j++) {
+            (function (c) { mountWhenVisible(c, function () { initInlineDashboard(c); }); })(inline[j]);
+        }
     }
 
     if (document.readyState === 'loading') {

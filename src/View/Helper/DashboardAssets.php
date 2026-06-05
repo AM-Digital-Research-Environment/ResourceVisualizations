@@ -108,15 +108,34 @@ class DashboardAssets extends AbstractHelper
         };
 
         if ($cdn) {
-            // Warm the CDN connection early; since the libraries are deferred,
-            // this shaves the DNS/TLS handshake off their post-parse download.
-            $view->headLink(['rel' => 'preconnect', 'href' => 'https://cdn.jsdelivr.net']);
             $headLink->appendStylesheet($asset('css/resource-visualizations.css'));
-            $headScript->appendFile(self::ECHARTS_JS, 'text/javascript', $defer);
-            $headScript->appendFile(self::WORDCLOUD_JS, 'text/javascript', $defer);
-            $headLink->appendStylesheet(self::MAPLIBRE_CSS);
-            $headScript->appendFile(self::MAPLIBRE_JS, 'text/javascript', $defer);
-            $headScript->appendFile($asset('js/dashboard-core.js'), 'text/javascript', $defer);
+            if ($controller === 'dashboard') {
+                // The default 'dashboard' surface (Collection Overview / Dashboard,
+                // Publications) renders as a block on a content page, typically
+                // below the fold. Rather than load the ~650 KiB ECharts/MapLibre
+                // prelude here, hand the front end the library URLs; dashboard.js
+                // injects them and renders only when the dashboard scrolls into
+                // view (ns.ensureLibs + IntersectionObserver). dashboard-core.js
+                // still loads (deferred) so the theme-token probe and watchers are
+                // ready, but it pulls in no heavy library on its own.
+                $headScript->appendScript('window.RV_LIBS=window.RV_LIBS||' . json_encode([
+                    'echarts'     => self::ECHARTS_JS,
+                    'wordcloud'   => self::WORDCLOUD_JS,
+                    'maplibre'    => self::MAPLIBRE_JS,
+                    'maplibreCss' => self::MAPLIBRE_CSS,
+                ], JSON_UNESCAPED_SLASHES) . ';');
+                $headScript->appendFile($asset('js/dashboard-core.js'), 'text/javascript', $defer);
+            } else {
+                // Dedicated dashboard pages (compare / explorer / communities /
+                // whatsNew): the dashboard IS the page content and sits in the
+                // viewport, so load the libraries eagerly (deferred) up front.
+                $view->headLink(['rel' => 'preconnect', 'href' => 'https://cdn.jsdelivr.net']);
+                $headScript->appendFile(self::ECHARTS_JS, 'text/javascript', $defer);
+                $headScript->appendFile(self::WORDCLOUD_JS, 'text/javascript', $defer);
+                $headLink->appendStylesheet(self::MAPLIBRE_CSS);
+                $headScript->appendFile(self::MAPLIBRE_JS, 'text/javascript', $defer);
+                $headScript->appendFile($asset('js/dashboard-core.js'), 'text/javascript', $defer);
+            }
         }
 
         foreach (self::CHART_SCRIPTS as $script) {

@@ -91,6 +91,66 @@
     };
 
     /* ------------------------------------------------------------------ */
+    /*  Lazy library loader                                                */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * Inject the heavy chart/map libraries (ECharts + the word-cloud plugin, and
+     * MapLibre with its CSS) on demand, returning a cached Promise that resolves
+     * once they are ready. The orchestrator calls this just before it renders a
+     * dashboard that has scrolled into view, so a page that never reaches its
+     * (below-the-fold) dashboard pays nothing for ~650 KiB of JS or the chart
+     * render work.
+     *
+     * URLs come from window.RV_LIBS (emitted by the DashboardAssets helper on the
+     * lazy surfaces). When the libraries were instead loaded eagerly — the
+     * dedicated dashboard pages, or item pages via Module.php — `echarts` is
+     * already defined and this resolves immediately, so behaviour is unchanged.
+     */
+    ns.ensureLibs = function () {
+        if (ns._libsPromise) return ns._libsPromise;
+        if (typeof echarts !== 'undefined') {
+            ns._libsPromise = Promise.resolve();
+            return ns._libsPromise;
+        }
+        var cfg = window.RV_LIBS || {};
+        var head = document.head || document.getElementsByTagName('head')[0];
+
+        function loadScript(src) {
+            return new Promise(function (resolve, reject) {
+                if (!src) { resolve(); return; }
+                var existing = head.querySelector('script[src="' + src + '"]');
+                if (existing) {
+                    if (existing.dataset.rvLoaded) { resolve(); return; }
+                    existing.addEventListener('load', function () { resolve(); });
+                    existing.addEventListener('error', reject);
+                    return;
+                }
+                var s = document.createElement('script');
+                s.src = src;
+                s.onload = function () { s.dataset.rvLoaded = '1'; resolve(); };
+                s.onerror = reject;
+                head.appendChild(s);
+            });
+        }
+
+        function loadStyle(href) {
+            if (!href || head.querySelector('link[href="' + href + '"]')) return;
+            var l = document.createElement('link');
+            l.rel = 'stylesheet';
+            l.href = href;
+            head.appendChild(l);
+        }
+
+        loadStyle(cfg.maplibreCss);
+        // ECharts first (the word-cloud plugin extends it); MapLibre in parallel.
+        ns._libsPromise = loadScript(cfg.echarts).then(function () {
+            return Promise.all([loadScript(cfg.wordcloud), loadScript(cfg.maplibre)]);
+        });
+        return ns._libsPromise;
+    };
+
+    /* ------------------------------------------------------------------ */
     /*  Theme-token resolution                                             */
     /* ------------------------------------------------------------------ */
 
