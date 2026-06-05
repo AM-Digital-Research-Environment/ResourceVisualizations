@@ -12,6 +12,7 @@ return [
             'compareEntity' => Site\BlockLayout\CompareEntity::class,
             'whatsNew' => Site\BlockLayout\WhatsNew::class,
             'photoBrowse' => Site\BlockLayout\PhotoBrowse::class,
+            'featuredCollections' => Site\BlockLayout\FeaturedCollections::class,
         ],
     ],
     'resource_page_block_layouts' => [

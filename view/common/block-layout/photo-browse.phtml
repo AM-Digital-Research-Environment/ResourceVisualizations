@@ -3,16 +3,20 @@
  * Photo Browsing page block.
  *
  * Renders the editor-selected item set's image-bearing items into a JSON payload
- * (thumbnail + original URLs, year, raw date, place name, coordinates) that
+ * (thumbnail + original URLs, year, raw date, place name, coordinates — plus,
+ * for featured collections, the creator and journal volume/issue/pages) that
  * asset/js/item-set-photo-views.js turns into masonry / map / timeline browsers
- * with a lightbox.
+ * with a lightbox, or — for an issue-grouped collection (ILAM) — issue cards
+ * that open a table-of-contents modal.
  *
  * Data comes from the precompute (asset/data/photo-galleries/{itemSetId}.json,
- * built by the admin "Regenerate" job straight from the Omeka DB — coordinates
- * resolved by following dcterms:spatial to a Location item, like every other
- * precomputed dataset). When that file is absent — e.g. a freshly added block
- * before the next regenerate — the view falls back to resolving the gallery live
- * through the Omeka API.
+ * built by the admin "Regenerate" job). When that file is absent — e.g. a
+ * freshly added block before the next regenerate — the view falls back to
+ * resolving the gallery live through the Omeka API.
+ *
+ * A featured collection may draw a SUB-collection from a shared item set:
+ * `$identifierPrefix` keeps only items whose dcterms:identifier begins with it
+ * (Museu Afro-Digital's three sub-collections all live in item set 6295).
  *
  * @var \Laminas\View\Renderer\PhpRenderer $this
  * @var \Omeka\Api\Representation\SitePageBlockRepresentation $block
@@ -20,6 +24,10 @@
  * @var string    $heading
  * @var string    $defaultView
  * @var array{total:int,photos:array}|null $precomputed
+ * @var string|null $identifierPrefix  sub-collection filter (dcterms:identifier prefix)
+ * @var string    $grouping            'photo' (default) | 'issue' (journal issues + TOC)
+ * @var string|null $partner           partner credit line
+ * @var array{masonry:bool,map:bool,timeline:bool} $allowedViews
  */
 
 use ResourceVisualizations\View\Helper\DashboardAssets;
@@ -28,29 +36,55 @@ if (!$itemSetId) {
     return; // block not configured yet
 }
 
-// Safety bound: a gallery is lazy-loaded client-side, but we still serialise the
-// records, so cap a runaway set and surface the cap (never silently truncate).
-$MAX_PHOTOS = 600;
+$issueMode = ($grouping ?? 'photo') === 'issue';
+$prefix = ($identifierPrefix ?? '') !== '' ? (string) $identifierPrefix : null;
+
+// Issue collections (ILAM: 1,032 articles → ~45 issues) need every record to
+// build complete tables of contents; a plain gallery is bounded so a runaway
+// set can't serialise forever. The cap is always surfaced, never silent.
+$MAX_PHOTOS = $issueMode ? 5000 : 600;
 $siteSlug = $this->currentSite()->slug();
 $siteBase = $this->basePath() . '/s/' . $siteSlug;
 $photos = [];
 $capped = false;
 
+// --- Shared parsers (used by the live path; the precompute emits these fields
+//     ready-made). Volume/issue from a DOI like ".../amj.v11i4.123"; page range
+//     from a "pages: 95-118" note. ---
+$parseVolIssue = static function (?string $doi): array {
+    if ($doi !== null && preg_match('/v(\d+)i(\d+)/i', $doi, $m)) {
+        return [(int) $m[1], (int) $m[2]];
+    }
+    return [null, null];
+};
+$parsePages = static function (?string $text): ?string {
+    if ($text !== null && preg_match('/pages?\s*[:\-]?\s*([0-9ivxlcdm]+(?:\s*[\x{2013}\-]\s*[0-9ivxlcdm]+)?)/iu', $text, $m)) {
+        return preg_replace('/\s+/', '', $m[1]);
+    }
+    return null;
+};
+
 if ($precomputed !== null) {
     // ---- Fast path: the precomputed gallery. Records hold ids only; rebuild the
-    // file + item URLs here, root-relative so the JSON stays domain-independent.
-    // thumb = the large derivative (always .jpg); full = the stored original when
-    // present, else the large thumb. ----
+    // file + item URLs here, root-relative so the JSON stays domain-independent. ----
     foreach ($precomputed['photos'] as $p) {
         $storage = (string) ($p['storage'] ?? '');
         if ($storage === '') {
             continue;
         }
+        // Sub-collection filter: keep only items whose identifier matches.
+        if ($prefix !== null && !str_starts_with((string) ($p['ident'] ?? ''), $prefix)) {
+            continue;
+        }
+        if (count($photos) >= $MAX_PHOTOS) {
+            $capped = true;
+            break;
+        }
         $ext = (string) ($p['ext'] ?? '');
         $thumb = $this->basePath() . '/files/large/' . $storage . '.jpg';
         $full  = $ext !== '' ? ($this->basePath() . '/files/original/' . $storage . '.' . $ext) : $thumb;
         $id = (int) $p['id'];
-        $photos[] = [
+        $rec = [
             'id'    => $id,
             'title' => (string) ($p['title'] ?? ('Item ' . $id)),
             'url'   => $siteBase . '/item/' . $id,
@@ -62,17 +96,25 @@ if ($precomputed !== null) {
             'lat'   => $p['lat'] ?? null,
             'lon'   => $p['lon'] ?? null,
         ];
+        if (isset($p['creator'])) {
+            $rec['creator'] = $p['creator'];
+        }
+        if ($issueMode) {
+            $rec['volume'] = isset($p['volume']) ? (int) $p['volume'] : null;
+            $rec['issue']  = isset($p['issue']) ? (int) $p['issue'] : null;
+            $rec['pages']  = $p['pages'] ?? null;
+        }
+        $photos[] = $rec;
     }
-    $total = (int) ($precomputed['total'] ?? count($photos));
-    $capped = $total > count($photos);
+    // Total for the count line: the filtered subset's size when a prefix is set,
+    // else the precompute's set-wide total.
+    $total = ($prefix !== null) ? count($photos) : (int) ($precomputed['total'] ?? count($photos));
+    $capped = $capped || ($total > count($photos));
 } else {
     // ---- Fallback: resolve live through the Omeka API so a newly added block
-    // works before the next "Regenerate". Coordinates follow the item's
-    // dcterms:spatial link to a Location item — the photo itself rarely carries
-    // geo:lat/long — exactly as the precompute does, just one request late. ----
+    // works before the next "Regenerate". ----
     $dateProperties = ['dcterms:issued', 'dcterms:created', 'dcterms:date', 'fabio:hasDateCollected'];
 
-    // Reads validated geo:lat / geo:long off any resource representation.
     $readGeo = function ($res): array {
         $latV = $res->value('geo:lat');
         $lonV = $res->value('geo:long');
@@ -85,7 +127,22 @@ if ($precomputed !== null) {
         }
         return [$lat, $lon];
     };
-    $placeGeoCache = []; // linked place item id => [lat, lon], resolved once per place
+    // First non-empty contributor label (creator → author → contributor).
+    $readCreator = function ($item): ?string {
+        foreach (['marcrel:aut', 'dcterms:creator', 'dcterms:contributor'] as $term) {
+            $v = $item->value($term);
+            if ($v) {
+                $r = $v->valueResource();
+                $label = $r ? $r->displayTitle() : trim((string) $v);
+                if ($label !== '') {
+                    return $label;
+                }
+            }
+        }
+        return null;
+    };
+    $placeGeoCache = [];
+    $total = 0;
     $page = 1;
 
     do {
@@ -100,9 +157,17 @@ if ($precomputed !== null) {
             if (!$media || !$media->hasThumbnails()) {
                 continue; // only image-bearing items belong in a photo gallery
             }
+            // Sub-collection filter on the live path.
+            if ($prefix !== null) {
+                $idv = $item->value('dcterms:identifier');
+                if (!$idv || !str_starts_with(trim((string) $idv), $prefix)) {
+                    continue;
+                }
+            }
+            $total++;
             if (count($photos) >= $MAX_PHOTOS) {
                 $capped = true;
-                break 2;
+                continue; // keep counting the true total
             }
 
             // --- Year + raw date (first available date property) ---
@@ -119,30 +184,7 @@ if ($precomputed !== null) {
                 }
             }
 
-            // --- Place (linked or literal dcterms:spatial): label + origin coords. ---
-            $place = null;
-            $spr = null;
-            $sp = $item->value('dcterms:spatial');
-            if ($sp) {
-                $spr = $sp->valueResource();
-                $place = $spr ? $spr->displayTitle() : trim((string) $sp);
-                if ($place === '') {
-                    $place = null;
-                }
-            }
-
-            // --- Coordinates: the item's own geo:lat / geo:long, else the linked
-            // origin place's coordinates (cached per place id). ---
-            [$lat, $lon] = $readGeo($item);
-            if (($lat === null || $lon === null) && $spr) {
-                $pid = $spr->id();
-                if (!array_key_exists($pid, $placeGeoCache)) {
-                    $placeGeoCache[$pid] = $readGeo($spr);
-                }
-                [$lat, $lon] = $placeGeoCache[$pid];
-            }
-
-            $photos[] = [
+            $rec = [
                 'id'    => $item->id(),
                 'title' => $item->displayTitle(),
                 'url'   => $item->siteUrl($siteSlug),
@@ -150,39 +192,87 @@ if ($precomputed !== null) {
                 'full'  => $media->originalUrl() ?: $media->thumbnailUrl('large'),
                 'year'  => $year,
                 'date'  => ($dateStr !== null && $dateStr !== '') ? $dateStr : null,
-                'place' => $place,
-                'lat'   => $lat,
-                'lon'   => $lon,
             ];
+
+            if ($issueMode) {
+                // Volume/issue from the DOI; pages from the description note.
+                $doi = $item->value('bibo:doi');
+                $doiStr = $doi ? ($doi->uri() ?: (string) $doi) : null;
+                [$vol, $iss] = $parseVolIssue($doiStr);
+                $desc = $item->value('dcterms:description');
+                $rec['volume']  = $vol;
+                $rec['issue']   = $iss;
+                $rec['pages']   = $parsePages($desc ? trim((string) $desc) : null);
+                $rec['creator'] = $readCreator($item);
+                // ILAM disables map; skip geo resolution entirely.
+                $rec['place'] = null;
+                $rec['lat'] = null;
+                $rec['lon'] = null;
+            } else {
+                // --- Place (linked or literal dcterms:spatial): label + coords. ---
+                $place = null;
+                $spr = null;
+                $sp = $item->value('dcterms:spatial');
+                if ($sp) {
+                    $spr = $sp->valueResource();
+                    $place = $spr ? $spr->displayTitle() : trim((string) $sp);
+                    if ($place === '') {
+                        $place = null;
+                    }
+                }
+                [$lat, $lon] = $readGeo($item);
+                if (($lat === null || $lon === null) && $spr) {
+                    $pid = $spr->id();
+                    if (!array_key_exists($pid, $placeGeoCache)) {
+                        $placeGeoCache[$pid] = $readGeo($spr);
+                    }
+                    [$lat, $lon] = $placeGeoCache[$pid];
+                }
+                $rec['place'] = $place;
+                $rec['lat'] = $lat;
+                $rec['lon'] = $lon;
+                $rec['creator'] = $readCreator($item);
+            }
+
+            $photos[] = $rec;
         }
         $page++;
     } while (count($items) === 100);
 }
 
 if (empty($photos)) {
-    return; // no images in this set
+    return; // no images in this set / sub-collection
 }
 
-// Which browsers are meaningful for this set?
+// Which browsers are meaningful for this set, intersected with what the
+// collection allows (a registry entry can disable map / timeline; issue
+// grouping is masonry-only).
+$allow = $allowedViews ?? ['masonry' => true, 'map' => true, 'timeline' => true];
 $geoCount = 0;
 $datedCount = 0;
 foreach ($photos as $p) {
-    if ($p['lat'] !== null) {
+    if (($p['lat'] ?? null) !== null) {
         $geoCount++;
     }
-    if ($p['year'] !== null) {
+    if (($p['year'] ?? null) !== null) {
         $datedCount++;
     }
 }
-$views = ['masonry'];
-if ($geoCount > 0) {
+$views = [];
+if (!empty($allow['masonry'])) {
+    $views[] = 'masonry';
+}
+if (!empty($allow['map']) && $geoCount > 0 && !$issueMode) {
     $views[] = 'map';
 }
-if ($datedCount > 0) {
+if (!empty($allow['timeline']) && $datedCount > 0 && !$issueMode) {
     $views[] = 'timeline';
 }
+if (!$views) {
+    $views = ['masonry'];
+}
 if (!in_array($defaultView, $views, true)) {
-    $defaultView = 'masonry';
+    $defaultView = $views[0];
 }
 
 $viewLabels = [
@@ -191,14 +281,35 @@ $viewLabels = [
     'timeline' => $this->translate('Timeline'),
 ];
 
+// Count summary. Issue collections report distinct issues + articles.
+if ($issueMode) {
+    $issueKeys = [];
+    foreach ($photos as $p) {
+        if (($p['volume'] ?? null) !== null && ($p['issue'] ?? null) !== null) {
+            $issueKeys[$p['volume'] . '.' . $p['issue']] = true;
+        }
+    }
+    $issueCount = count($issueKeys);
+    $countLabel = sprintf(
+        $this->translate('%d issues · %d articles'),
+        $issueCount,
+        count($photos)
+    );
+} elseif ($capped) {
+    $countLabel = sprintf($this->translate('First %d images'), count($photos));
+} else {
+    $countLabel = sprintf(
+        $this->translatePlural('%d image', '%d images', count($photos)),
+        count($photos)
+    );
+}
+
 $payload = json_encode($photos,
     JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 
 // Lean asset prelude — masonry & timeline are pure DOM, the map lazy-loads
 // MapLibre on demand, so we skip the full chart-builder chain and only inject
-// the stylesheet, the shared RV core helpers, and this block's engine. The
-// MapLibre asset URLs ride along as data-attributes (single source of truth:
-// DashboardAssets) so the engine can inject them when the Map tab is opened.
+// the stylesheet, the shared RV core helpers, and this block's engine.
 $this->headLink()->appendStylesheet(
     $this->assetUrl('css/resource-visualizations.css', 'ResourceVisualizations'));
 $this->headScript()->appendFile(
@@ -211,9 +322,13 @@ $this->headScript()->appendFile(
     <?php if ($heading !== ''): ?>
     <h3 class="photo-browse-heading"><?= $this->escapeHtml($heading) ?></h3>
     <?php endif; ?>
+    <?php if (($partner ?? null)): ?>
+    <p class="photo-browse-partner"><?= $this->escapeHtml($partner) ?></p>
+    <?php endif; ?>
 
     <div class="photo-browse-container"
          data-default-view="<?= $this->escapeHtmlAttr($defaultView) ?>"
+         data-grouping="<?= $this->escapeHtmlAttr($issueMode ? 'issue' : 'photo') ?>"
          data-maplibre-css="<?= $this->escapeHtmlAttr($this->assetUrl(DashboardAssets::MAPLIBRE_CSS, 'ResourceVisualizations')) ?>"
          data-maplibre-js="<?= $this->escapeHtmlAttr($this->assetUrl(DashboardAssets::MAPLIBRE_JS, 'ResourceVisualizations')) ?>">
 
@@ -230,13 +345,7 @@ $this->headScript()->appendFile(
                 <?php endforeach; ?>
             </div>
             <?php endif; ?>
-            <span class="photo-browse-count">
-                <?php if ($capped): ?>
-                    <?= sprintf($this->translate('First %d images'), count($photos)) ?>
-                <?php else: ?>
-                    <?= sprintf($this->translatePlural('%d image', '%d images', count($photos)), count($photos)) ?>
-                <?php endif; ?>
-            </span>
+            <span class="photo-browse-count"><?= $this->escapeHtml($countLabel) ?></span>
         </div>
 
         <div class="photo-browse-stage">

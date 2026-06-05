@@ -1,24 +1,45 @@
 /**
- * Photo Browsing engine — masonry / map / timeline browsers + lightbox.
+ * Photo Browsing engine — masonry / map / timeline browsers + lightbox, plus a
+ * journal-issue grouping mode with a table-of-contents modal.
  *
  * Surface-agnostic: it hydrates every `.photo-browse-container` on the page from
  * the JSON payload the PhotoBrowse block server-renders (id/title/url/thumb/full/
- * year/date/place/lat/lon). No precompute, no chart builders.
+ * year/date/place/lat/lon — and, for featured collections, creator and journal
+ * volume/issue/pages). No precompute, no chart builders.
  *
- * THEMING — follows the DRE theme like the rest of the module:
- *   - masonry & timeline are pure DOM, styled entirely from --rv-* tokens (CSS
- *     flips them on light/dark with zero JS);
- *   - the map resolves its colours through `ns.cssColor` and re-themes via
- *     `ns.trackMap(map, rebuild)` on the global theme toggle.
+ *   - masonry: a responsive round-robin column layout of carded tiles (cover +
+ *     title + date/place chips). Cards reserve their box (muted frame, 4:3
+ *     placeholder that settles to the image's natural ratio on load) and fade
+ *     the image in, so nothing flashes or reflows as lazy images stream in;
+ *     they also reveal-on-scroll via ns.revealOnScroll.
+ *   - `data-grouping="issue"`: tiles become journal issues (Vol. N No. M), and
+ *     clicking opens a table-of-contents modal listing the issue's articles.
+ *   - map: clustered MapLibre, lazy-loaded the first time the Map tab is opened.
  *
- * MapLibre is heavy and only the Map tab needs it, so it is lazy-loaded (from the
- * CDN URLs the block passes as data-attributes) the first time the Map view is
- * opened — the default Grid view ships zero map weight.
+ * THEMING — follows the DRE theme via the --rv-* tokens (masonry/timeline/TOC are
+ * pure DOM) and ns.cssColor / ns.trackMap (the map).
  */
 (function () {
     'use strict';
 
     var ns = window.RV = window.RV || {};
+
+    /* ------------------------------------------------------------------ */
+    /*  Small inline-SVG icons (lucide, MIT)                               */
+    /* ------------------------------------------------------------------ */
+
+    function svg(inner, cls) {
+        return '<svg class="' + (cls || '') + '" viewBox="0 0 24 24" fill="none"'
+            + ' stroke="currentColor" stroke-width="2" stroke-linecap="round"'
+            + ' stroke-linejoin="round" aria-hidden="true" focusable="false">' + inner + '</svg>';
+    }
+    var ICON = {
+        calendar: '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 2v4"/><path d="M16 2v4"/>',
+        pin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+        book: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+        arrow: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+        external: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>'
+    };
 
     /* ------------------------------------------------------------------ */
     /*  Lazy MapLibre loader (shared across every gallery on the page)     */
@@ -63,13 +84,14 @@
         var stage = container.querySelector('.photo-browse-stage');
         var buttons = Array.prototype.slice.call(container.querySelectorAll('.photo-view-btn'));
         var defaultView = container.dataset.defaultView || 'masonry';
+        var grouping = container.dataset.grouping || 'photo';
         var mlCss = container.dataset.maplibreCss || '';
         var mlJs = container.dataset.maplibreJs || '';
 
         var lightbox = makeLightbox(container, photos);
+        var toc = grouping === 'issue' ? makeTocModal(container) : null;
         var views = {};   // name -> { el, built }
 
-        // Pre-register a slot per view so showView can build lazily.
         ['masonry', 'map', 'timeline'].forEach(function (name) {
             views[name] = { el: null, built: false };
         });
@@ -77,7 +99,6 @@
         function showView(name) {
             if (!views[name]) name = 'masonry';
 
-            // Toggle button + tab state.
             buttons.forEach(function (b) {
                 var on = b.dataset.view === name;
                 b.classList.toggle('is-active', on);
@@ -88,17 +109,15 @@
             if (!views[name].built) {
                 if (name === 'map') {
                     buildMap(views[name], photos, lightbox, mlCss, mlJs, stage);
+                } else if (name === 'timeline') {
+                    views[name].el = buildTimeline(photos, lightbox);
+                    views[name].built = true;
                 } else {
-                    var el = name === 'timeline'
-                        ? buildTimeline(photos, lightbox)
-                        : buildMasonry(photos, lightbox);
-                    views[name].el = el;
+                    views[name].el = buildMasonry(photos, lightbox, grouping, toc, stage);
                     views[name].built = true;
                 }
             }
 
-            // Swap visible node. The map node persists (kept mounted) so its
-            // WebGL context + theme tracking survive tab switches.
             clearLoading(stage);
             Array.prototype.slice.call(stage.children).forEach(function (c) {
                 if (c.classList && c.classList.contains('photo-view')) c.hidden = true;
@@ -107,7 +126,6 @@
                 if (views[name].el.parentNode !== stage) stage.appendChild(views[name].el);
                 views[name].el.hidden = false;
             }
-            // A freshly-shown map must resize to its now-visible box.
             if (name === 'map' && views.map._map) {
                 requestAnimationFrame(function () { try { views.map._map.resize(); } catch (e) {} });
             }
@@ -126,45 +144,299 @@
     }
 
     /* ------------------------------------------------------------------ */
-    /*  Masonry view                                                       */
+    /*  Masonry view (responsive round-robin columns)                      */
     /* ------------------------------------------------------------------ */
 
-    function buildMasonry(photos, lightbox) {
+    function columnsForWidth(w) {
+        if (w >= 1440) return 5;
+        if (w >= 1024) return 4;
+        if (w >= 640) return 3;
+        return 2;
+    }
+
+    function buildMasonry(photos, lightbox, grouping, toc, stage) {
         var view = document.createElement('div');
         view.className = 'photo-view photo-masonry';
-        photos.forEach(function (p, i) {
-            view.appendChild(makeCard(p, i, lightbox));
-        });
+
+        // Build the card nodes ONCE. Re-layout only moves them between columns,
+        // so loaded images are never re-fetched (no re-flash) on resize.
+        var cards;
+        if (grouping === 'issue') {
+            cards = buildIssueCards(photos, toc);
+        } else {
+            cards = photos.map(function (p, i) { return makeCard(p, i, lightbox, false); });
+        }
+
+        var currentCols = 0;
+        function layout() {
+            var w = view.clientWidth || (stage && stage.clientWidth) || window.innerWidth || 1024;
+            var n = columnsForWidth(w);
+            if (n === currentCols) return;
+            currentCols = n;
+            view.textContent = '';
+            var cols = [];
+            for (var i = 0; i < n; i++) {
+                var col = document.createElement('div');
+                col.className = 'photo-masonry-col';
+                view.appendChild(col);
+                cols.push(col);
+            }
+            cards.forEach(function (card, i) { cols[i % n].appendChild(card); });
+        }
+        layout();
+
+        if ('ResizeObserver' in window) {
+            // Observe the stage (always in the DOM) so the first callback fixes
+            // the column count once the view is mounted and measurable.
+            var ro = new ResizeObserver(function () { layout(); });
+            ro.observe(stage || view);
+        } else {
+            window.addEventListener('resize', layout);
+        }
         return view;
     }
 
-    /** A clickable thumbnail card. Shared by masonry + timeline. */
-    function makeCard(p, index, lightbox) {
+    /**
+     * A clickable carded tile. `compact` (timeline) drops the body so the strip
+     * stays a thin row of thumbnails.
+     */
+    function makeCard(p, index, lightbox, compact) {
         var card = document.createElement('button');
         card.type = 'button';
-        card.className = 'photo-card';
+        card.className = 'photo-card' + (compact ? ' is-compact' : '');
         card.title = p.title || '';
+
+        card.appendChild(makeFrame(p, !compact));
+
+        if (!compact) {
+            var body = document.createElement('div');
+            body.className = 'photo-card-body';
+
+            var title = document.createElement('h4');
+            title.className = 'photo-card-title';
+            title.textContent = p.title || '';
+            body.appendChild(title);
+
+            var chips = [];
+            if (p.year) chips.push(chip(ICON.calendar, p.year));
+            if (p.place) chips.push(chip(ICON.pin, p.place));
+            if (chips.length) {
+                var meta = document.createElement('div');
+                meta.className = 'photo-card-meta';
+                chips.forEach(function (c) { meta.appendChild(c); });
+                body.appendChild(meta);
+            }
+            card.appendChild(body);
+        }
+
+        card.addEventListener('click', function () { lightbox.open(index); });
+        if (ns.revealOnScroll) ns.revealOnScroll(card, { delay: (index % 8) * 25 });
+        return card;
+    }
+
+    /**
+     * The image frame: a muted, box-reserving container that settles from a 4:3
+     * placeholder to the image's natural ratio on load and fades the image in —
+     * the combination that kills the "flash / reflow as it loads" problem.
+     * `settle=false` (timeline) keeps a fixed-height frame (CSS controls it).
+     */
+    function makeFrame(p, settle) {
+        var frame = document.createElement('div');
+        frame.className = 'photo-card-frame';
+        if (settle) frame.style.aspectRatio = '4 / 3';
 
         var img = document.createElement('img');
         img.className = 'photo-card-img';
         img.loading = 'lazy';
         img.decoding = 'async';
         img.alt = p.title || '';
-        // Attach the error handler BEFORE setting src so a broken thumbnail is
-        // reliably hidden even if it resolves synchronously from cache.
-        img.addEventListener('error', function () { card.classList.add('is-broken'); });
+        img.addEventListener('error', function () { frame.classList.add('is-broken'); });
+        img.addEventListener('load', function () {
+            if (settle && img.naturalWidth > 0 && img.naturalHeight > 0) {
+                frame.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+            }
+            img.classList.add('is-loaded');
+        });
         img.src = p.thumb;
-        card.appendChild(img);
+        frame.appendChild(img);
+        return frame;
+    }
 
-        if (p.year) {
-            var tag = document.createElement('span');
-            tag.className = 'photo-card-year';
-            tag.textContent = p.year;
-            card.appendChild(tag);
+    function chip(iconInner, label) {
+        var span = document.createElement('span');
+        span.className = 'photo-card-chip';
+        span.innerHTML = svg(iconInner, 'photo-chip-icon');
+        span.appendChild(document.createTextNode(' ' + label));
+        return span;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Issue grouping (journal collections, e.g. ILAM)                    */
+    /* ------------------------------------------------------------------ */
+
+    /** Group photos by volume.issue, in reading order, into card nodes. */
+    function buildIssueCards(photos, toc) {
+        var groups = {};
+        var order = [];
+        photos.forEach(function (p) {
+            if (p.volume == null || p.issue == null) return;
+            var key = p.volume + '.' + p.issue;
+            if (!groups[key]) {
+                groups[key] = { volume: p.volume, issue: p.issue, year: p.year || null, items: [] };
+                order.push(key);
+            }
+            var g = groups[key];
+            g.items.push(p);
+            if (g.year == null && p.year != null) g.year = p.year;
+        });
+
+        order.sort(function (a, b) {
+            return groups[a].volume - groups[b].volume || groups[a].issue - groups[b].issue;
+        });
+
+        return order.map(function (key, i) {
+            var g = groups[key];
+            g.label = 'Vol. ' + g.volume + ' No. ' + g.issue + (g.year ? ' (' + g.year + ')' : '');
+            return makeIssueCard(g, i, toc);
+        });
+    }
+
+    function makeIssueCard(group, index, toc) {
+        var rep = group.items[0] || {};
+        var card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'photo-card photo-issue-card';
+        card.title = group.label;
+
+        card.appendChild(makeFrame(rep, true));
+
+        var body = document.createElement('div');
+        body.className = 'photo-card-body';
+        var title = document.createElement('h4');
+        title.className = 'photo-card-title';
+        title.textContent = group.label;
+        body.appendChild(title);
+        var sub = document.createElement('p');
+        sub.className = 'photo-card-subtitle';
+        sub.textContent = group.items.length + (group.items.length === 1 ? ' article' : ' articles');
+        body.appendChild(sub);
+        card.appendChild(body);
+
+        card.addEventListener('click', function () { if (toc) toc.open(group); });
+        if (ns.revealOnScroll) ns.revealOnScroll(card, { delay: (index % 8) * 25 });
+        return card;
+    }
+
+    /** First page number in a "95-118" range (for TOC ordering); else +∞. */
+    function startPage(pages) {
+        if (!pages) return Number.POSITIVE_INFINITY;
+        var n = parseInt(String(pages).split(/[–-]/)[0], 10);
+        return isFinite(n) ? n : Number.POSITIVE_INFINITY;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Issue table-of-contents modal                                      */
+    /* ------------------------------------------------------------------ */
+
+    function makeTocModal(container) {
+        var box = document.createElement('div');
+        box.className = 'photo-toc';
+        box.setAttribute('role', 'dialog');
+        box.setAttribute('aria-modal', 'true');
+        box.hidden = true;
+        box.innerHTML =
+            '<div class="photo-toc-backdrop" data-close="1"></div>' +
+            '<div class="photo-toc-frame">' +
+                '<button type="button" class="photo-toc-close" data-close="1" aria-label="Close">✕</button>' +
+                '<aside class="photo-toc-cover"><img alt=""></aside>' +
+                '<section class="photo-toc-body">' +
+                    '<header class="photo-toc-header">' +
+                        '<p class="photo-toc-eyebrow">' + svg(ICON.book, 'photo-toc-eyebrow-icon') + ' Table of contents</p>' +
+                        '<h3 class="photo-toc-title"></h3>' +
+                        '<p class="photo-toc-count"></p>' +
+                    '</header>' +
+                    '<ol class="photo-toc-list"></ol>' +
+                '</section>' +
+            '</div>';
+        container.appendChild(box);
+
+        var coverImg = box.querySelector('.photo-toc-cover img');
+        var titleEl = box.querySelector('.photo-toc-title');
+        var countEl = box.querySelector('.photo-toc-count');
+        var listEl = box.querySelector('.photo-toc-list');
+
+        function open(group) {
+            var rep = group.items[0] || {};
+            coverImg.src = rep.thumb || '';
+            coverImg.alt = group.label || '';
+            titleEl.textContent = group.label || 'Table of contents';
+            countEl.textContent = group.items.length
+                + (group.items.length === 1 ? ' article' : ' articles') + ' in this issue.';
+
+            var items = group.items.slice().sort(function (a, b) {
+                var pa = startPage(a.pages), pb = startPage(b.pages);
+                if (pa !== pb) return pa - pb;
+                return (a.title || '').localeCompare(b.title || '');
+            });
+
+            listEl.textContent = '';
+            items.forEach(function (it) {
+                var li = document.createElement('li');
+                li.className = 'photo-toc-item';
+
+                var a = document.createElement('a');
+                a.className = 'photo-toc-item-link';
+                a.href = it.url || '#';
+
+                var main = document.createElement('div');
+                main.className = 'photo-toc-item-main';
+                var t = document.createElement('p');
+                t.className = 'photo-toc-item-title';
+                t.textContent = it.title || 'Untitled';
+                main.appendChild(t);
+                if (it.creator) {
+                    var c = document.createElement('p');
+                    c.className = 'photo-toc-item-creator';
+                    c.textContent = it.creator;
+                    main.appendChild(c);
+                }
+                a.appendChild(main);
+
+                var metaWrap = document.createElement('div');
+                metaWrap.className = 'photo-toc-item-meta';
+                if (it.pages) {
+                    var pg = document.createElement('span');
+                    pg.className = 'photo-toc-item-pages';
+                    pg.textContent = 'pp. ' + it.pages;
+                    metaWrap.appendChild(pg);
+                }
+                var arr = document.createElement('span');
+                arr.className = 'photo-toc-item-arrow';
+                arr.innerHTML = svg(ICON.arrow);
+                metaWrap.appendChild(arr);
+                a.appendChild(metaWrap);
+
+                li.appendChild(a);
+                listEl.appendChild(li);
+            });
+
+            box.hidden = false;
+            document.body.classList.add('photo-lightbox-open');
         }
 
-        card.addEventListener('click', function () { lightbox.open(index); });
-        return card;
+        function close() {
+            box.hidden = true;
+            document.body.classList.remove('photo-lightbox-open');
+        }
+
+        box.addEventListener('click', function (e) {
+            if (e.target.closest('[data-close]')) close();
+        });
+        document.addEventListener('keydown', function (e) {
+            if (!box.hidden && e.key === 'Escape') close();
+        });
+
+        return { open: open, close: close };
     }
 
     /* ------------------------------------------------------------------ */
@@ -197,7 +469,7 @@
             var items = document.createElement('div');
             items.className = 'photo-timeline-items';
             byYear[key].forEach(function (i) {
-                items.appendChild(makeCard(photos[i], i, lightbox));
+                items.appendChild(makeCard(photos[i], i, lightbox, true));
             });
             group.appendChild(items);
             view.appendChild(group);
@@ -290,7 +562,6 @@
                     }
                 });
 
-                // Fit to the points (guard the single-point case).
                 try {
                     var b = new maplibregl.LngLatBounds();
                     geo.forEach(function (f) { b.extend(f.geometry.coordinates); });
@@ -300,7 +571,6 @@
                 } catch (e) { /* noop */ }
             });
 
-            // Cluster click → zoom in to expand it.
             map.on('click', 'clusters', function (e) {
                 var f = map.queryRenderedFeatures(e.point, { layers: ['clusters'] })[0];
                 if (!f) return;
@@ -309,7 +579,6 @@
                         map.easeTo({ center: f.geometry.coordinates, zoom: zoom });
                     }).catch(function () {});
             });
-            // Point click → open the lightbox at that photo.
             map.on('click', 'points', function (e) {
                 var f = e.features && e.features[0];
                 if (f) lightbox.open(f.properties.idx);

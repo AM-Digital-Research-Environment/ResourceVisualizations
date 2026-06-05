@@ -1,0 +1,107 @@
+<?php
+/**
+ * Featured Collections landing grid.
+ *
+ * Renders the curated registry as a responsive 2-column grid of collection
+ * cards, each linking to its detail page. Counts + cover images are resolved by
+ * the block (precompute index, with a live API fallback). Mirrors the amira
+ * dashboard's /collections index (CollectionIndexCard).
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var \Omeka\Api\Representation\SitePageBlockRepresentation $block
+ * @var string $heading
+ * @var array  $entries   registry entries (see ResourceVisualizations\FeaturedCollections\Registry)
+ * @var array  $cardData  slug => {itemCount:int, photoCount:?int, covers:string[]}
+ */
+
+if (empty($entries)) {
+    return;
+}
+
+$siteBase = $this->basePath() . '/s/' . $this->currentSite()->slug();
+
+// Reveal-on-scroll lives in dashboard-core; the grid is otherwise pure DOM.
+$this->headLink()->appendStylesheet(
+    $this->assetUrl('css/resource-visualizations.css', 'ResourceVisualizations'));
+$this->headScript()->appendFile(
+    $this->assetUrl('js/dashboard-core.js', 'ResourceVisualizations'), 'text/javascript', ['defer' => true]);
+
+$svg = fn (string $inner): string =>
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+    . ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+    . $inner . '</svg>';
+$iconImages = '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>';
+$iconArrow = '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>';
+
+/** Compose the footer count line for a card. */
+$footer = function (array $entry, array $d) {
+    $ic = (int) ($d['itemCount'] ?? 0);
+    $pc = $d['photoCount'] ?? null;
+    $n = fn (int $v): string => number_format($v);
+    if ($entry['grouping'] === 'issue') {
+        return $pc !== null
+            ? ['<strong>' . $n((int) $pc) . '</strong> issues', $n($ic) . ' articles']
+            : ['<strong>' . $n($ic) . '</strong> articles', null];
+    }
+    if ($pc !== null && (int) $pc !== $ic) {
+        return ['<strong>' . $n((int) $pc) . '</strong> photos', $n($ic) . ' items'];
+    }
+    return ['<strong>' . $n($ic) . '</strong> items', null];
+};
+?>
+
+<div class="resource-vis-block featured-collections-block">
+    <?php if ($heading !== ''): ?>
+    <h3 class="featured-collections-heading"><?= $this->escapeHtml($heading) ?></h3>
+    <?php endif; ?>
+
+    <div class="featured-collections">
+        <?php foreach (array_values($entries) as $i => $entry):
+            $d = $cardData[$entry['slug']] ?? ['itemCount' => 0, 'photoCount' => null, 'covers' => []];
+            $covers = array_slice($d['covers'] ?? [], 0, 4);
+            $href = $siteBase . '/page/' . rawurlencode($entry['pageSlug']);
+            [$statMain, $statAlt] = $footer($entry, $d);
+        ?>
+        <a class="collection-card" href="<?= $this->escapeHtmlAttr($href) ?>" data-rv-reveal="<?= $i * 80 ?>">
+            <div class="collection-card-cover" aria-hidden="true">
+                <?php if (!empty($entry['thumbnail'])): ?>
+                    <img src="<?= $this->escapeHtmlAttr($this->basePath() . '/' . ltrim($entry['thumbnail'], '/')) ?>" alt="" loading="lazy">
+                <?php elseif ($covers): ?>
+                    <div class="collection-card-mosaic" data-count="<?= count($covers) ?>">
+                        <?php foreach ($covers as $url): ?>
+                        <img src="<?= $this->escapeHtmlAttr($url) ?>" alt="" loading="lazy">
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="collection-card-placeholder"><?= $svg($iconImages) ?></div>
+                <?php endif; ?>
+            </div>
+
+            <div class="collection-card-body">
+                <h4 class="collection-card-title"><?= $this->escapeHtml($entry['title']) ?></h4>
+                <?php if (!empty($entry['tagline'])): ?>
+                <p class="collection-card-tagline"><?= $this->escapeHtml($entry['tagline']) ?></p>
+                <?php endif; ?>
+                <?php if ($entry['description'] !== ''): ?>
+                <p class="collection-card-desc"><?= $this->escapeHtml($entry['description']) ?></p>
+                <?php endif; ?>
+                <?php if (!empty($entry['partner'])): ?>
+                <span class="collection-card-partner"><?= $this->escapeHtml($entry['partner']) ?></span>
+                <?php endif; ?>
+
+                <div class="collection-card-footer">
+                    <span class="collection-card-stats">
+                        <?= $statMain // safe: only <strong> + number_format ?>
+                        <?php if ($statAlt !== null): ?>
+                        <span class="collection-card-stats-alt">· <?= $this->escapeHtml($statAlt) ?></span>
+                        <?php endif; ?>
+                    </span>
+                    <span class="collection-card-cta">
+                        <?= $this->translate('Browse') ?> <?= $svg($iconArrow) ?>
+                    </span>
+                </div>
+            </div>
+        </a>
+        <?php endforeach; ?>
+    </div>
+</div>

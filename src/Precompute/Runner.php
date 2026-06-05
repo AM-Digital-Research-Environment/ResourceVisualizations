@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace ResourceVisualizations\Precompute;
 
 use Doctrine\DBAL\Connection;
+use ResourceVisualizations\FeaturedCollections\Registry;
 
 /**
  * Orchestrates the dashboard precompute: loads the data, calls the pure
@@ -38,6 +39,7 @@ final class Runner
     private const ITEM_SET_SUBJECT = 1852;
     private const ITEM_SET_PROJECT = 20;
     private const ITEM_SET_PUBLICATIONS = 29918;
+    private const ITEM_SET_PODCASTS = 39095;
 
     /**
      * Synthetic resource-type label used to fold cluster publications into the
@@ -58,9 +60,7 @@ final class Runner
      * models each as a virtual project (it has items but no projectsData /
      * template-5 project entity), and its items sit outside the
      * section→project→item hierarchy — so generateCollectionOverview() folds
-     * them onto a partner-university column of the section×university heatmap,
-     * and buildOverviewStats() adds each one (when it has items) to the
-     * "Projects (with items)" card. Single source of truth for both.
+     * them onto a partner-university column of the section×university heatmap.
      */
     private const EXTERNAL_COLLECTIONS = [
         self::ITEM_SET_ILAM => ['section' => 'External', 'university' => 'Rhodes University'],
@@ -108,6 +108,15 @@ final class Runner
     private array $countryIndex = [];
 
     /**
+     * Extra literals (dcterms:identifier, dcterms:description, bibo:doi) for the
+     * items of the featured-collections item sets only — used to split Museu
+     * Afro-Digital by identifier prefix and to derive ILAM volume/issue/pages.
+     * Keyed item id => ['ident'=>?, 'desc'=>?, 'doi'=>?]. Loaded scoped (not in
+     * the global DataLoader) so the general literal map stays lean.
+     */
+    private array $featuredLiterals = [];
+
+    /**
      * Entity counts for the Collection Overview stat cards, filled by the
      * per-entity index passes (each counts entities that have ≥1 linked item)
      * and read by {@see self::buildOverviewStats()}.
@@ -129,6 +138,7 @@ final class Runner
         private readonly string $countriesGeojson,
         private readonly string $knowledgeGraphsDir,
         private readonly string $galleriesDir,
+        private readonly string $featuredDir,
         ?callable $logFn = null,
     ) {
         $this->logFn = $logFn;
@@ -176,6 +186,7 @@ final class Runner
         $this->templateLabels = $data['templateLabels'];
         $this->literals = $data['literals'];
         $this->primaryMedia = $data['primaryMedia'];
+        $this->loadFeaturedLiterals();
 
         $features = Aggregators::loadCountryFeatures($this->countriesGeojson);
         $this->countryIndex = Aggregators::buildCountryIndex($this->geo, $features);
@@ -196,6 +207,7 @@ final class Runner
         $this->generatePublications();
         $this->generateWhatsNew();
         $this->generatePhotoGalleries();
+        $this->generateFeaturedCollections();
         $this->generateKnowledgeGraphs();
 
         $this->log('Done. ' . $this->fileCount . ' files written.');
@@ -848,30 +860,18 @@ final class Runner
      */
     private function buildOverviewStats(int $researchItemCount, int $countries): array
     {
-        // People, Organisations, Languages, Subjects & Tags, Resource Types and
-        // Cluster Publications are the sizes of their authority item sets — the
-        // full curated count, not just entities linked to a research item.
-        // Projects (with items) and Locations stay as the "present in the
-        // collection" counts gathered by the index passes.
+        // People, Organisations, Languages, Subjects & Tags, Resource Types,
+        // Research projects and Cluster Publications are the sizes of their
+        // authority item sets — the full curated count, not just entities linked
+        // to a research item. Locations stays as the "present in the collection"
+        // count gathered by its index pass.
         $setCount = fn (int $setId): int => count($this->itemSets[$setId] ?? []);
-
-        // Internal template-5 projects with items (from the generateProjects index
-        // pass) plus each external partner collection that has items — the amira
-        // dashboard counts ILAM and BayGlo as virtual projects, but they have no
-        // template-5 project entity so the index pass misses them.
-        $externalProjects = 0;
-        foreach (array_keys(self::EXTERNAL_COLLECTIONS) as $extSet) {
-            if (!empty($this->itemSets[$extSet])) {
-                $externalProjects++;
-            }
-        }
-        $projectsWithItems = ($this->statCounts['projects'] ?? 0) + $externalProjects;
 
         // Assemble via the reusable component — it casts values, drops empty
         // cards (Research Items aside, always > 0) and clears null subtitles.
         return Aggregators::buildStatCards([
             ['key' => 'researchItems', 'label' => 'Research Items', 'value' => $researchItemCount],
-            ['key' => 'projects', 'label' => 'Projects (with items)', 'value' => $projectsWithItems],
+            ['key' => 'projects', 'label' => 'Research projects', 'value' => $setCount(self::ITEM_SET_PROJECT)],
             ['key' => 'people', 'label' => 'People', 'value' => $setCount(self::ITEM_SET_PERSON)],
             ['key' => 'organisations', 'label' => 'Organisations', 'value' => $setCount(self::ITEM_SET_INSTITUTION)],
             ['key' => 'locations', 'label' => 'Locations', 'value' => $this->statCounts['locations'] ?? 0,
@@ -880,6 +880,7 @@ final class Runner
             ['key' => 'subjectsTags', 'label' => 'Subjects & Tags', 'value' => $setCount(self::ITEM_SET_SUBJECT)],
             ['key' => 'resourceTypes', 'label' => 'Resource Types', 'value' => $setCount(self::ITEM_SET_RESOURCE_TYPE)],
             ['key' => 'publications', 'label' => 'Cluster Publications', 'value' => $setCount(self::ITEM_SET_PUBLICATIONS)],
+            ['key' => 'podcasts', 'label' => 'Podcasts', 'value' => $setCount(self::ITEM_SET_PODCASTS)],
         ]);
     }
 
@@ -1042,8 +1043,27 @@ final class Runner
             mkdir($this->galleriesDir, 0775, true);
         }
 
+        // Registry sets get extra per-photo fields: the identifier (so the
+        // PhotoBrowse view can split a shared set into sub-collections) and, for
+        // journal collections, the volume/issue/pages/creator the issue TOC
+        // needs. Issue sets are NOT capped — every article must be present for a
+        // complete table of contents.
+        $issueSets = [];
+        $prefixSets = [];
+        foreach (Registry::all() as $rc) {
+            if ($rc['grouping'] === 'issue') {
+                $issueSets[$rc['itemSetId']] = true;
+            }
+            if ($rc['identifierPrefix'] !== null) {
+                $prefixSets[$rc['itemSetId']] = true;
+            }
+        }
+
         $setCount = 0;
         foreach ($this->itemSets as $setId => $itemIds) {
+            $isIssue = isset($issueSets[$setId]);
+            $isPrefix = isset($prefixSets[$setId]);
+            $cap = $isIssue ? PHP_INT_MAX : self::MAX_GALLERY_PHOTOS;
             $photos = [];
             $total = 0;
             foreach ($itemIds as $itemId) {
@@ -1055,7 +1075,7 @@ final class Runner
                     continue; // never expose a non-public item in a gallery
                 }
                 $total++;
-                if (count($photos) >= self::MAX_GALLERY_PHOTOS) {
+                if (count($photos) >= $cap) {
                     continue; // cap what we serialise, but keep counting the true total
                 }
 
@@ -1078,7 +1098,7 @@ final class Runner
                     $place = $this->literals[$itemId]['dcterms:spatial'][0];
                 }
 
-                $photos[] = [
+                $rec = [
                     'id'      => $itemId,
                     'title'   => $this->items[$itemId]['title'] ?? ('Item ' . $itemId),
                     'storage' => $media['storage'],
@@ -1089,6 +1109,17 @@ final class Runner
                     'lat'     => $lat,
                     'lon'     => $lon,
                 ];
+                if ($isPrefix) {
+                    $rec['ident'] = $this->featuredLiterals[$itemId]['ident'] ?? '';
+                }
+                if ($isIssue) {
+                    [$vol, $iss] = $this->parseVolIssue($this->featuredLiterals[$itemId]['doi'] ?? null);
+                    $rec['volume']  = $vol;
+                    $rec['issue']   = $iss;
+                    $rec['pages']   = $this->parsePages($this->featuredLiterals[$itemId]['desc'] ?? null);
+                    $rec['creator'] = $this->firstCreator($itemId);
+                }
+                $photos[] = $rec;
             }
 
             if (!$photos) {
@@ -1104,6 +1135,145 @@ final class Runner
             $setCount++;
         }
         $this->log('  ' . $setCount . ' photo galleries written');
+    }
+
+    /**
+     * Load dcterms:identifier / dcterms:description / bibo:doi for the items of
+     * the featured-collections item sets only (Museu 6295, ILAM 27724, …). DOIs
+     * are URI values, so COALESCE the literal value with the uri column. Item
+     * ids are integers from the DB, so an intval-joined IN list is injection-safe
+     * and avoids DBAL array-parameter version differences.
+     */
+    private function loadFeaturedLiterals(): void
+    {
+        $setIds = Registry::itemSetIds();
+        $itemIds = [];
+        foreach ($setIds as $sid) {
+            foreach ($this->itemSets[$sid] ?? [] as $iid) {
+                $itemIds[$iid] = true;
+            }
+        }
+        if (!$itemIds) {
+            return;
+        }
+        $idList = implode(',', array_map('intval', array_keys($itemIds)));
+        $rows = $this->connection->executeQuery(
+            "SELECT v.resource_id, CONCAT(vo.prefix, ':', p.local_name), COALESCE(NULLIF(v.value, ''), v.uri)"
+            . ' FROM value v'
+            . ' JOIN property p ON v.property_id = p.id'
+            . ' JOIN vocabulary vo ON p.vocabulary_id = vo.id'
+            . " WHERE v.resource_id IN ($idList)"
+            . "   AND CONCAT(vo.prefix, ':', p.local_name) IN ('dcterms:identifier', 'dcterms:description', 'bibo:doi')"
+            . "   AND COALESCE(NULLIF(v.value, ''), v.uri) IS NOT NULL"
+        )->fetchAllNumeric();
+        $key = ['dcterms:identifier' => 'ident', 'dcterms:description' => 'desc', 'bibo:doi' => 'doi'];
+        foreach ($rows as $r) {
+            $k = $key[(string) $r[1]] ?? null;
+            if ($k === null) {
+                continue;
+            }
+            $iid = (int) $r[0];
+            // First value per key wins (mirrors how the view reads value(0)).
+            if (!isset($this->featuredLiterals[$iid][$k])) {
+                $this->featuredLiterals[$iid][$k] = (string) $r[2];
+            }
+        }
+        $this->log('  featured literals: ' . count($this->featuredLiterals) . ' items');
+    }
+
+    /**
+     * Per-collection counts + cover storage ids for the Featured Collections
+     * landing grid, honouring each entry's sub-collection prefix and (for ILAM)
+     * journal-issue grouping. Written to featured-collections/index.json and read
+     * by the FeaturedCollections block (with a live API fallback when absent).
+     */
+    private function generateFeaturedCollections(): void
+    {
+        $this->log('=== Featured Collections ===');
+        if (!is_dir($this->featuredDir)) {
+            mkdir($this->featuredDir, 0775, true);
+        }
+
+        $index = [];
+        foreach (Registry::all() as $entry) {
+            $setId = $entry['itemSetId'];
+            $prefix = $entry['identifierPrefix'];
+            $isIssue = $entry['grouping'] === 'issue';
+            $itemCount = 0;
+            $photoItems = 0;
+            $covers = [];
+            $issues = [];
+            foreach ($this->itemSets[$setId] ?? [] as $itemId) {
+                if (!($this->items[$itemId]['public'] ?? false)) {
+                    continue;
+                }
+                if ($prefix !== null
+                    && !str_starts_with((string) ($this->featuredLiterals[$itemId]['ident'] ?? ''), $prefix)
+                ) {
+                    continue;
+                }
+                $itemCount++;
+                if ($isIssue) {
+                    [$vol, $iss] = $this->parseVolIssue($this->featuredLiterals[$itemId]['doi'] ?? null);
+                    if ($vol !== null && $iss !== null) {
+                        $issues[$vol . '.' . $iss] = true;
+                    }
+                }
+                $media = $this->primaryMedia[$itemId] ?? null;
+                if ($media !== null) {
+                    $photoItems++;
+                    if (count($covers) < 4) {
+                        $covers[] = $media['storage'];
+                    }
+                }
+            }
+            $index[$entry['slug']] = [
+                'itemCount'  => $itemCount,
+                'photoCount' => $isIssue ? count($issues) : $photoItems,
+                'covers'     => $covers,
+            ];
+        }
+
+        file_put_contents(
+            $this->featuredDir . '/index.json',
+            json_encode($index, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+        );
+        $this->fileCount++;
+        $this->log('  ' . count($index) . ' featured collections indexed');
+    }
+
+    /** Volume + issue from a DOI like ".../amj.v11i4.123"; [null,null] if none. */
+    private function parseVolIssue(?string $doi): array
+    {
+        if ($doi !== null && preg_match('/v(\d+)i(\d+)/i', $doi, $m)) {
+            return [(int) $m[1], (int) $m[2]];
+        }
+        return [null, null];
+    }
+
+    /** Page range from a "pages: 95-118" note; null if none. */
+    private function parsePages(?string $text): ?string
+    {
+        if ($text !== null
+            && preg_match('/pages?\s*[:\-]?\s*([0-9ivxlcdm]+(?:\s*[\x{2013}\-]\s*[0-9ivxlcdm]+)?)/iu', $text, $m)
+        ) {
+            return preg_replace('/\s+/', '', $m[1]);
+        }
+        return null;
+    }
+
+    /** First contributor's display name (creator → author → contributor). */
+    private function firstCreator(int $itemId): ?string
+    {
+        foreach ($this->links[$itemId] ?? [] as [$term, , $vrid]) {
+            if (in_array($term, ['marcrel:aut', 'dcterms:creator', 'dcterms:contributor'], true)) {
+                $name = $this->items[$vrid]['title'] ?? null;
+                if ($name !== null && $name !== '') {
+                    return $name;
+                }
+            }
+        }
+        return null;
     }
 
     private function generateKnowledgeGraphs(): void

@@ -7,6 +7,7 @@ use Omeka\Api\Representation\SitePageBlockRepresentation;
 use Omeka\Api\Representation\SitePageRepresentation;
 use Omeka\Api\Representation\SiteRepresentation;
 use Omeka\Site\BlockLayout\AbstractBlockLayout;
+use ResourceVisualizations\FeaturedCollections\Registry;
 
 /**
  * Photo Browsing site-page block.
@@ -14,13 +15,19 @@ use Omeka\Site\BlockLayout\AbstractBlockLayout;
  * The editor picks one (image-heavy) item set; the view server-renders that
  * set's image-bearing items into masonry / map / timeline browsers with a
  * lightbox. Thumbnails come straight from Omeka S derivatives, coordinates from
- * geo:lat/geo:long, dates from the usual date properties — so there is NO new
- * precompute: everything is resolved at page-render time by the partial.
+ * geo:lat/geo:long, dates from the usual date properties.
+ *
+ * Optionally the editor instead picks a **Featured collection** (see
+ * {@see Registry}); the block then pulls the item set, an optional
+ * sub-collection filter (e.g. one of Museu Afro-Digital's three sub-collections,
+ * split by dcterms:identifier prefix), the grouping mode (journal issues for
+ * ILAM) and the allowed views from the registry — so the three Museu pages can
+ * all draw from item set 6295 yet show different sub-collections, and ILAM
+ * renders as issues with a table of contents.
  *
  * Editorial control by design (Phase 6): drop one block per gallery on any
- * curated site page, rather than auto-attaching to every item-set page. The
- * rendering engine (asset/js/item-set-photo-views.js) is surface-agnostic, so
- * the same views could later be mounted on the item-set resource page too.
+ * curated site page. The rendering engine (asset/js/item-set-photo-views.js) is
+ * surface-agnostic.
  */
 class PhotoBrowse extends AbstractBlockLayout
 {
@@ -37,6 +44,15 @@ class PhotoBrowse extends AbstractBlockLayout
     {
         $data = $block ? $block->data() : [];
 
+        // A curated featured collection (optional). When set, it supplies the
+        // item set, sub-collection filter, grouping and views — so the editor
+        // need not pick an item set, and the three Museu sub-collections (same
+        // item set 6295) are told apart by the chosen entry.
+        $featured = new Element\Select('o:block[__blockIndex__][o:data][featured_collection]');
+        $featured->setValueOptions(Registry::selectOptions())
+            ->setEmptyOption($view->translate('— None (plain item-set gallery) —'))
+            ->setValue($data['featured_collection'] ?? '');
+
         // Item-set options: prefer the sets assigned to this site; fall back to
         // every item set when the site has none assigned (research collections
         // often are not site-scoped). Sorted by title for a usable dropdown.
@@ -46,7 +62,6 @@ class PhotoBrowse extends AbstractBlockLayout
         $itemSet->setValueOptions($valueOptions)
             ->setEmptyOption($view->translate('Select an item set…'))
             ->setAttribute('class', 'chosen-select')
-            ->setAttribute('required', true)
             ->setValue($data['item_set'] ?? '');
 
         $heading = new Element\Text('o:block[__blockIndex__][o:data][heading]');
@@ -61,8 +76,12 @@ class PhotoBrowse extends AbstractBlockLayout
         ])->setValue($data['default_view'] ?? 'masonry');
 
         return $this->field($view,
+                $view->translate('Featured collection'),
+                $view->translate('Optional. Pick a curated collection to apply its item set, sub-collection filter, journal-issue grouping and views automatically. Leave as “None” to configure a plain gallery below.'),
+                $view->formSelect($featured))
+            . $this->field($view,
                 $view->translate('Item set'),
-                $view->translate('The image-heavy item set to display as a photo gallery.'),
+                $view->translate('The image-heavy item set to display as a photo gallery. Ignored when a Featured collection is selected above.'),
                 $view->formSelect($itemSet))
             . $this->field($view,
                 $view->translate('Gallery title'),
@@ -70,26 +89,66 @@ class PhotoBrowse extends AbstractBlockLayout
                 $view->formText($heading))
             . $this->field($view,
                 $view->translate('Default view'),
-                $view->translate('Which browser opens first. Map and Timeline are hidden automatically when the set has no coordinates / dates.'),
+                $view->translate('Which browser opens first. Map and Timeline are hidden automatically when they do not apply (no coordinates / dates, or a journal-issue collection).'),
                 $view->formSelect($defaultView));
     }
 
     public function render(PhpRenderer $view, SitePageBlockRepresentation $block,
         $templateViewScript = 'common/block-layout/photo-browse')
     {
-        $itemSetId = $block->dataValue('item_set');
+        // A featured collection wins over an explicit item set.
+        $entry = null;
+        $slug = (string) $block->dataValue('featured_collection', '');
+        if ($slug !== '') {
+            $entry = Registry::bySlug($slug);
+        }
+
+        // Auto-apply: when no collection was picked but the chosen item set maps
+        // to exactly one whole-set registry entry (ILAM, Gerd Spittler — not the
+        // prefix-split Museu sub-collections, which are ambiguous and must be
+        // chosen), use it. So those existing gallery pages gain issue grouping /
+        // partner credit without re-wiring.
+        $rawSet = $block->dataValue('item_set');
+        if ($entry === null && $rawSet) {
+            $candidates = Registry::forItemSet((int) $rawSet);
+            if (count($candidates) === 1 && $candidates[0]['identifierPrefix'] === null) {
+                $entry = $candidates[0];
+            }
+        }
+
+        $itemSetId = $entry ? $entry['itemSetId'] : $rawSet;
         $itemSetId = $itemSetId ? (int) $itemSetId : null;
+
+        $grouping = $entry ? $entry['grouping'] : 'photo';
+        $prefix = $entry ? ($entry['identifierPrefix'] ?? null) : null;
+        $partner = $entry ? ($entry['partner'] ?? null) : null;
+        // Heading: only the editor's explicit heading. Featured-collection pages
+        // already carry a Page Title block with the collection name, so the
+        // gallery does not repeat it (it shows the partner credit + counts).
+        $heading = (string) $block->dataValue('heading', '');
+
+        // Allowed views: the registry can opt a collection out of map/timeline;
+        // issue grouping is masonry-only (each card is a journal issue).
+        $allowedViews = $entry ? $entry['views'] : ['masonry' => true, 'map' => true, 'timeline' => true];
+        if ($grouping === 'issue') {
+            $allowedViews = ['masonry' => true, 'map' => false, 'timeline' => false];
+        }
+
         $defaultView = $block->dataValue('default_view', 'masonry');
         if (!in_array($defaultView, self::VIEWS, true)) {
             $defaultView = 'masonry';
         }
 
         return $view->partial($templateViewScript, [
-            'block'       => $block,
-            'itemSetId'   => $itemSetId,
-            'heading'     => (string) $block->dataValue('heading', ''),
-            'defaultView' => $defaultView,
-            'precomputed' => $itemSetId ? $this->loadGallery($itemSetId) : null,
+            'block'           => $block,
+            'itemSetId'       => $itemSetId,
+            'heading'         => $heading,
+            'defaultView'     => $defaultView,
+            'precomputed'     => $itemSetId ? $this->loadGallery($itemSetId) : null,
+            'identifierPrefix' => $prefix,
+            'grouping'        => $grouping,
+            'partner'         => $partner,
+            'allowedViews'    => $allowedViews,
         ]);
     }
 
