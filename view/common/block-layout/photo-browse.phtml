@@ -202,9 +202,9 @@ $payload = json_encode($photos,
 $this->headLink()->appendStylesheet(
     $this->assetUrl('css/resource-visualizations.css', 'ResourceVisualizations'));
 $this->headScript()->appendFile(
-    $this->assetUrl('js/dashboard-core.js', 'ResourceVisualizations'));
+    $this->assetUrl('js/dashboard-core.js', 'ResourceVisualizations'), 'text/javascript', ['defer' => true]);
 $this->headScript()->appendFile(
-    $this->assetUrl('js/item-set-photo-views.js', 'ResourceVisualizations'));
+    $this->assetUrl('js/item-set-photo-views.js', 'ResourceVisualizations'), 'text/javascript', ['defer' => true]);
 ?>
 
 <div class="resource-vis-block photo-browse-block">

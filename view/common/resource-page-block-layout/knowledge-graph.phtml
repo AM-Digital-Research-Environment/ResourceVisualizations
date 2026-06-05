@@ -10,7 +10,7 @@
  * @var \Omeka\Api\Representation\ItemRepresentation $resource
  */
 
-$this->headScript()->appendFile($this->assetUrl('js/knowledge-graph.js', 'ResourceVisualizations'));
+$this->headScript()->appendFile($this->assetUrl('js/knowledge-graph.js', 'ResourceVisualizations'), 'text/javascript', ['defer' => true]);
 
 $siteSlug = $this->currentSite()->slug();
 $resourceClass = $resource->resourceClass();

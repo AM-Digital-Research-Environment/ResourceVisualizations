@@ -44,23 +44,29 @@ class Module extends AbstractModule
     public function addAssets($event)
     {
         $view = $event->getTarget();
+        // Warm the CDN connection; the libraries below are deferred.
+        $view->headLink(['rel' => 'preconnect', 'href' => 'https://cdn.jsdelivr.net']);
         $view->headLink()->appendStylesheet(
             $view->assetUrl('css/resource-visualizations.css', 'ResourceVisualizations')
         );
+        // defer: keep the ~650 KiB ECharts/MapLibre prelude off the critical
+        // render path. Deferred scripts execute in append order, so dashboard-
+        // core (and the chart chain a block appends after) still load first.
+        $defer = ['defer' => true];
         $view->headScript()->appendFile(
-            'https://cdn.jsdelivr.net/npm/echarts@6/dist/echarts.min.js'
+            'https://cdn.jsdelivr.net/npm/echarts@6/dist/echarts.min.js', 'text/javascript', $defer
         );
         $view->headScript()->appendFile(
-            'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2/dist/echarts-wordcloud.min.js'
+            'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2/dist/echarts-wordcloud.min.js', 'text/javascript', $defer
         );
         $view->headLink()->appendStylesheet(
             'https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.css'
         );
         $view->headScript()->appendFile(
-            'https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js'
+            'https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js', 'text/javascript', $defer
         );
         $view->headScript()->appendFile(
-            $view->assetUrl('js/dashboard-core.js', 'ResourceVisualizations')
+            $view->assetUrl('js/dashboard-core.js', 'ResourceVisualizations'), 'text/javascript', $defer
         );
     }
 }

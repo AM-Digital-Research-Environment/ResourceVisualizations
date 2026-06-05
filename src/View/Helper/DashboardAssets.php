@@ -97,26 +97,35 @@ class DashboardAssets extends AbstractHelper
 
         $headLink = $view->headLink();
         $headScript = $view->headScript();
+        // Defer every script so the ~650 KiB ECharts/MapLibre prelude and the
+        // chart-builder chain never block first paint. Deferred scripts still
+        // execute in append order, after parsing but before DOMContentLoaded,
+        // so the controllers' DOMContentLoaded init() finds every builder
+        // already registered — same ordering guarantees as blocking <script>s.
+        $defer = ['defer' => true];
         $asset = function ($path) use ($view) {
             return $view->assetUrl($path, 'ResourceVisualizations');
         };
 
         if ($cdn) {
+            // Warm the CDN connection early; since the libraries are deferred,
+            // this shaves the DNS/TLS handshake off their post-parse download.
+            $view->headLink(['rel' => 'preconnect', 'href' => 'https://cdn.jsdelivr.net']);
             $headLink->appendStylesheet($asset('css/resource-visualizations.css'));
-            $headScript->appendFile(self::ECHARTS_JS);
-            $headScript->appendFile(self::WORDCLOUD_JS);
+            $headScript->appendFile(self::ECHARTS_JS, 'text/javascript', $defer);
+            $headScript->appendFile(self::WORDCLOUD_JS, 'text/javascript', $defer);
             $headLink->appendStylesheet(self::MAPLIBRE_CSS);
-            $headScript->appendFile(self::MAPLIBRE_JS);
-            $headScript->appendFile($asset('js/dashboard-core.js'));
+            $headScript->appendFile(self::MAPLIBRE_JS, 'text/javascript', $defer);
+            $headScript->appendFile($asset('js/dashboard-core.js'), 'text/javascript', $defer);
         }
 
         foreach (self::CHART_SCRIPTS as $script) {
-            $headScript->appendFile($asset($script));
+            $headScript->appendFile($asset($script), 'text/javascript', $defer);
         }
 
         if ($controller && isset(self::CONTROLLERS[$controller])) {
             foreach (self::CONTROLLERS[$controller] as $script) {
-                $headScript->appendFile($asset($script));
+                $headScript->appendFile($asset($script), 'text/javascript', $defer);
             }
         }
 
