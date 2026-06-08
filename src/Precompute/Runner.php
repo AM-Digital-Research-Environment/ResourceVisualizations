@@ -40,6 +40,8 @@ final class Runner
     private const ITEM_SET_PROJECT = 20;
     private const ITEM_SET_PUBLICATIONS = 29918;
     private const ITEM_SET_PODCASTS = 39095;
+    private const ITEM_SET_YOUTUBE = 39192;
+    private const ITEM_SET_YOUTUBE_PLAYLISTS = 39193;
 
     /**
      * Synthetic resource-type label used to fold cluster publications into the
@@ -54,6 +56,16 @@ final class Runner
      * generateCollectionOverview() and podcastIds().
      */
     private const SYNTHETIC_TYPE_PODCAST = 'Podcast';
+
+    /**
+     * Synthetic resource-type label folding the synced YouTube videos item set
+     * (39192) into the Collection Overview as one "YouTube video" category. The
+     * videos carry a dcterms:language and dcterms:date but no dcterms:type of
+     * their own, so the synthetic label is what places them in the resource-type
+     * pie, the year×type timeline and the type×language heatmap. See
+     * generateCollectionOverview() and youtubeIds().
+     */
+    private const SYNTHETIC_TYPE_YOUTUBE = 'YouTube video';
 
     // External partner collections — their items reach the section×university
     // overview via item-set membership (they sit outside the section→project
@@ -212,6 +224,7 @@ final class Runner
         $this->generateCollectionOverview();
         $this->generateCommunities();
         $this->generatePublications();
+        $this->generateYouTube();
         $this->generateWhatsNew();
         $this->generatePhotoGalleries();
         $this->generateFeaturedCollections();
@@ -764,25 +777,31 @@ final class Runner
         // the "Publication" slice ~12× — see publicationIds().)
         $publications = $this->publicationIds();
         $podcasts = $this->podcastIds();
-        $this->log('=== Collection Overview (' . count($researchItems) . ' research items + ' . count($publications) . ' publications + ' . count($podcasts) . ' podcasts) ===');
-        if (!$researchItems && !$publications && !$podcasts) {
+        $youtube = $this->youtubeIds();
+        $this->log('=== Collection Overview (' . count($researchItems) . ' research items + ' . count($publications) . ' publications + ' . count($podcasts) . ' podcasts + ' . count($youtube) . ' YouTube videos) ===');
+        if (!$researchItems && !$publications && !$podcasts && !$youtube) {
             return;
         }
         // Combined corpus, de-duplicated. Research items are template 10,
-        // publications templates 11–20 and podcasts template 21 (disjoint item
-        // sets), but flatten through array_flip to guard against overlap anyway.
-        $overviewItems = array_keys(array_flip(array_merge($researchItems, $publications, $podcasts)));
-        // Each publication / podcast is folded under one synthetic resource type
-        // (overriding its own dcterms:type) so it appears as a single "Publication"
-        // / "Podcast" category in the resource-type pie, the year×type timeline AND
-        // the type×language heatmap — keeping the high-level overview readable. The
-        // fine-grained publication types stay in the dedicated Publications block.
+        // publications templates 11–20, podcasts template 21 and YouTube videos
+        // template 22 (disjoint item sets), but flatten through array_flip to
+        // guard against overlap anyway.
+        $overviewItems = array_keys(array_flip(array_merge($researchItems, $publications, $podcasts, $youtube)));
+        // Each publication / podcast / YouTube video is folded under one synthetic
+        // resource type (overriding its own dcterms:type, if any) so it appears as a
+        // single "Publication" / "Podcast" / "YouTube video" category in the
+        // resource-type pie, the year×type timeline AND the type×language heatmap —
+        // keeping the high-level overview readable. The fine-grained publication
+        // types stay in the dedicated Publications block.
         $syntheticTypes = [];
         foreach ($publications as $pid) {
             $syntheticTypes[$pid] = self::SYNTHETIC_TYPE_PUBLICATION;
         }
         foreach ($podcasts as $pid) {
             $syntheticTypes[$pid] = self::SYNTHETIC_TYPE_PODCAST;
+        }
+        foreach ($youtube as $pid) {
+            $syntheticTypes[$pid] = self::SYNTHETIC_TYPE_YOUTUBE;
         }
 
         $dashboard = Aggregators::aggregateItems($overviewItems, $this->items, $this->links, $this->itemYear, $this->geo, $syntheticTypes);
@@ -894,6 +913,7 @@ final class Runner
             ['key' => 'resourceTypes', 'label' => 'Resource Types', 'value' => $setCount(self::ITEM_SET_RESOURCE_TYPE)],
             ['key' => 'publications', 'label' => 'Cluster Publications', 'value' => $setCount(self::ITEM_SET_PUBLICATIONS)],
             ['key' => 'podcasts', 'label' => 'Podcasts', 'value' => $setCount(self::ITEM_SET_PODCASTS)],
+            ['key' => 'youtube', 'label' => 'YouTube videos', 'value' => $setCount(self::ITEM_SET_YOUTUBE)],
         ]);
     }
 
@@ -940,6 +960,17 @@ final class Runner
     private function podcastIds(): array
     {
         return array_values($this->itemSets[self::ITEM_SET_PODCASTS] ?? []);
+    }
+
+    /**
+     * Item ids of the synced YouTube videos item set (39192) — the cluster's
+     * YouTube channel, synced into Omeka by MongoDB2OmekaS (template 22,
+     * bibo:AudioVisualDocument). Folded into the Collection Overview under the
+     * synthetic "YouTube video" resource type.
+     */
+    private function youtubeIds(): array
+    {
+        return array_values($this->itemSets[self::ITEM_SET_YOUTUBE] ?? []);
     }
 
     /**
@@ -1021,6 +1052,96 @@ final class Runner
         $dashboard['resourceType'] = 'publications';
         $this->save('publications', $dashboard);
         $this->log('  publications dashboard written (' . count($pubs) . ' items)');
+    }
+
+    /**
+     * YouTube dashboard — the cluster's YouTube channel (item set 39192, synced
+     * by MongoDB2OmekaS), rendered by the dedicated YouTube site-page block.
+     * Surfaces what the videos actually carry: a by-year upload timeline, the
+     * language mix (and its drift over time), the playlists the channel is
+     * organised into, and any credited speakers. Saved under 'youtube'
+     * (resourceType 'youtube' → the youtube layout in dashboard-layouts.js).
+     */
+    private function generateYouTube(): void
+    {
+        $videos = $this->youtubeIds();
+        $this->log('=== YouTube (' . count($videos) . ' videos in set ' . self::ITEM_SET_YOUTUBE . ') ===');
+        if (count($videos) < 3) {
+            return;
+        }
+        $dashboard = Aggregators::aggregateItems($videos, $this->items, $this->links, $this->itemYear, $this->geo);
+        if ($v = $this->buildYoutubePlaylists($videos)) {
+            $dashboard['playlists'] = $v;
+        }
+        if ($v = Aggregators::buildLanguageTimeline($videos, $this->links, $this->items, $this->itemYear)) {
+            $dashboard['languageTimeline'] = $v;
+        }
+
+        // Summary stat cards: videos, playlists, languages, and the people
+        // credited as speakers (marcrel:spk — manually curated, so often empty).
+        $speakerIds = [];
+        foreach ($videos as $iid) {
+            foreach ($this->links[$iid] ?? [] as [$term, , $vrid]) {
+                if ($term === 'marcrel:spk') {
+                    $speakerIds[$vrid] = true;
+                }
+            }
+        }
+        $dashboard['stats'] = Aggregators::buildStatCards([
+            ['key' => 'youtube', 'label' => 'Videos', 'value' => count($videos)],
+            ['key' => 'playlists', 'label' => 'Playlists', 'value' => count($dashboard['playlists'] ?? [])],
+            ['key' => 'languages', 'label' => 'Languages', 'value' => count($dashboard['languages'] ?? [])],
+            ['key' => 'people', 'label' => 'Speakers', 'value' => count($speakerIds)],
+        ]);
+
+        // YouTube-specific chart wording. The shared registry titles charts for
+        // research items; these retitle them for the channel. Read by
+        // renderDashboard() in dashboard.js.
+        $dashboard['labels'] = [
+            'timeline' => 'Videos by Year',
+            'contributors' => 'Speakers',
+        ];
+        $dashboard['descriptions'] = [
+            'timeline' => 'Number of videos uploaded per year.',
+            'languages' => 'Languages spoken across the channel\'s videos.',
+            'languageTimeline' => 'How the language mix of the uploads shifts over time.',
+            'contributors' => 'People credited as speakers in the videos.',
+        ];
+
+        $dashboard['resourceType'] = 'youtube';
+        $this->save('youtube', $dashboard);
+        $this->log('  youtube dashboard written (' . count($videos) . ' videos)');
+    }
+
+    /**
+     * Top playlists by number of videos. Videos link to their playlist authority
+     * items (item set 39193) via dcterms:isPartOf, so each playlist's video count
+     * is the size of its childrenOf set restricted to the channel's videos.
+     * Returns `[{name,value,itemId}]` sorted by count desc, then name.
+     *
+     * @return list<array{name:string,value:int,itemId:int}>
+     */
+    private function buildYoutubePlaylists(array $videoIds): array
+    {
+        $videoSet = array_flip($videoIds);
+        $out = [];
+        foreach ($this->itemSets[self::ITEM_SET_YOUTUBE_PLAYLISTS] ?? [] as $plId) {
+            $title = $this->items[$plId]['title'] ?? '';
+            if ($title === '') {
+                continue;
+            }
+            $n = 0;
+            foreach ($this->childrenOf[$plId] ?? [] as $childId) {
+                if (isset($videoSet[$childId])) {
+                    $n++;
+                }
+            }
+            if ($n > 0) {
+                $out[] = ['name' => $title, 'value' => $n, 'itemId' => (int) $plId];
+            }
+        }
+        usort($out, static fn ($a, $b) => ($b['value'] <=> $a['value']) ?: strcmp((string) $a['name'], (string) $b['name']));
+        return $out;
     }
 
     /**
@@ -1221,6 +1342,7 @@ final class Runner
         foreach (Registry::all() as $entry) {
             $setId = $entry['itemSetId'];
             $prefix = $entry['identifierPrefix'];
+            $producerId = $entry['producerId'];
             $isIssue = $entry['grouping'] === 'issue';
             $itemCount = 0;
             $photoItems = 0;
@@ -1233,6 +1355,11 @@ final class Runner
                 if ($prefix !== null
                     && !str_starts_with((string) ($this->featuredLiterals[$itemId]['ident'] ?? ''), $prefix)
                 ) {
+                    continue;
+                }
+                // Producer subset (DECCA / Jambo): keep only items crediting this
+                // org via marcrel:prn (Production company).
+                if ($producerId !== null && !$this->itemHasProducer($itemId, $producerId)) {
                     continue;
                 }
                 $itemCount++;
@@ -1252,7 +1379,9 @@ final class Runner
             }
             $index[$entry['slug']] = [
                 'itemCount'  => $itemCount,
-                'photoCount' => $isIssue ? count($issues) : $photoItems,
+                // Producer subsets are image-less audio: report no photo count so
+                // the card footer reads "N items", not "0 photos · N items".
+                'photoCount' => $isIssue ? count($issues) : ($producerId !== null ? null : $photoItems),
                 'covers'     => $covers,
             ];
         }
@@ -1283,6 +1412,17 @@ final class Runner
             return preg_replace('/\s+/', '', $m[1]);
         }
         return null;
+    }
+
+    /** Whether an item credits the given Organisation as its producer (marcrel:prn). */
+    private function itemHasProducer(int $itemId, int $producerId): bool
+    {
+        foreach ($this->links[$itemId] ?? [] as [$term, , $vrid]) {
+            if ($term === 'marcrel:prn' && $vrid === $producerId) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** First contributor's display name (creator → author → contributor). */

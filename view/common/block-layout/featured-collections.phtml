@@ -59,7 +59,13 @@ $footer = function (array $entry, array $d) {
         <?php foreach (array_values($entries) as $i => $entry):
             $d = $cardData[$entry['slug']] ?? ['itemCount' => 0, 'photoCount' => null, 'covers' => []];
             $covers = array_slice($d['covers'] ?? [], 0, 4);
-            $href = $siteBase . '/page/' . rawurlencode($entry['pageSlug']);
+            // Link-out cards (e.g. the audio producer subsets) point at an
+            // external/site-relative listing; everything else opens its in-module
+            // detail page. A site-relative externalUrl resolves against the site root.
+            $ext = (string) ($entry['externalUrl'] ?? '');
+            $href = $ext !== ''
+                ? (str_starts_with($ext, 'http') ? $ext : $siteBase . $ext)
+                : $siteBase . '/page/' . rawurlencode($entry['pageSlug']);
             [$statMain, $statAlt] = $footer($entry, $d);
         ?>
         <a class="collection-card" href="<?= $this->escapeHtmlAttr($href) ?>" data-rv-reveal="<?= $i * 80 ?>">

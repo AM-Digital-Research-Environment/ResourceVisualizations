@@ -23,6 +23,11 @@ namespace ResourceVisualizations\FeaturedCollections;
  *     sub-collections; each registry entry pins an `identifierPrefix` so the
  *     gallery shows only that sub-collection's items (split by the
  *     `dcterms:identifier` prefix: APMESTRENO / TRABNEGRBA / ORIXAFGM).
+ *   - DECCA and Jambo are record-label producers (`producerId`) of image-less
+ *     Audio recordings inside the DigiRet collection (6262), not item sets of
+ *     their own. They are featured as link-out cards (`externalUrl`): the card
+ *     shows a count and links to the producer-filtered Omeka listing, with no
+ *     in-module photo gallery.
  */
 final class Registry
 {
@@ -30,7 +35,8 @@ final class Registry
      * @return list<array{
      *   slug:string, pageSlug:string, itemSetId:int, identifierPrefix:?string,
      *   title:string, tagline:?string, description:string, partner:?string,
-     *   thumbnail:?string, views:array{masonry:bool,map:bool,timeline:bool},
+     *   thumbnail:?string, externalUrl:?string, producerId:?int,
+     *   views:array{masonry:bool,map:bool,timeline:bool},
      *   grouping:string, dedupe:bool
      * }>
      */
@@ -79,6 +85,38 @@ final class Registry
                 'title' => 'Orixás - Fundação Gregório de Mattos',
                 'description' => 'Orishas — from the Gregório de Mattos Foundation.',
                 'partner' => 'Part of the Museu Afro-Digital — Universidade Federal da Bahia',
+            ],
+            // DECCA and Jambo are record-label *producers* (marcrel:prn) of Audio
+            // recordings inside the "Beyond the Digital Return" collection (item
+            // set 6262), not item sets of their own — and the recordings carry no
+            // images. So they are featured as link-out cards: the card shows a
+            // count + a manual cover and links straight to the producer-filtered
+            // Omeka listing (externalUrl), with no in-module photo gallery.
+            // `producerId` is the Organisation item the recordings credit; the
+            // precompute counts the set's public items that link to it via
+            // marcrel:prn. Drop a cover image in and set `thumbnail` to replace the
+            // placeholder.
+            [
+                'slug' => 'decca',
+                'itemSetId' => 6262,
+                'producerId' => 1219,
+                'title' => 'DECCA',
+                'description' => 'A record label whose Nigerian Yoruba popular-music recordings — Waka, Apala, Highlife and more — were digitised from the Ghana Broadcasting Corporation Gramophone Library.',
+                'partner' => 'Part of “Beyond the Digital Return” · University of Bayreuth',
+                // marcrel:prn (property 568) = Production company → DECCA (org 1219).
+                'externalUrl' => '/item?property[0][property]=568&property[0][type]=res&property[0][text]=1219',
+                // 'thumbnail' => 'asset/featured/decca.jpg', // add a cover to replace the placeholder
+            ],
+            [
+                'slug' => 'jambo',
+                'itemSetId' => 6262,
+                'producerId' => 1222,
+                'title' => 'Jambo',
+                'description' => 'An East African record label whose Swahili and Ganda recordings — including The Kiko Kids — were digitised from the Ghana Broadcasting Corporation Gramophone Library.',
+                'partner' => 'Part of “Beyond the Digital Return” · University of Bayreuth',
+                // marcrel:prn (property 568) = Production company → Jambo (org 1222).
+                'externalUrl' => '/item?property[0][property]=568&property[0][type]=res&property[0][text]=1222',
+                // 'thumbnail' => 'asset/featured/jambo.jpg', // add a cover to replace the placeholder
             ],
         ]);
     }
@@ -138,6 +176,16 @@ final class Registry
             'description' => (string) ($e['description'] ?? ''),
             'partner' => isset($e['partner']) ? (string) $e['partner'] : null,
             'thumbnail' => isset($e['thumbnail']) ? (string) $e['thumbnail'] : null,
+            // Link-out card: when set, the card links here instead of to an
+            // in-module detail page (used for collections with no photo gallery,
+            // e.g. the audio producer subsets DECCA / Jambo). A value starting
+            // with "http" is used as-is; otherwise it is resolved against the
+            // current site root in the view.
+            'externalUrl' => isset($e['externalUrl']) ? (string) $e['externalUrl'] : null,
+            // Producer (Organisation) item id: when set, the collection is the
+            // subset of `itemSetId` whose items credit this org via marcrel:prn,
+            // rather than the whole item set. Counted by the precompute.
+            'producerId' => isset($e['producerId']) ? (int) $e['producerId'] : null,
             'views' => [
                 'masonry' => (bool) ($e['views']['masonry'] ?? true),
                 'map' => (bool) ($e['views']['map'] ?? true),

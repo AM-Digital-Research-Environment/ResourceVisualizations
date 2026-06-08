@@ -8,6 +8,7 @@ return [
             'collectionDashboard' => Site\BlockLayout\CollectionDashboard::class,
             'discursiveCommunities' => Site\BlockLayout\DiscursiveCommunities::class,
             'publications' => Site\BlockLayout\Publications::class,
+            'youtube' => Site\BlockLayout\YouTube::class,
             'projectExplorer' => Site\BlockLayout\ProjectExplorer::class,
             'compareEntity' => Site\BlockLayout\CompareEntity::class,
             'whatsNew' => Site\BlockLayout\WhatsNew::class,

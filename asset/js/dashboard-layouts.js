@@ -204,6 +204,16 @@
             wide:  ['stackedTimeline', 'coAuthorNetwork', 'chord',
                     'subjects', 'subjectTrends'],
             tall:  ['coAuthorNetwork', 'chord', 'subjects', 'subjectTrends']
+        },
+        // Cluster YouTube channel (youtube.json). Videos carry no resource type
+        // or geography, so the layout shows uploads over time, the language mix,
+        // the playlists, and any credited speakers (contributors, auto-hidden
+        // until speakers are curated). timeline + languages pair on one row.
+        youtube: {
+            order: ['playlists', 'timeline', 'languages', 'languageTimeline',
+                    'contributors'],
+            wide:  ['playlists', 'languageTimeline'],
+            tall:  ['playlists']
         }
     };
 

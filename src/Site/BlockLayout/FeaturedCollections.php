@@ -31,6 +31,10 @@ class FeaturedCollections extends AbstractBlockLayout
     /** Live-fallback safety bound when scanning an item set for covers/counts. */
     const SCAN_CAP = 600;
 
+    /** Resolved marcrel:prn (Production company) property id, cached for the request. */
+    private ?int $prnPropertyId = null;
+    private bool $prnResolved = false;
+
     public function getLabel()
     {
         return 'Featured Collections'; // @translate
@@ -102,8 +106,11 @@ class FeaturedCollections extends AbstractBlockLayout
 
             // Live fallback.
             $setId = $entry['itemSetId'];
+            $producerId = $entry['producerId'] ?? null;
             $prefix = $entry['identifierPrefix'] ?? null;
-            if ($prefix !== null) {
+            if ($producerId !== null) {
+                $out[$slug] = $this->scanProducerSummary($view, $setId, $producerId);
+            } elseif ($prefix !== null) {
                 if (!isset($fetched[$setId])) {
                     $fetched[$setId] = $this->scanSet($view, $setId);
                 }
@@ -182,6 +189,43 @@ class FeaturedCollections extends AbstractBlockLayout
             }
         }
         return ['itemCount' => $itemCount, 'photoCount' => null, 'covers' => $covers];
+    }
+
+    /**
+     * Live count for a producer subset (e.g. DECCA / Jambo): items in the set
+     * crediting the given Organisation via marcrel:prn. These are image-less
+     * audio, so there are no covers and no photo count — the card falls back to
+     * its manual thumbnail / placeholder.
+     *
+     * @return array{itemCount:int,photoCount:?int,covers:array<int,string>}
+     */
+    private function scanProducerSummary(PhpRenderer $view, int $setId, int $producerId): array
+    {
+        $propId = $this->producerPropertyId($view);
+        if ($propId === null) {
+            return ['itemCount' => 0, 'photoCount' => null, 'covers' => []];
+        }
+        $response = $view->api()->search('items', [
+            'item_set_id' => $setId,
+            'property'    => [['property' => $propId, 'type' => 'res', 'text' => $producerId]],
+            'limit'       => 0,
+        ]);
+        return ['itemCount' => (int) $response->getTotalResults(), 'photoCount' => null, 'covers' => []];
+    }
+
+    /** Resolve the marcrel:prn (Production company) property id once per request. */
+    private function producerPropertyId(PhpRenderer $view): ?int
+    {
+        if (!$this->prnResolved) {
+            $this->prnResolved = true;
+            try {
+                $props = $view->api()->search('properties', ['term' => 'marcrel:prn'])->getContent();
+                $this->prnPropertyId = $props ? (int) $props[0]->id() : null;
+            } catch (\Throwable $e) {
+                $this->prnPropertyId = null;
+            }
+        }
+        return $this->prnPropertyId;
     }
 
     /** @return array<string,array<string,mixed>>|array<string,mixed> */
