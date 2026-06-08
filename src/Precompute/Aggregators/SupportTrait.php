@@ -1,14 +1,14 @@
 <?php
 declare(strict_types=1);
 
-namespace ResourceVisualizations\Precompute\Aggregators;
+namespace DreVisualizations\Precompute\Aggregators;
 
 /**
  * Shared, low-level helpers used across the chart builders: list sorting,
  * reverse-link lookups, and the weighted-PageRank / Louvain primitives the
  * network and community graphs share.
  *
- * Composed into {@see \ResourceVisualizations\Precompute\Aggregators}; its methods
+ * Composed into {@see \DreVisualizations\Precompute\Aggregators}; its methods
  * reach shared constants and helpers on that class through `self::`.
  */
 trait SupportTrait

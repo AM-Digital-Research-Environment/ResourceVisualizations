@@ -1,4 +1,4 @@
-# Resource Visualizations
+# DRE Visualizations
 
 An [Omeka S](https://omeka.org/s/) module that adds interactive visualizations to resource pages using [ECharts](https://echarts.apache.org/) and [MapLibre GL](https://maplibre.org/).
 
@@ -181,10 +181,12 @@ Inline dashboard for item set pages with server-side aggregation.
 Download via Omeka S CLI:
 
 ```bash
-docker compose exec php omeka-s-cli module:download --base-path /var/www/html gh:fmadore/ResourceVisualizations
+docker compose exec php omeka-s-cli module:download --base-path /var/www/html gh:AM-Digital-Research-Environment/DRE-Visualizations
 ```
 
 Then activate in **Admin > Modules**.
+
+> **Module folder name.** Omeka loads this module from a directory named `DreVisualizations` — it must match the PHP namespace — even though the repository is `DRE-Visualizations`. If you install by hand, clone into that folder: `git clone https://github.com/AM-Digital-Research-Environment/DRE-Visualizations.git modules/DreVisualizations`.
 
 ### Configure Resource Pages
 
@@ -197,7 +199,7 @@ Go to **Admin > Sites > [site] > Theme > Configure resource pages**:
 
 Visualizations load from pre-computed JSON in `asset/data/`. **Everything regenerates inside Omeka** — no Python, shell access, or extra credentials.
 
-**Admin → Modules → Resource Visualizations → "Regenerate now"** dispatches an Omeka background job (`src/Precompute/`, pure PHP) that rebuilds, straight from the Omeka database via Omeka's own connection:
+**Admin → Modules → DRE Visualizations → "Regenerate now"** dispatches an Omeka background job (`src/Precompute/`, pure PHP) that rebuilds, straight from the Omeka database via Omeka's own connection:
 
 - per-entity & category **dashboards** + the **collection overview**
 - the **Discursive Communities** graph
@@ -214,7 +216,7 @@ Watch progress and any errors at **Admin → Jobs → the job's log**. Re-run af
 To pull a new module **release** into the container:
 
 ```bash
-docker compose exec php omeka-s-cli module:download --base-path /var/www/html --force gh:fmadore/ResourceVisualizations
+docker compose exec php omeka-s-cli module:download --base-path /var/www/html --force gh:AM-Digital-Research-Environment/DRE-Visualizations
 docker compose restart php
 ```
 
@@ -223,7 +225,7 @@ Then click **"Regenerate now"** to rebuild the precomputed data.
 ## Architecture
 
 ```
-ResourceVisualizations/
+DreVisualizations/
 ├── Module.php                          # Asset injection (ECharts, MapLibre CDN)
 ├── config/
 │   ├── module.ini                      # Module metadata
@@ -270,7 +272,7 @@ ResourceVisualizations/
 │   │   ├── dashboard-registry.js                 # CHART_MAP, labels, descriptions
 │   │   └── dashboard.js                          # Orchestrator: render + async/inline init
 │   ├── css/
-│   │   └── resource-visualizations.css # Styles with CSS custom properties
+│   │   └── dre-visualizations.css # Styles with CSS custom properties
 │   └── data/
 │       ├── geo/
 │       │   └── countries.geojson       # Natural Earth 110m boundaries (choropleth)
@@ -331,7 +333,7 @@ live toggle (`body[data-theme="dark"|"light"]`) and the system preference
 > [!IMPORTANT]
 > **Always reference the DRE theme's variables — never hard-code a colour.**
 > - In **CSS**, use the `--rv-*` aliases declared at the top of
->   `asset/css/resource-visualizations.css`; they map straight onto the theme
+>   `asset/css/dre-visualizations.css`; they map straight onto the theme
 >   tokens.
 > - In **JavaScript**, resolve colours with `ns.cssColor('--token', fallback)`
 >   (see `asset/js/dashboard-core.js`).

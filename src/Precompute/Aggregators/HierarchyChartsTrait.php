@@ -1,13 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace ResourceVisualizations\Precompute\Aggregators;
+namespace DreVisualizations\Precompute\Aggregators;
 
 /**
  * Hierarchical breakdowns: the type→language→subject sunburst and the
  * project→type treemap.
  *
- * Composed into {@see \ResourceVisualizations\Precompute\Aggregators}; its methods
+ * Composed into {@see \DreVisualizations\Precompute\Aggregators}; its methods
  * reach shared constants and helpers on that class through `self::`.
  */
 trait HierarchyChartsTrait

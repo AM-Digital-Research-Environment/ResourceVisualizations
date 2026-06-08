@@ -1,5 +1,5 @@
 <?php
-namespace ResourceVisualizations\Site\ResourcePageBlockLayout;
+namespace DreVisualizations\Site\ResourcePageBlockLayout;
 
 use Laminas\View\Renderer\PhpRenderer;
 use Omeka\Api\Representation\AbstractResourceEntityRepresentation;

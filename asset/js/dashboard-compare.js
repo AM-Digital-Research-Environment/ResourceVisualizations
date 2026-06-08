@@ -481,7 +481,7 @@
         var basePath = container.dataset.basePath || '';
         var siteBase = container.dataset.siteBase || '';
         ns.basePath = basePath; // expose for builders that load module assets
-        var moduleBase = basePath + '/modules/ResourceVisualizations/asset/data/item-dashboards/';
+        var moduleBase = basePath + '/modules/DreVisualizations/asset/data/item-dashboards/';
 
         var fixedType = container.dataset.entityType || '';
         var hasSwitcher = !TYPES[fixedType];

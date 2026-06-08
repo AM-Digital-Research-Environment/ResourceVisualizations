@@ -5,14 +5,14 @@
  *   - dashboard-core.js (THEME, COLORS, initChart, truncateLabel, getBasemapStyle)
  *
  * Priority:
- * 1. Try /files/resource-visualizations/{id}.json (precomputed, instant)
+ * 1. Try /modules/DreVisualizations/asset/data/knowledge-graphs/{id}.json (precomputed, instant)
  * 2. Fall back to REST API (lightweight: direct relationships only)
  */
 (function () {
     'use strict';
 
     var ns = window.RV;
-    if (!ns) { console.warn('ResourceVisualizations: dashboard-core.js must load before knowledge-graph.js'); return; }
+    if (!ns) { console.warn('DreVisualizations: dashboard-core.js must load before knowledge-graph.js'); return; }
 
     var COLORS = ns.COLORS;
     var THEME = ns.THEME;
@@ -54,7 +54,7 @@
         var itemId = container.dataset.itemId;
         var basePath = container.dataset.basePath || '';
         var apiBase = container.dataset.apiBase;
-        var precomputedUrl = basePath + '/modules/ResourceVisualizations/asset/data/knowledge-graphs/' + itemId + '.json';
+        var precomputedUrl = basePath + '/modules/DreVisualizations/asset/data/knowledge-graphs/' + itemId + '.json';
 
         // Try precomputed file first.
         return fetch(precomputedUrl).then(function (resp) {
@@ -712,14 +712,14 @@
                 renderItemMap(mapEl, data.itemMap, siteBase);
             }
         }).catch(function (err) {
-            console.error('ResourceVisualizations:', err);
+            console.error('DreVisualizations:', err);
             container.innerHTML = '<p class="rv-error">Failed to load knowledge graph.</p>';
         });
     }
 
     function init() {
         if (typeof echarts === 'undefined') {
-            console.warn('ResourceVisualizations: ECharts not loaded');
+            console.warn('DreVisualizations: ECharts not loaded');
             return;
         }
         var cs = document.querySelectorAll('.knowledge-graph-container');

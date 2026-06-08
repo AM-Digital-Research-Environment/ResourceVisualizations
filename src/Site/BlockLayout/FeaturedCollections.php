@@ -1,5 +1,5 @@
 <?php
-namespace ResourceVisualizations\Site\BlockLayout;
+namespace DreVisualizations\Site\BlockLayout;
 
 use Laminas\Form\Element;
 use Laminas\View\Renderer\PhpRenderer;
@@ -7,7 +7,7 @@ use Omeka\Api\Representation\SitePageBlockRepresentation;
 use Omeka\Api\Representation\SitePageRepresentation;
 use Omeka\Api\Representation\SiteRepresentation;
 use Omeka\Site\BlockLayout\AbstractBlockLayout;
-use ResourceVisualizations\FeaturedCollections\Registry;
+use DreVisualizations\FeaturedCollections\Registry;
 
 /**
  * Featured Collections landing block.

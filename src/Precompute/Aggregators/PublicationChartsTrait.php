@@ -1,13 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace ResourceVisualizations\Precompute\Aggregators;
+namespace DreVisualizations\Precompute\Aggregators;
 
 /**
  * Publication-specific aggregations: top literal venues and the
  * top-authors union of linked persons and literal names.
  *
- * Composed into {@see \ResourceVisualizations\Precompute\Aggregators}; its methods
+ * Composed into {@see \DreVisualizations\Precompute\Aggregators}; its methods
  * reach shared constants and helpers on that class through `self::`.
  */
 trait PublicationChartsTrait

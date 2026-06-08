@@ -168,7 +168,7 @@ Every per-entity chart lands as the same change across the PHP precompute and th
 5. **Layout** — add the key to the relevant entity layout's `order` (and `wide`/`tall`) in `asset/js/dashboard-layouts.js`.
 6. **Asset include** — add `dashboard-charts-x.js` to `DashboardAssets::CHART_SCRIPTS` in `src/View/Helper/DashboardAssets.php` (the single source of truth for the builder chain — add it here and nowhere else).
 7. **Test** — add a mock-data case to `tests/AggregatorsTest.php`.
-8. **Regenerate** — Admin → Resource Visualizations → "Regenerate now" rebuilds the JSON in-Omeka.
+8. **Regenerate** — Admin → DRE Visualizations → "Regenerate now" rebuilds the JSON in-Omeka.
 
 The orchestrator (`asset/js/dashboard.js`) reads `LAYOUTS[data.resourceType]`, **auto-hides any key whose data is empty/null**, and calls `CHART_MAP[key](el, data[key], siteBase, data)` — the 4th argument is the whole dashboard object, which is how data-driven overlays work (see `geoFlows`).
 
@@ -184,7 +184,7 @@ The module styles itself entirely from the [DRE theme](https://github.com/AM-Dig
 - **In JS**, resolve every colour through `ns.cssColor('--token', fallback)`. The categorical palette `ns.COLORS` (20 hues) is the only sanctioned theme-independent set (compare-mode needs a stable colour-by-index map); brand identity is carried by `THEME.accent` (= `--primary`).
 - **ECharts**: create instances with `ns.initChart(el)`. For graph/structural charts whose per-node/edge colours must re-resolve on toggle, set `chart._rvRebuild`.
 - **MapLibre**: register every map with `ns.trackMap(map, rebuild)` and pick the basemap with `ns.getBasemapStyle()`; maps are *rebuilt* on theme toggle.
-- **In CSS**, use the `--rv-*` aliases at the top of `asset/css/resource-visualizations.css`. Never introduce a raw hex.
+- **In CSS**, use the `--rv-*` aliases at the top of `asset/css/dre-visualizations.css`. Never introduce a raw hex.
 
 ### Other invariants
 
@@ -232,11 +232,11 @@ The renderer (`ns.renderStatCards`, wired into `dashboard.js`) is shared, so the
 
 ## Regeneration
 
-After data changes, click **Admin → Modules → Resource Visualizations → "Regenerate now"** — one in-Omeka, pure-PHP job rebuilds the dashboards, communities, publications **and** the per-item knowledge graphs. No Python.
+After data changes, click **Admin → Modules → DRE Visualizations → "Regenerate now"** — one in-Omeka, pure-PHP job rebuilds the dashboards, communities, publications **and** the per-item knowledge graphs. No Python.
 
 To pull a new module **release** into the container:
 
 ```bash
-docker compose exec php omeka-s-cli module:download --base-path /var/www/html --force gh:fmadore/ResourceVisualizations
+docker compose exec php omeka-s-cli module:download --base-path /var/www/html --force gh:AM-Digital-Research-Environment/DRE-Visualizations
 docker compose restart php
 ```

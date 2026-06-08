@@ -102,7 +102,7 @@
         var basePath = container.dataset.basePath || '';
         var siteBase = container.dataset.siteBase || '';
         if (!itemId || !apiBase) return;
-        var dashBase = basePath + '/modules/ResourceVisualizations/asset/data/item-dashboards/';
+        var dashBase = basePath + '/modules/DreVisualizations/asset/data/item-dashboards/';
 
         fetch(apiBase + '/items/' + itemId).then(function (r) { return r.json(); }).then(function (item) {
             var iYear = yearOf(item);

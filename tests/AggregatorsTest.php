@@ -18,8 +18,8 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/src/Precompute/Aggregators.php';
 require dirname(__DIR__) . '/src/Precompute/KnowledgeGraphs.php';
 
-use ResourceVisualizations\Precompute\Aggregators as A;
-use ResourceVisualizations\Precompute\KnowledgeGraphs as KG;
+use DreVisualizations\Precompute\Aggregators as A;
+use DreVisualizations\Precompute\KnowledgeGraphs as KG;
 
 $failures = 0;
 function check(bool $cond, string $msg): void

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace ResourceVisualizations\Precompute;
+namespace DreVisualizations\Precompute;
 
 /**
  * Dependency-free per-item knowledge-graph builder. Produces one graph per

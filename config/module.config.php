@@ -1,5 +1,5 @@
 <?php
-namespace ResourceVisualizations;
+namespace DreVisualizations;
 
 return [
     'block_layouts' => [
@@ -48,12 +48,12 @@ return [
         'routes' => [
             'admin' => [
                 'child_routes' => [
-                    'resource-visualizations' => [
+                    'dre-visualizations' => [
                         'type' => \Laminas\Router\Http\Literal::class,
                         'options' => [
-                            'route' => '/resource-visualizations',
+                            'route' => '/dre-visualizations',
                             'defaults' => [
-                                '__NAMESPACE__' => 'ResourceVisualizations\Controller\Admin',
+                                '__NAMESPACE__' => 'DreVisualizations\Controller\Admin',
                                 'controller' => Controller\Admin\MaintenanceController::class,
                                 'action' => 'index',
                             ],
@@ -89,13 +89,13 @@ return [
     'navigation' => [
         'AdminModule' => [
             [
-                'label' => 'Resource Visualizations', // @translate
-                'route' => 'admin/resource-visualizations/maintenance',
+                'label' => 'DRE Visualizations', // @translate
+                'route' => 'admin/dre-visualizations/maintenance',
                 'resource' => Controller\Admin\MaintenanceController::class,
                 'class' => 'o-icon-chart',
                 'pages' => [
                     [
-                        'route' => 'admin/resource-visualizations/maintenance-regenerate',
+                        'route' => 'admin/dre-visualizations/maintenance-regenerate',
                         'visible' => false,
                     ],
                 ],

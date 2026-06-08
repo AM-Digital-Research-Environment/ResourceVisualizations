@@ -46,7 +46,7 @@
         var basePath = container.dataset.basePath || '';
         var siteBase = container.dataset.siteBase || '';
         ns.basePath = basePath;
-        var url = basePath + '/modules/ResourceVisualizations/asset/data/communities/discursive.json';
+        var url = basePath + '/modules/DreVisualizations/asset/data/communities/discursive.json';
 
         fetch(url).then(function (r) {
             if (!r.ok) throw new Error('not found');

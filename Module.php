@@ -1,11 +1,11 @@
 <?php
-namespace ResourceVisualizations;
+namespace DreVisualizations;
 
 use Omeka\Module\AbstractModule;
 use Omeka\Permissions\Acl;
 use Laminas\EventManager\SharedEventManagerInterface;
 use Laminas\Mvc\MvcEvent;
-use ResourceVisualizations\View\Helper\DashboardAssets;
+use DreVisualizations\View\Helper\DashboardAssets;
 
 class Module extends AbstractModule
 {
@@ -46,7 +46,7 @@ class Module extends AbstractModule
     {
         $view = $event->getTarget();
         $view->headLink()->appendStylesheet(
-            $view->assetUrl('css/resource-visualizations.css', 'ResourceVisualizations')
+            $view->assetUrl('css/dre-visualizations.css', 'DreVisualizations')
         );
         // defer: keep the ECharts/MapLibre prelude off the critical render path.
         // Deferred scripts execute in append order, so dashboard-core (and the
@@ -55,19 +55,19 @@ class Module extends AbstractModule
         // DashboardAssets), resolved to same-origin module-asset URLs.
         $defer = ['defer' => true];
         $view->headScript()->appendFile(
-            $view->assetUrl(DashboardAssets::ECHARTS_JS, 'ResourceVisualizations'), 'text/javascript', $defer
+            $view->assetUrl(DashboardAssets::ECHARTS_JS, 'DreVisualizations'), 'text/javascript', $defer
         );
         $view->headScript()->appendFile(
-            $view->assetUrl(DashboardAssets::WORDCLOUD_JS, 'ResourceVisualizations'), 'text/javascript', $defer
+            $view->assetUrl(DashboardAssets::WORDCLOUD_JS, 'DreVisualizations'), 'text/javascript', $defer
         );
         $view->headLink()->appendStylesheet(
-            $view->assetUrl(DashboardAssets::MAPLIBRE_CSS, 'ResourceVisualizations')
+            $view->assetUrl(DashboardAssets::MAPLIBRE_CSS, 'DreVisualizations')
         );
         $view->headScript()->appendFile(
-            $view->assetUrl(DashboardAssets::MAPLIBRE_JS, 'ResourceVisualizations'), 'text/javascript', $defer
+            $view->assetUrl(DashboardAssets::MAPLIBRE_JS, 'DreVisualizations'), 'text/javascript', $defer
         );
         $view->headScript()->appendFile(
-            $view->assetUrl('js/dashboard-core.js', 'ResourceVisualizations'), 'text/javascript', $defer
+            $view->assetUrl('js/dashboard-core.js', 'DreVisualizations'), 'text/javascript', $defer
         );
     }
 }

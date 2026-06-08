@@ -1,17 +1,17 @@
 <?php
 declare(strict_types=1);
 
-namespace ResourceVisualizations\Precompute;
+namespace DreVisualizations\Precompute;
 
-use ResourceVisualizations\Precompute\Aggregators\SupportTrait;
-use ResourceVisualizations\Precompute\Aggregators\BasicChartsTrait;
-use ResourceVisualizations\Precompute\Aggregators\TemporalChartsTrait;
-use ResourceVisualizations\Precompute\Aggregators\NetworkChartsTrait;
-use ResourceVisualizations\Precompute\Aggregators\GeoChartsTrait;
-use ResourceVisualizations\Precompute\Aggregators\HierarchyChartsTrait;
-use ResourceVisualizations\Precompute\Aggregators\CommunityTrait;
-use ResourceVisualizations\Precompute\Aggregators\PublicationChartsTrait;
-use ResourceVisualizations\Precompute\Aggregators\OverviewChartsTrait;
+use DreVisualizations\Precompute\Aggregators\SupportTrait;
+use DreVisualizations\Precompute\Aggregators\BasicChartsTrait;
+use DreVisualizations\Precompute\Aggregators\TemporalChartsTrait;
+use DreVisualizations\Precompute\Aggregators\NetworkChartsTrait;
+use DreVisualizations\Precompute\Aggregators\GeoChartsTrait;
+use DreVisualizations\Precompute\Aggregators\HierarchyChartsTrait;
+use DreVisualizations\Precompute\Aggregators\CommunityTrait;
+use DreVisualizations\Precompute\Aggregators\PublicationChartsTrait;
+use DreVisualizations\Precompute\Aggregators\OverviewChartsTrait;
 
 // The builders are split into focused traits under Aggregators/. They are
 // required explicitly (not just autoloaded) so this class works both under

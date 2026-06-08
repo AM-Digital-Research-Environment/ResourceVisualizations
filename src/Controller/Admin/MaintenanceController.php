@@ -1,23 +1,23 @@
 <?php
 declare(strict_types=1);
 
-namespace ResourceVisualizations\Controller\Admin;
+namespace DreVisualizations\Controller\Admin;
 
 use Laminas\Http\Response;
 use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\View\Model\ViewModel;
 use Omeka\Stdlib\Message;
-use ResourceVisualizations\Form\MaintenanceForm;
-use ResourceVisualizations\Job\PrecomputeDashboards;
+use DreVisualizations\Form\MaintenanceForm;
+use DreVisualizations\Job\PrecomputeDashboards;
 
 /**
- * Admin maintenance page for the ResourceVisualizations module.
+ * Admin maintenance page for the DreVisualizations module.
  *
- *   indexAction       GET   /admin/resource-visualizations/maintenance
+ *   indexAction       GET   /admin/dre-visualizations/maintenance
  *     Renders the page with a "Regenerate" button (CSRF-protected POST form).
  *
- *   regenerateAction  POST  /admin/resource-visualizations/maintenance/regenerate
- *     Dispatches ResourceVisualizations\Job\PrecomputeDashboards as an Omeka
+ *   regenerateAction  POST  /admin/dre-visualizations/maintenance/regenerate
+ *     Dispatches DreVisualizations\Job\PrecomputeDashboards as an Omeka
  *     background job and flashes a link to its log at /admin/job/{id}/log.
  *
  * ACL: editor + site-admin + global-admin (granted in Module::onBootstrap).
@@ -35,14 +35,14 @@ class MaintenanceController extends AbstractActionController
     {
         $request = $this->getRequest();
         if (!$request->isPost()) {
-            return $this->redirect()->toRoute('admin/resource-visualizations/maintenance');
+            return $this->redirect()->toRoute('admin/dre-visualizations/maintenance');
         }
 
         $form = $this->getForm(MaintenanceForm::class);
         $form->setData($request->getPost()->toArray());
         if (!$form->isValid()) {
             $this->messenger()->addError('Invalid form submission. Please reload the page and try again.'); // @translate
-            return $this->redirect()->toRoute('admin/resource-visualizations/maintenance');
+            return $this->redirect()->toRoute('admin/dre-visualizations/maintenance');
         }
 
         $job = $this->jobDispatcher()->dispatch(PrecomputeDashboards::class);
@@ -57,6 +57,6 @@ class MaintenanceController extends AbstractActionController
         $message->setEscapeHtml(false);
         $this->messenger()->addSuccess($message);
 
-        return $this->redirect()->toRoute('admin/resource-visualizations/maintenance');
+        return $this->redirect()->toRoute('admin/dre-visualizations/maintenance');
     }
 }

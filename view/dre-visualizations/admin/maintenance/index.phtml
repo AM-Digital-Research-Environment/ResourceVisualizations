@@ -1,22 +1,22 @@
 <?php
 /**
- * Admin maintenance page for ResourceVisualizations.
+ * Admin maintenance page for DreVisualizations.
  *
  * A single CSRF-protected "Regenerate" button that dispatches the precompute
  * background job. Plain server-rendered HTML; the flash messenger (rendered by
  * the admin layout) links to the job log once dispatched.
  *
  * @var \Laminas\View\Renderer\PhpRenderer $this
- * @var \ResourceVisualizations\Form\MaintenanceForm $form
+ * @var \DreVisualizations\Form\MaintenanceForm $form
  */
 
 $translate = $this->plugin('translate');
 
-$form->setAttribute('action', $this->url('admin/resource-visualizations/maintenance-regenerate'));
+$form->setAttribute('action', $this->url('admin/dre-visualizations/maintenance-regenerate'));
 $form->setAttribute('method', 'POST');
 $form->prepare();
 
-echo $this->pageTitle($translate('Resource Visualizations: maintenance'), 1);
+echo $this->pageTitle($translate('DRE Visualizations: maintenance'), 1);
 ?>
 
 <p class="description">

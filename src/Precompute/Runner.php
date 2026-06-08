@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace ResourceVisualizations\Precompute;
+namespace DreVisualizations\Precompute;
 
 use Doctrine\DBAL\Connection;
-use ResourceVisualizations\FeaturedCollections\Registry;
+use DreVisualizations\FeaturedCollections\Registry;
 
 /**
  * Orchestrates the dashboard precompute: loads the data, calls the pure

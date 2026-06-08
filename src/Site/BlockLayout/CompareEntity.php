@@ -1,5 +1,5 @@
 <?php
-namespace ResourceVisualizations\Site\BlockLayout;
+namespace DreVisualizations\Site\BlockLayout;
 
 use Laminas\View\Renderer\PhpRenderer;
 use Omeka\Api\Representation\SitePageBlockRepresentation;

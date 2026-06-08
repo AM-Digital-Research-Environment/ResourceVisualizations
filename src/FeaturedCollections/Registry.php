@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace ResourceVisualizations\FeaturedCollections;
+namespace DreVisualizations\FeaturedCollections;
 
 /**
  * Featured-collections registry — the single source of truth for the curated

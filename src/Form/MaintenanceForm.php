@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace ResourceVisualizations\Form;
+namespace DreVisualizations\Form;
 
 use Laminas\Form\Element\Csrf;
 use Laminas\Form\Form;

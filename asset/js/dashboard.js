@@ -130,7 +130,7 @@
         var basePath = container.dataset.basePath || '';
         var siteBase = container.dataset.siteBase || '';
         ns.basePath = basePath; // expose for builders that load module assets (e.g. choropleth GeoJSON)
-        var moduleBase = basePath + '/modules/ResourceVisualizations/asset/data/';
+        var moduleBase = basePath + '/modules/DreVisualizations/asset/data/';
         var url = moduleBase + 'item-dashboards/' + itemId + '.json';
 
         fetch(url).then(function (r) {

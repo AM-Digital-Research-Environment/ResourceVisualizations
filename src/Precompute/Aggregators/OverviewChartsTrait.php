@@ -1,14 +1,14 @@
 <?php
 declare(strict_types=1);
 
-namespace ResourceVisualizations\Precompute\Aggregators;
+namespace DreVisualizations\Precompute\Aggregators;
 
 /**
  * Radar breadth profile and the curated Collection-Overview charts (stat
  * cards, research-sections bar, section × university heatmap,
  * cluster-partner geography).
  *
- * Composed into {@see \ResourceVisualizations\Precompute\Aggregators}; its methods
+ * Composed into {@see \DreVisualizations\Precompute\Aggregators}; its methods
  * reach shared constants and helpers on that class through `self::`.
  */
 trait OverviewChartsTrait

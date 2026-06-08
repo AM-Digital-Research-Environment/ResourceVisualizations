@@ -1,14 +1,14 @@
 <?php
 declare(strict_types=1);
 
-namespace ResourceVisualizations\Precompute\Aggregators;
+namespace DreVisualizations\Precompute\Aggregators;
 
 /**
  * Time-aware charts: stacked timeline, subject / language trends,
  * beeswarm, items-per-project box plot,
  * time-bucketed chord, and the What's-New windows.
  *
- * Composed into {@see \ResourceVisualizations\Precompute\Aggregators}; its methods
+ * Composed into {@see \DreVisualizations\Precompute\Aggregators}; its methods
  * reach shared constants and helpers on that class through `self::`.
  */
 trait TemporalChartsTrait

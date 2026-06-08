@@ -87,7 +87,7 @@
     /** Resolve a module asset (under asset/) to an absolute URL, e.g.
      *  ns.moduleAsset('data/geo/countries.geojson'). Needs ns.basePath. */
     ns.moduleAsset = function (path) {
-        return ns.basePath + '/modules/ResourceVisualizations/asset/' + path;
+        return ns.basePath + '/modules/DreVisualizations/asset/' + path;
     };
 
     /* ------------------------------------------------------------------ */

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace ResourceVisualizations\Precompute;
+namespace DreVisualizations\Precompute;
 
 use Doctrine\DBAL\Connection;
 

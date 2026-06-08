@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace ResourceVisualizations\Job;
+namespace DreVisualizations\Job;
 
 use Omeka\Job\AbstractJob;
-use ResourceVisualizations\Precompute\Runner;
+use DreVisualizations\Precompute\Runner;
 use Throwable;
 
 /**
@@ -28,7 +28,7 @@ class PrecomputeDashboards extends AbstractJob
         $moduleRoot = dirname(__DIR__, 2);
         $dataDir = $moduleRoot . '/asset/data';
 
-        $logger->info('ResourceVisualizations: starting dashboard precompute', [
+        $logger->info('DreVisualizations: starting dashboard precompute', [
             'job_id' => $this->job->getId(),
         ]);
 
@@ -45,11 +45,11 @@ class PrecomputeDashboards extends AbstractJob
             );
             $stats = $runner->run();
         } catch (Throwable $e) {
-            $logger->err('ResourceVisualizations: precompute failed: ' . $e->getMessage());
+            $logger->err('DreVisualizations: precompute failed: ' . $e->getMessage());
             // Re-throw so AbstractJob marks the job as ERROR.
             throw $e;
         }
 
-        $logger->info('ResourceVisualizations: precompute complete', $stats);
+        $logger->info('DreVisualizations: precompute complete', $stats);
     }
 }

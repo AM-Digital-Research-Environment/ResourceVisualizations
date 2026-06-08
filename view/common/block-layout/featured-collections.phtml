@@ -10,7 +10,7 @@
  * @var \Laminas\View\Renderer\PhpRenderer $this
  * @var \Omeka\Api\Representation\SitePageBlockRepresentation $block
  * @var string $heading
- * @var array  $entries   registry entries (see ResourceVisualizations\FeaturedCollections\Registry)
+ * @var array  $entries   registry entries (see DreVisualizations\FeaturedCollections\Registry)
  * @var array  $cardData  slug => {itemCount:int, photoCount:?int, covers:string[]}
  */
 
@@ -22,9 +22,9 @@ $siteBase = $this->basePath() . '/s/' . $this->currentSite()->slug();
 
 // Reveal-on-scroll lives in dashboard-core; the grid is otherwise pure DOM.
 $this->headLink()->appendStylesheet(
-    $this->assetUrl('css/resource-visualizations.css', 'ResourceVisualizations'));
+    $this->assetUrl('css/dre-visualizations.css', 'DreVisualizations'));
 $this->headScript()->appendFile(
-    $this->assetUrl('js/dashboard-core.js', 'ResourceVisualizations'), 'text/javascript', ['defer' => true]);
+    $this->assetUrl('js/dashboard-core.js', 'DreVisualizations'), 'text/javascript', ['defer' => true]);
 
 $svg = fn (string $inner): string =>
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'

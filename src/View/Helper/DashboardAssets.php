@@ -1,5 +1,5 @@
 <?php
-namespace ResourceVisualizations\View\Helper;
+namespace DreVisualizations\View\Helper;
 
 use Laminas\View\Helper\AbstractHelper;
 
@@ -109,11 +109,11 @@ class DashboardAssets extends AbstractHelper
         // already registered — same ordering guarantees as blocking <script>s.
         $defer = ['defer' => true];
         $asset = function ($path) use ($view) {
-            return $view->assetUrl($path, 'ResourceVisualizations');
+            return $view->assetUrl($path, 'DreVisualizations');
         };
 
         if ($cdn) {
-            $headLink->appendStylesheet($asset('css/resource-visualizations.css'));
+            $headLink->appendStylesheet($asset('css/dre-visualizations.css'));
             if ($controller === 'dashboard') {
                 // The default 'dashboard' surface (Collection Overview / Dashboard,
                 // Publications) renders as a block on a content page, typically

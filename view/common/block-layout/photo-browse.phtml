@@ -30,7 +30,7 @@
  * @var array{masonry:bool,map:bool,timeline:bool} $allowedViews
  */
 
-use ResourceVisualizations\View\Helper\DashboardAssets;
+use DreVisualizations\View\Helper\DashboardAssets;
 
 if (!$itemSetId) {
     return; // block not configured yet
@@ -311,11 +311,11 @@ $payload = json_encode($photos,
 // MapLibre on demand, so we skip the full chart-builder chain and only inject
 // the stylesheet, the shared RV core helpers, and this block's engine.
 $this->headLink()->appendStylesheet(
-    $this->assetUrl('css/resource-visualizations.css', 'ResourceVisualizations'));
+    $this->assetUrl('css/dre-visualizations.css', 'DreVisualizations'));
 $this->headScript()->appendFile(
-    $this->assetUrl('js/dashboard-core.js', 'ResourceVisualizations'), 'text/javascript', ['defer' => true]);
+    $this->assetUrl('js/dashboard-core.js', 'DreVisualizations'), 'text/javascript', ['defer' => true]);
 $this->headScript()->appendFile(
-    $this->assetUrl('js/item-set-photo-views.js', 'ResourceVisualizations'), 'text/javascript', ['defer' => true]);
+    $this->assetUrl('js/item-set-photo-views.js', 'DreVisualizations'), 'text/javascript', ['defer' => true]);
 ?>
 
 <div class="resource-vis-block photo-browse-block">
@@ -329,8 +329,8 @@ $this->headScript()->appendFile(
     <div class="photo-browse-container"
          data-default-view="<?= $this->escapeHtmlAttr($defaultView) ?>"
          data-grouping="<?= $this->escapeHtmlAttr($issueMode ? 'issue' : 'photo') ?>"
-         data-maplibre-css="<?= $this->escapeHtmlAttr($this->assetUrl(DashboardAssets::MAPLIBRE_CSS, 'ResourceVisualizations')) ?>"
-         data-maplibre-js="<?= $this->escapeHtmlAttr($this->assetUrl(DashboardAssets::MAPLIBRE_JS, 'ResourceVisualizations')) ?>">
+         data-maplibre-css="<?= $this->escapeHtmlAttr($this->assetUrl(DashboardAssets::MAPLIBRE_CSS, 'DreVisualizations')) ?>"
+         data-maplibre-js="<?= $this->escapeHtmlAttr($this->assetUrl(DashboardAssets::MAPLIBRE_JS, 'DreVisualizations')) ?>">
 
         <div class="photo-browse-toolbar">
             <?php if (count($views) > 1): ?>

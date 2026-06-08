@@ -15,7 +15,7 @@
  *
  * THEMING — follows the DRE theme. Icons are inline lucide SVGs (lucide.dev, MIT
  * licence) stroked with `currentColor`, and every surface/colour comes from the
- * `--rv-*` aliases in resource-visualizations.css, so the cards follow the active
+ * `--rv-*` aliases in dre-visualizations.css, so the cards follow the active
  * light / dark theme with zero JS.
  */
 (function () {
