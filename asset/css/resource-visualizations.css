@@ -1502,34 +1502,60 @@ button.rv-toolbar-btn:focus-visible,
     margin-bottom: 14px;
 }
 
+/* Segmented view switch — a sunken track that holds pill-shaped tabs, with the
+   active view floating on an accent pill. These are <button>s, so the DRE theme's
+   global button skin (green fill + translateY lift + glow on :hover, specificity
+   0,3,1) would otherwise hijack them; the interactive rules below are scoped
+   through .photo-view-toggle (4+ selectors) so they clear that and the control
+   keeps its own quiet, intentional look — colour transitions only, never a lift. */
 .photo-view-toggle {
     display: inline-flex;
-    border: 1px solid var(--rv-border);
-    border-radius: var(--rv-radius-sm);
-    overflow: hidden;
-}
-
-.photo-view-btn {
-    border: 0;
-    background: var(--rv-bg);
-    color: var(--rv-text-strong);
-    padding: 6px 16px;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-}
-
-.photo-view-btn + .photo-view-btn {
-    border-left: 1px solid var(--rv-border);
-}
-
-.photo-view-btn:hover:not(.is-active) {
+    gap: 2px;
+    padding: 3px;
     background: var(--rv-bg-sunken);
+    border: 1px solid var(--rv-border-light);
+    border-radius: 999px;
 }
 
-.photo-view-btn.is-active {
+.photo-browse-toolbar .photo-view-toggle .photo-view-btn {
+    margin: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--rv-text-color);
+    padding: 6px 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.photo-browse-toolbar .photo-view-toggle .photo-view-btn:hover:not(.is-active),
+.photo-browse-toolbar .photo-view-toggle .photo-view-btn:focus-visible:not(.is-active) {
+    background: color-mix(in oklab, var(--rv-accent) 12%, transparent);
+    color: var(--rv-text-strong);
+    box-shadow: none;
+    transform: none;
+}
+
+.photo-browse-toolbar .photo-view-toggle .photo-view-btn.is-active {
     background: var(--rv-accent);
     color: var(--rv-accent-contrast);
+    box-shadow: var(--rv-shadow-sm);
+    transform: none;
+}
+
+.photo-browse-toolbar .photo-view-toggle .photo-view-btn:active {
+    transform: none;
+    box-shadow: none;
+}
+
+.photo-browse-toolbar .photo-view-toggle .photo-view-btn:focus-visible {
+    outline: 2px solid var(--rv-accent);
+    outline-offset: 2px;
 }
 
 .photo-browse-count {
@@ -1824,41 +1850,78 @@ body.photo-lightbox-open {
 .photo-lightbox-nav {
     position: absolute;
     z-index: 2;
-    border: 0;
-    background: rgba(0, 0, 0, 0.45);
+    margin: 0;
+    /* Shed the theme button's inherited padding (0.7rem 1.4rem) — under
+       border-box it overflows the fixed width and warps the circle to an
+       ellipse. These are icon buttons; width/height set the size. */
+    padding: 0;
+    box-sizing: border-box;
+    border: 1px solid color-mix(in oklab, #fff 24%, transparent);
+    background: color-mix(in oklab, #000 52%, transparent);
+    -webkit-backdrop-filter: blur(8px) saturate(1.4);
+    backdrop-filter: blur(8px) saturate(1.4);
     color: #fff;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    transition: background 0.15s;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    /* `scale` (not `transform`) carries the hover growth — see the nav note. */
+    transition: background-color 0.18s ease, border-color 0.18s ease,
+        box-shadow 0.18s ease, scale 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.photo-lightbox-close:hover,
-.photo-lightbox-nav:hover {
-    background: rgba(0, 0, 0, 0.75);
+/* Hover/active/focus skin. Scoped 4 selectors deep (.photo-browse-container
+   .photo-lightbox …:hover) so it clears the DRE theme's global button:hover,
+   whose :not() chain gives it specificity (0,3,1) — that rule was turning these
+   controls green, adding a glow, and applying a translateY lift that fought the
+   arrows' centring. We grow with `scale` and reset its `transform` to none. */
+.photo-browse-container .photo-lightbox .photo-lightbox-close:hover,
+.photo-browse-container .photo-lightbox .photo-lightbox-nav:hover,
+.photo-browse-container .photo-lightbox .photo-lightbox-close:focus-visible,
+.photo-browse-container .photo-lightbox .photo-lightbox-nav:focus-visible {
+    background: color-mix(in oklab, #000 72%, transparent);
+    border-color: color-mix(in oklab, #fff 44%, transparent);
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.45);
+    color: #fff;
+    transform: none;
+    scale: 1.07;
+}
+
+.photo-browse-container .photo-lightbox .photo-lightbox-close:active,
+.photo-browse-container .photo-lightbox .photo-lightbox-nav:active {
+    transform: none;
+    scale: 0.94;
+}
+
+.photo-browse-container .photo-lightbox .photo-lightbox-close:focus-visible,
+.photo-browse-container .photo-lightbox .photo-lightbox-nav:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.92);
+    outline-offset: 2px;
 }
 
 .photo-lightbox-close {
-    top: 14px;
+    top: 16px;
     right: 16px;
-    width: 38px;
-    height: 38px;
-    font-size: 1.1rem;
+    width: 40px;
+    height: 40px;
 }
 
+/* Centring lives on `translate`, an independent property the hover `scale` can
+   never overwrite — so the arrows grow in place instead of jumping. */
 .photo-lightbox-nav {
     top: 50%;
-    transform: translateY(-50%);
-    width: 46px;
-    height: 46px;
-    font-size: 2rem;
-    line-height: 1;
+    translate: 0 -50%;
+    width: 48px;
+    height: 48px;
 }
 
-.photo-lightbox-prev { left: 14px; }
-.photo-lightbox-next { right: 14px; }
+.photo-lightbox-prev { left: 18px; }
+.photo-lightbox-next { right: 18px; }
+
+.photo-lightbox-close svg { width: 20px; height: 20px; }
+.photo-lightbox-nav svg { width: 26px; height: 26px; }
 
 @media (max-width: 680px) {
     .photo-lightbox-body {
@@ -1878,10 +1941,11 @@ body.photo-lightbox-open {
     }
 
     .photo-lightbox-nav {
-        width: 38px;
-        height: 38px;
-        font-size: 1.6rem;
+        width: 40px;
+        height: 40px;
     }
+
+    .photo-lightbox-nav svg { width: 22px; height: 22px; }
 }
 
 /* ------------------------------------------------------------------ */

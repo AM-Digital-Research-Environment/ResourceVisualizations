@@ -5,7 +5,7 @@ namespace ResourceVisualizations\Precompute\Aggregators;
 
 /**
  * Time-aware charts: stacked timeline, subject / language trends,
- * beeswarm, acquisition calendar, items-per-project box plot,
+ * beeswarm, items-per-project box plot,
  * time-bucketed chord, and the What's-New windows.
  *
  * Composed into {@see \ResourceVisualizations\Precompute\Aggregators}; its methods
@@ -183,33 +183,6 @@ trait TemporalChartsTrait
             }
         }
         return $points ?: null;
-    }
-
-    /**
-     * Acquisition cadence: item count per calendar day (row-creation date).
-     * Feeds the ECharts calendar heatmap.
-     *
-     * @return list<array{0:string,1:int}>|null
-     */
-    public static function buildCalendarHeatmap(array $itemIds, array $items): ?array
-    {
-        $byDay = [];
-        foreach ($itemIds as $iid) {
-            $day = $items[$iid]['created'] ?? '';
-            if ($day === '') {
-                continue;
-            }
-            $byDay[$day] = ($byDay[$day] ?? 0) + 1;
-        }
-        if (!$byDay) {
-            return null;
-        }
-        ksort($byDay);
-        $out = [];
-        foreach ($byDay as $day => $count) {
-            $out[] = [(string) $day, $count];
-        }
-        return $out;
     }
 
     /**

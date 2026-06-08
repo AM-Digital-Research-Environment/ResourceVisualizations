@@ -43,7 +43,7 @@
             },
             yAxis: {
                 type: 'category', data: data.rows,
-                axisLabel: { fontSize: THEME.fontSize, formatter: function (v) { return truncateLabel(v, 22); } }
+                axisLabel: { interval: 0, fontSize: THEME.fontSize, formatter: function (v) { return truncateLabel(v, 22); } }
             },
             visualMap: {
                 min: 0, max: maxVal || 1, calculable: true, orient: 'vertical', right: 12, top: 'center',
@@ -53,7 +53,35 @@
                 type: 'heatmap', data: data.values,
                 label: { show: true, fontSize: 10 },
                 emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.3)' } }
-            }]
+            }],
+            // On narrow (mobile) widths the matrix gets too dense: the per-cell
+            // value labels overlap into an unreadable smear and the wide left/right
+            // margins starve the cells. So below 560/380px we hide the colour-scale,
+            // reclaim the margins, steepen + shrink the axis labels and drop the cell
+            // numbers (the colour ramp + tap tooltip still carry the value). ECharts
+            // re-evaluates the matching query automatically on every resize.
+            media: [
+                {
+                    query: { maxWidth: 560 },
+                    option: {
+                        grid: { left: 94, right: 14, top: 8, bottom: 96 },
+                        xAxis: { axisLabel: { rotate: 55, fontSize: 9, formatter: function (v) { return truncateLabel(v, 14); } } },
+                        yAxis: { axisLabel: { fontSize: 9, formatter: function (v) { return truncateLabel(v, 14); } } },
+                        visualMap: { show: false },
+                        series: [{ label: { show: false } }]
+                    }
+                },
+                {
+                    query: { maxWidth: 380 },
+                    option: {
+                        grid: { left: 78, right: 8, top: 6, bottom: 88 },
+                        xAxis: { axisLabel: { rotate: 90, fontSize: 8, formatter: function (v) { return truncateLabel(v, 10); } } },
+                        yAxis: { axisLabel: { fontSize: 8, formatter: function (v) { return truncateLabel(v, 10); } } },
+                        visualMap: { show: false },
+                        series: [{ label: { show: false } }]
+                    }
+                }
+            ]
         });
         // Re-apply the theme-aware ramp when the light/dark theme toggles.
         chart._rvRebuild = function () {

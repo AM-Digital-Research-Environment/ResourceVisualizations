@@ -38,7 +38,10 @@
         pin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
         book: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
         arrow: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
-        external: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>'
+        external: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+        chevronLeft: '<path d="m15 18-6-6 6-6"/>',
+        chevronRight: '<path d="m9 18 6-6-6-6"/>',
+        close: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'
     };
 
     /* ------------------------------------------------------------------ */
@@ -510,9 +513,19 @@
         });
 
         function createMap() {
-            var accent = ns.cssColor('--primary', '#22817b');
-            var clusterFill = ns.cssColor('--primary-muted', '#6fb08e');
-            var textOn = ns.cssColor('--surface', '#ffffff');
+            // High-contrast markers for the near-white Positron (and dark-matter)
+            // basemaps. The old cluster fill was --primary-muted — only 12% green
+            // mixed into the surface — so on Positron it rendered as a near-white
+            // circle carrying white text: invisible. Clusters are now solid,
+            // size-graduated green with near-white counts; single photos are
+            // warm-accent pins; both get a surface-coloured "moat" ring that lifts
+            // them cleanly off the basemap in light and dark.
+            var green       = ns.cssColor('--primary', '#007a50');
+            var greenDark   = ns.cssColor('--primary-hover', '#00633f');
+            var greenDeep   = ns.cssColor('--primary-active', '#004d30');
+            var clusterText = ns.cssColor('--primary-contrast', '#ffffff');
+            var pointFill   = ns.cssColor('--accent', '#d57912');
+            var moat        = ns.cssColor('--surface', '#ffffff');
 
             var map = new maplibregl.Map({
                 container: mapEl,
@@ -534,11 +547,12 @@
                     id: 'clusters', type: 'circle', source: 'photos',
                     filter: ['has', 'point_count'],
                     paint: {
-                        'circle-color': clusterFill,
-                        'circle-opacity': 0.85,
-                        'circle-stroke-color': accent,
-                        'circle-stroke-width': 1.5,
-                        'circle-radius': ['step', ['get', 'point_count'], 16, 10, 22, 50, 30]
+                        'circle-color': ['step', ['get', 'point_count'],
+                            green, 25, greenDark, 75, greenDeep],
+                        'circle-opacity': 0.92,
+                        'circle-stroke-color': moat,
+                        'circle-stroke-width': 2.5,
+                        'circle-radius': ['step', ['get', 'point_count'], 18, 10, 24, 50, 32]
                     }
                 });
                 map.addLayer({
@@ -549,16 +563,20 @@
                         'text-size': 12,
                         'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold', 'Noto Sans Bold']
                     },
-                    paint: { 'text-color': textOn }
+                    paint: {
+                        'text-color': clusterText,
+                        'text-halo-color': greenDark,
+                        'text-halo-width': 1
+                    }
                 });
                 map.addLayer({
                     id: 'points', type: 'circle', source: 'photos',
                     filter: ['!', ['has', 'point_count']],
                     paint: {
-                        'circle-color': accent,
+                        'circle-color': pointFill,
                         'circle-radius': 7,
-                        'circle-stroke-color': textOn,
-                        'circle-stroke-width': 2
+                        'circle-stroke-color': moat,
+                        'circle-stroke-width': 2.5
                     }
                 });
 
@@ -606,9 +624,9 @@
         box.hidden = true;
         box.innerHTML =
             '<div class="photo-lightbox-backdrop" data-close="1"></div>' +
-            '<button type="button" class="photo-lightbox-close" data-close="1" aria-label="Close">✕</button>' +
-            '<button type="button" class="photo-lightbox-nav photo-lightbox-prev" data-nav="-1" aria-label="Previous">‹</button>' +
-            '<button type="button" class="photo-lightbox-nav photo-lightbox-next" data-nav="1" aria-label="Next">›</button>' +
+            '<button type="button" class="photo-lightbox-close" data-close="1" aria-label="Close">' + svg(ICON.close) + '</button>' +
+            '<button type="button" class="photo-lightbox-nav photo-lightbox-prev" data-nav="-1" aria-label="Previous">' + svg(ICON.chevronLeft) + '</button>' +
+            '<button type="button" class="photo-lightbox-nav photo-lightbox-next" data-nav="1" aria-label="Next">' + svg(ICON.chevronRight) + '</button>' +
             '<div class="photo-lightbox-body">' +
                 '<figure class="photo-lightbox-figure"><img alt=""></figure>' +
                 '<aside class="photo-lightbox-meta">' +
@@ -625,6 +643,8 @@
         var linkEl = box.querySelector('.photo-lightbox-link');
         var closeBtn = box.querySelector('.photo-lightbox-close');
         var idx = 0;
+        var pushed = false;   // a history entry is parked while the lightbox is open
+        var opener = null;    // element to restore focus to on close (a11y)
 
         function field(label, value) {
             if (!value) return;
@@ -649,15 +669,37 @@
         }
 
         function open(i) {
+            opener = document.activeElement;
             idx = (i + photos.length) % photos.length;
             render();
             box.hidden = false;
             document.body.classList.add('photo-lightbox-open');
             closeBtn.focus();
+            // Park a history entry so the browser Back button / Android back
+            // gesture closes the lightbox and stays on the page, instead of
+            // navigating away. One entry covers the whole open session — paging
+            // with the arrows doesn't add more.
+            if (!pushed) {
+                try { history.pushState({ rvPhotoLightbox: true }, ''); pushed = true; }
+                catch (e) { /* history unavailable — Esc / ✕ still close */ }
+            }
         }
-        function close() {
+        // `fromPop` is true when a popstate (Back) is what closed us — the browser
+        // has already removed our entry, so we must NOT call history.back() again.
+        function close(fromPop) {
+            if (box.hidden) return;
             box.hidden = true;
             document.body.classList.remove('photo-lightbox-open');
+            if (pushed && !fromPop) {
+                pushed = false;
+                try { history.back(); } catch (e) { /* noop */ }
+            } else {
+                pushed = false;
+            }
+            if (opener && typeof opener.focus === 'function') {
+                try { opener.focus(); } catch (e) { /* noop */ }
+            }
+            opener = null;
         }
         function step(d) {
             idx = (idx + d + photos.length) % photos.length;
@@ -675,6 +717,11 @@
             if (e.key === 'Escape') close();
             else if (e.key === 'ArrowLeft') step(-1);
             else if (e.key === 'ArrowRight') step(1);
+        });
+        // Back button / gesture: close the open lightbox in place. The entry was
+        // already popped by the browser, so pass fromPop so we don't pop twice.
+        window.addEventListener('popstate', function () {
+            if (!box.hidden) close(true);
         });
 
         return { open: open, close: close };

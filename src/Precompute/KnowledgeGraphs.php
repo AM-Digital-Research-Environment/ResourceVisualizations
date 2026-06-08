@@ -343,11 +343,133 @@ final class KnowledgeGraphs
             }
         }
 
+        [$nodes, $communityCount] = self::assignCommunities($nodes, $edges);
+
         return [
             'nodes' => $nodes,
             'edges' => $edges,
             'categories' => $categories,
-            'stats' => ['maxStrength' => round($maxStrength, 2), 'maxFreqPct' => round($maxFreq, 1)],
+            'stats' => [
+                'maxStrength' => round($maxStrength, 2),
+                'maxFreqPct' => round($maxFreq, 1),
+                'communityCount' => $communityCount,
+            ],
         ];
+    }
+
+    /**
+     * Assign each non-centre node a community id via label propagation, so that
+     * entities tied together by the items they share (e.g. a subject and a person
+     * that co-occur in the same shared items) read as one coloured cluster.
+     *
+     * The centre is a universal hub — it links to every direct neighbour — so it
+     * is excluded from the propagation graph; leaf nodes reachable only through
+     * the centre therefore stay isolated and get community = -1 (no halo).
+     * Communities are relabelled by size (largest = 0) and singletons dropped, so
+     * the colour indices are stable and only meaningful clusters are highlighted.
+     *
+     * Deterministic (sorted-id processing order + lowest-label tie-break +
+     * in-place/asynchronous updates), so the precompute output is reproducible.
+     *
+     * @return array{0:array,1:int} [nodes each carrying 'community', community count]
+     */
+    public static function assignCommunities(array $nodes, array $edges): array
+    {
+        // Centre id(s) — excluded from the propagation graph.
+        $centerIds = [];
+        foreach ($nodes as $n) {
+            if (!empty($n['isCenter'])) {
+                $centerIds[$n['id']] = true;
+            }
+        }
+
+        // Undirected adjacency over non-centre nodes only.
+        $adj = [];
+        foreach ($edges as $e) {
+            $a = $e['source'];
+            $b = $e['target'];
+            if ($a === $b || isset($centerIds[$a]) || isset($centerIds[$b])) {
+                continue;
+            }
+            $adj[$a][$b] = true;
+            $adj[$b][$a] = true;
+        }
+
+        // Non-centre node ids, sorted for deterministic propagation.
+        $ids = [];
+        foreach ($nodes as $n) {
+            if (!isset($centerIds[$n['id']])) {
+                $ids[] = (string) $n['id'];
+            }
+        }
+        sort($ids);
+
+        // Each node starts in its own community.
+        $label = [];
+        foreach ($ids as $id) {
+            $label[$id] = $id;
+        }
+
+        // Asynchronous label propagation: each node adopts the most frequent label
+        // among its neighbours (lowest label breaks ties). Converges quickly on
+        // these small ego graphs; capped to stay bounded.
+        for ($iter = 0; $iter < 20; $iter++) {
+            $changed = false;
+            foreach ($ids as $id) {
+                $nbrs = $adj[$id] ?? [];
+                if (!$nbrs) {
+                    continue;
+                }
+                $counts = [];
+                foreach (array_keys($nbrs) as $nb) {
+                    $l = $label[$nb];
+                    $counts[$l] = ($counts[$l] ?? 0) + 1;
+                }
+                $best = null;
+                $bestCount = -1;
+                foreach ($counts as $l => $c) {
+                    if ($c > $bestCount || ($c === $bestCount && strcmp((string) $l, (string) $best) < 0)) {
+                        $best = (string) $l;
+                        $bestCount = $c;
+                    }
+                }
+                if ($best !== null && $best !== $label[$id]) {
+                    $label[$id] = $best;
+                    $changed = true;
+                }
+            }
+            if (!$changed) {
+                break;
+            }
+        }
+
+        // Group connected nodes by final label; keep only multi-node communities.
+        $groups = [];
+        foreach ($ids as $id) {
+            if (isset($adj[$id])) {
+                $groups[$label[$id]][] = $id;
+            }
+        }
+        $multi = [];
+        foreach ($groups as $members) {
+            if (count($members) >= 2) {
+                $multi[] = $members;
+            }
+        }
+        usort($multi, static fn ($a, $b) => count($b) <=> count($a)); // largest first
+
+        $communityOf = [];
+        foreach ($multi as $cidx => $members) {
+            foreach ($members as $id) {
+                $communityOf[$id] = $cidx;
+            }
+        }
+
+        foreach ($nodes as &$n) {
+            $n['community'] = $communityOf[(string) $n['id']] ?? -1;
+        }
+        unset($n);
+
+        return [$nodes, count($multi)];
     }
 }

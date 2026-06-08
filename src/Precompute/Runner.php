@@ -48,6 +48,13 @@ final class Runner
      */
     private const SYNTHETIC_TYPE_PUBLICATION = 'Publication';
 
+    /**
+     * Synthetic resource-type label folding the curated Podcasts item set (39095)
+     * into the Collection Overview as one "Podcast" category. See
+     * generateCollectionOverview() and podcastIds().
+     */
+    private const SYNTHETIC_TYPE_PODCAST = 'Podcast';
+
     // External partner collections — their items reach the section×university
     // overview via item-set membership (they sit outside the section→project
     // hierarchy: ILAM items have no dcterms:isPartOf, the BayGlo project names no
@@ -256,9 +263,6 @@ final class Runner
         if ($v = Aggregators::buildChoropleth($itemIds, $this->links, $this->countryIndex)) {
             $dashboard['choropleth'] = $v;
         }
-        if ($v = Aggregators::buildCalendarHeatmap($itemIds, $this->items)) {
-            $dashboard['calendar'] = $v;
-        }
         if ($v = Aggregators::buildTimeChord($itemIds, $this->links, $this->items, $this->itemYear)) {
             $dashboard['timeChord'] = $v;
         }
@@ -347,6 +351,11 @@ final class Runner
 
             $dashboard = Aggregators::aggregateItems($itemIds, $this->items, $this->links, $this->itemYear, $this->geo);
             $this->addStandardCharts($dashboard, $pid, $pinfo['title'], $itemIds);
+            // Map of the geocoded institutions the project's members (PI + team) are
+            // affiliated with — mirrors the per-person affiliation map.
+            if ($affMap = Aggregators::buildProjectAffiliationMap($pid, $this->links, $this->items, $this->geo)) {
+                $dashboard['affiliationMap'] = $affMap;
+            }
             if ($radar = Aggregators::buildRadar($radarProfiles[$pid] ?? null, $radarMax)) {
                 $dashboard['radar'] = $radar;
             }
@@ -735,9 +744,6 @@ final class Runner
             }
         }
         $allProjItems = array_keys($allProjItems);
-        if ($cal = Aggregators::buildCalendarHeatmap($allProjItems, $this->items)) {
-            $extra['calendar'] = $cal;
-        }
         if ($tc = Aggregators::buildTimeChord($allProjItems, $this->links, $this->items, $this->itemYear)) {
             $extra['timeChord'] = $tc;
         }
@@ -757,23 +763,33 @@ final class Runner
         // also carried by research items and authority records, which would inflate
         // the "Publication" slice ~12× — see publicationIds().)
         $publications = $this->publicationIds();
-        $this->log('=== Collection Overview (' . count($researchItems) . ' research items + ' . count($publications) . ' publications) ===');
-        if (!$researchItems && !$publications) {
+        $podcasts = $this->podcastIds();
+        $this->log('=== Collection Overview (' . count($researchItems) . ' research items + ' . count($publications) . ' publications + ' . count($podcasts) . ' podcasts) ===');
+        if (!$researchItems && !$publications && !$podcasts) {
             return;
         }
-        // Combined corpus, de-duplicated (research items are template 10 and
-        // publications are template 11–20, so the sets are disjoint — guard anyway).
-        $overviewItems = array_keys(array_flip(array_merge($researchItems, $publications)));
+        // Combined corpus, de-duplicated. Research items are template 10,
+        // publications templates 11–20 and podcasts template 21 (disjoint item
+        // sets), but flatten through array_flip to guard against overlap anyway.
+        $overviewItems = array_keys(array_flip(array_merge($researchItems, $publications, $podcasts)));
+        // Each publication / podcast is folded under one synthetic resource type
+        // (overriding its own dcterms:type) so it appears as a single "Publication"
+        // / "Podcast" category in the resource-type pie, the year×type timeline AND
+        // the type×language heatmap — keeping the high-level overview readable. The
+        // fine-grained publication types stay in the dedicated Publications block.
         $syntheticTypes = [];
         foreach ($publications as $pid) {
             $syntheticTypes[$pid] = self::SYNTHETIC_TYPE_PUBLICATION;
+        }
+        foreach ($podcasts as $pid) {
+            $syntheticTypes[$pid] = self::SYNTHETIC_TYPE_PODCAST;
         }
 
         $dashboard = Aggregators::aggregateItems($overviewItems, $this->items, $this->links, $this->itemYear, $this->geo, $syntheticTypes);
         if ($v = Aggregators::buildStackedTimeline($overviewItems, $this->links, $this->items, $this->itemYear, $syntheticTypes)) {
             $dashboard['stackedTimeline'] = $v;
         }
-        if ($v = Aggregators::buildHeatmap($overviewItems, $this->links, $this->items)) {
+        if ($v = Aggregators::buildHeatmap($overviewItems, $this->links, $this->items, $syntheticTypes)) {
             $dashboard['heatmap'] = $v;
         }
         if ($v = Aggregators::buildRoles($overviewItems, $this->links, $this->items)) {
@@ -799,9 +815,6 @@ final class Runner
         }
         if ($v = Aggregators::buildChoropleth($overviewItems, $this->links, $this->countryIndex)) {
             $dashboard['choropleth'] = $v;
-        }
-        if ($v = Aggregators::buildCalendarHeatmap($overviewItems, $this->items)) {
-            $dashboard['calendar'] = $v;
         }
         if ($v = Aggregators::buildTimeChord($overviewItems, $this->links, $this->items, $this->itemYear)) {
             $dashboard['timeChord'] = $v;
@@ -917,6 +930,16 @@ final class Runner
     private function publicationIds(): array
     {
         return array_values($this->itemSets[self::ITEM_SET_PUBLICATIONS] ?? []);
+    }
+
+    /**
+     * Item ids of the curated Podcasts item set (39095) — cluster podcast
+     * episodes hand-catalogued in Omeka (template 21, fabio:AudioDocument). Folded
+     * into the Collection Overview under the synthetic "Podcast" resource type.
+     */
+    private function podcastIds(): array
+    {
+        return array_values($this->itemSets[self::ITEM_SET_PODCASTS] ?? []);
     }
 
     /**

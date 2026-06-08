@@ -88,6 +88,51 @@ trait GeoChartsTrait
         return $markers ?: null;
     }
 
+    /**
+     * Affiliation map for a research project: the geocoded institutions that the
+     * project's members are affiliated with. Members are the persons linked from
+     * the project item via dcterms:creator (PI) and foaf:member (team); each
+     * member's affiliations are its dcterms:isPartOf → foaf:Organization targets
+     * that carry coordinates. Institutions are de-duplicated and each marker lists
+     * the affiliated members. Returns null when no member affiliation is geocoded,
+     * so the orchestrator hides the panel.
+     */
+    public static function buildProjectAffiliationMap(int $projectId, array $links, array $items, array $geo): ?array
+    {
+        // Project members: PI (dcterms:creator) + team (foaf:member).
+        $memberIds = [];
+        foreach ($links[$projectId] ?? [] as [$term, $label, $vrid]) {
+            if ($term === 'dcterms:creator' || $term === 'foaf:member') {
+                $memberIds[$vrid] = true;
+            }
+        }
+
+        $markers = []; // institution id => marker (accumulating member names)
+        foreach (array_keys($memberIds) as $pid) {
+            foreach ($links[$pid] ?? [] as [$term, $label, $vrid]) {
+                if ($term !== 'dcterms:isPartOf' || !isset($geo[$vrid])) {
+                    continue;
+                }
+                // Only institutions, not, e.g., a person's linked place.
+                if (($items[$vrid]['class_term'] ?? '') !== 'foaf:Organization') {
+                    continue;
+                }
+                if (!isset($markers[$vrid])) {
+                    $g = $geo[$vrid];
+                    $markers[$vrid] = [
+                        'name' => $g['name'], 'lat' => $g['lat'], 'lon' => $g['lon'],
+                        'itemId' => $g['itemId'], 'members' => [],
+                    ];
+                }
+                $mname = $items[$pid]['title'] ?? null;
+                if ($mname !== null && !in_array($mname, $markers[$vrid]['members'], true)) {
+                    $markers[$vrid]['members'][] = $mname;
+                }
+            }
+        }
+        return $markers ? array_values($markers) : null;
+    }
+
     /** Even-odd ray-casting test across all rings of a polygon (handles holes). */
     private static function pointInPolygon(float $x, float $y, array $rings): bool
     {

@@ -63,7 +63,6 @@ class DashboardAssets extends AbstractHelper
         'js/dashboard-charts-choropleth.js',
         'js/dashboard-charts-radar.js',
         'js/dashboard-charts-communities.js',
-        'js/dashboard-charts-calendar.js',
         'js/dashboard-charts-boxplot.js',
         'js/dashboard-charts-time-chord.js',
         'js/dashboard-stat-cards.js',

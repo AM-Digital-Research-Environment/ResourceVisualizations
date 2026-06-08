@@ -17,6 +17,18 @@
     var COLORS = ns.COLORS;
     var THEME = ns.THEME;
 
+    // Bold ring palette for community halos — deliberately distinct from the
+    // categorical node fills (ns.COLORS) so a node's cluster reads independently
+    // of its entity type. Saturated enough to stay legible in light and dark.
+    var HALO = ['#d81b60', '#1e88e5', '#fb8c00', '#8e24aa', '#00897b',
+                '#c0ca33', '#5e35b1', '#f4511e', '#039be5', '#43a047'];
+
+    /** Halo colour for a community index (null when none / halos off). */
+    function communityColor(c) {
+        if (c === undefined || c === null || c < 0) return null;
+        return HALO[c % HALO.length];
+    }
+
     // Property -> category mapping (used in API fallback only).
     var PROP_CAT = {
         'dcterms:creator': 'Person', 'dcterms:contributor': 'Person', 'foaf:member': 'Person',
@@ -378,10 +390,20 @@
         // Keep full copies for filtering.
         var allNodes = data.nodes.slice();
         var allEdges = data.edges.slice();
+        // Community halos are only offered/drawn when the precompute found clusters.
+        var hasCommunities = !!(data.stats && data.stats.communityCount > 0);
+        var showHalos = true;
 
         /** Build an ECharts option from a (possibly filtered) node/edge set. */
         function buildOption(nodes, edges) {
             var n = nodes.length;
+            // Degree per node (from the currently visible edges) drives hub sizing,
+            // so the busiest entities read as the largest.
+            var degree = {};
+            edges.forEach(function (e) {
+                degree[e.source] = (degree[e.source] || 0) + 1;
+                degree[e.target] = (degree[e.target] || 0) + 1;
+            });
             return {
                 aria: { enabled: true },
                 tooltip: {
@@ -427,10 +449,20 @@
                     type: 'graph', layout: 'force',
                     data: nodes.map(function (nd) {
                         var sh = !nd.isCenter && nd.symbolSize <= 16;
+                        // Grow well-connected (hub) nodes so the busiest entities
+                        // stand out; the centre already dominates, so leave it.
+                        var deg = degree[nd.id] || 0;
+                        var size = nd.isCenter ? nd.symbolSize
+                            : Math.min(nd.symbolSize * 2, nd.symbolSize * (1 + 0.22 * Math.sqrt(Math.max(0, deg - 1))));
+                        // Community halo: a coloured ring groups entities that
+                        // co-occur through shared items. The centre keeps its strong
+                        // neutral border; halos can be toggled off from the toolbar.
+                        var halo = (nd.isCenter || !showHalos) ? null : communityColor(nd.community);
                         return {
                             id: nd.id, name: nd.name, category: nd.category, url: nd.url || null,
-                            symbolSize: nd.symbolSize,
+                            symbolSize: size,
                             freqPct: nd.freqPct, strength: nd.strength, sharedCount: nd.sharedCount,
+                            community: nd.community,
                             label: {
                                 show: !!nd.isCenter, fontSize: nd.isCenter ? THEME.fontSizeTitle : THEME.fontSize,
                                 fontWeight: nd.isCenter ? 'bold' : 'normal',
@@ -439,7 +471,9 @@
                             emphasis: { label: { show: true, fontSize: 12, fontWeight: 'bold', width: 180, overflow: 'break' } },
                             itemStyle: nd.isCenter
                                 ? { borderColor: THEME.text, borderWidth: 3, shadowBlur: 8, shadowColor: 'rgba(0,0,0,0.2)' }
-                                : sh ? { opacity: 0.85 } : { borderWidth: 1 }  // node border (= --surface) from theme
+                                : halo
+                                    ? { borderColor: halo, borderWidth: 3, opacity: sh ? 0.95 : 1 }
+                                    : (sh ? { opacity: 0.85 } : { borderWidth: 1 })  // node border (= --surface) from theme
                         };
                     }),
                     links: edges.map(function (e) {
@@ -464,8 +498,14 @@
                         layoutAnimation: false
                     },
                     roam: true, draggable: true, cursor: 'pointer',
-                    emphasis: { focus: 'adjacency', lineStyle: { width: 2.5, opacity: 0.9 } },
-                    blur: { itemStyle: { opacity: 0.15 }, lineStyle: { opacity: 0.08 } },
+                    // Hovering an entity isolates its connections: neighbours + their
+                    // edges brighten and grow slightly, everything else fades hard.
+                    emphasis: {
+                        focus: 'adjacency', scale: 1.05,
+                        lineStyle: { width: 3, opacity: 0.95 },
+                        itemStyle: { shadowBlur: 12, shadowColor: 'rgba(0,0,0,0.25)' }
+                    },
+                    blur: { itemStyle: { opacity: 0.08 }, lineStyle: { opacity: 0.04 } },
                     label: { position: 'right', formatter: function (p) { return ns.truncateLabel(p.name, THEME.labelMaxLen); } },
                     lineStyle: { opacity: 0.5, width: 1.2 },
                     scaleLimit: { min: 0.2, max: 5 }
@@ -506,6 +546,24 @@
                         chart.setOption(buildOption(currentNodes, currentEdges), true);
                     }, 80);
                 });
+            }
+
+            // ── Community halo toggle ──
+            if (toolbar && hasCommunities) {
+                var haloBtn = document.createElement('button');
+                haloBtn.type = 'button';
+                haloBtn.className = 'rv-btn rv-btn-active';
+                haloBtn.setAttribute('aria-pressed', 'true');
+                haloBtn.setAttribute('aria-label', 'Toggle community colours');
+                haloBtn.title = 'Community colours — rings group entities that co-occur';
+                haloBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg>';
+                haloBtn.addEventListener('click', function () {
+                    showHalos = !showHalos;
+                    haloBtn.classList.toggle('rv-btn-active', showHalos);
+                    haloBtn.setAttribute('aria-pressed', String(showHalos));
+                    chart.setOption(buildOption(currentNodes, currentEdges), true);
+                });
+                toolbar.insertBefore(haloBtn, toolbar.firstChild);
             }
 
             // ── Save button ──

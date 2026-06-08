@@ -11,9 +11,10 @@ An [Omeka S](https://omeka.org/s/) module that adds interactive visualizations t
 A force-directed network showing the item's relationships. For items with rich outgoing links (research items, projects, people), shows linked persons, subjects, locations, and other items sharing the same properties. For items that are primarily linked TO (subjects, languages, locations, genres), shows the research items that reference them.
 
 - Pre-computed JSON for instant loading, regenerated in-Omeka (live REST-API fallback when absent)
+- Hover an entity to isolate its connections — its neighbours and their edges brighten while everything else fades
+- **Community colours** — a coloured halo rings entities that co-occur through shared items, so connected clusters read at a glance (toggle in the toolbar); the busiest (hub) entities are drawn larger
 - Click any node to navigate to its Omeka S page
 - Fullscreen mode (Escape to exit)
-- Adjacency highlighting on hover
 - Node cap (150 direct + 30 shared) prevents overload on highly-connected entities
 - Collapsible section — a native `<details>` disclosure mirroring the DRE theme's *Linked resources* accordion (expanded by default; the graph re-fits on expand)
 
@@ -55,7 +56,7 @@ Contextual charts adapted per entity type. All chart elements are clickable, lin
 | Origin > Current Location (flow map) | x | x | | | x | | | | |
 | Items by Country (choropleth) | x | x | | | | | | | |
 | Self-location MiniMap | | | | x | x | | | | |
-| Affiliation Map | | | x | | | | | | |
+| Affiliation Map | | x | x | | | | | | |
 | Profile (radar) | | x | x | x | | | | | |
 | Subject Co-occurrence (chord) | x | x | | | | | | | |
 | Collaboration Network | | | | x | | | | | |
@@ -69,7 +70,7 @@ Contextual charts adapted per entity type. All chart elements are clickable, lin
 
 Note: The basic Timeline is automatically hidden when the Stacked Timeline is available (since it's redundant).
 
-The collection / section / project overviews additionally carry an **acquisition calendar** (items added per day), a **box plot** of items-per-project across research sections, and a **time-aware chord** (subject co-occurrence with a year slider / play button).
+The collection / section / project overviews additionally carry a **box plot** of items-per-project across research sections, and a **time-aware chord** (subject co-occurrence with a year slider / play button). Single-project dashboards also carry an **affiliation map** of the geocoded institutions the project's members (PI + team) are affiliated with.
 
 Dashboard layouts are resource-type-aware: each resource template has its own chart order and wide/tall configuration defined in `dashboard-layouts.js`. This prevents layout gaps in the 2-column grid by pairing half-width charts side by side.
 
@@ -94,8 +95,8 @@ Parent/category items get aggregate dashboards spanning their entire item set. E
 
 Two collection-wide **site-page blocks** (Admin > Sites > [site] > Pages) that share one precomputed dataset (`asset/data/item-dashboards/collection-overview.json`, which aggregates every research item **and cluster publication**) but render different slices of it. The slice is chosen by a `data-layout` attribute on the block template, so both stay in sync from a single regeneration.
 
-- **Collection Overview** — a curated, home-page-friendly subset mirroring the [amira dashboard](https://amira.africamultiple.uni-bayreuth.de/) homepage, in this order: summary stat cards → **Africa Multiple Research Centres (AMRCs) and its partners** (cluster-geography map) → **Research Sections** (projects per section) → **Research Section × University** (research items by section and funding university) → **Items by Year and Type** → **Resource Type × Language** → **Languages** → **Resource Types** → **Subjects & Tags** → **Items by Country**. Uses the `collectionOverview` layout. Here "items" regroups research items **and** cluster publications (the curated Publications item set): each publication is folded in under a single synthetic **Publication** resource type — overriding its bibliographic type — so the whole bibliography reads as one **Publication** category in *Items by Year and Type* and *Resource Types* (drill into the Publications block for the per-type breakdown). *Subjects & Tags* spans both controlled LCSH subjects and free tags (both are `dcterms:subject`). *Resource Type × Language* drops any resource type that never co-occurs with a language.
-- **Collection Dashboard** — the full set of collection-wide visualizations (the former "Collection Overview"): stacked timeline, resource-type / language breakdowns, subject trends, co-occurrence chord, sankey, sunburst, geo flows, choropleth, acquisition calendar, time-aware chord, items-per-project box plot, and more. Uses the full `section` layout.
+- **Collection Overview** — a curated, home-page-friendly subset mirroring the [amira dashboard](https://amira.africamultiple.uni-bayreuth.de/) homepage, in this order: summary stat cards → **Africa Multiple Research Centres (AMRCs) and its partners** (cluster-geography map) → **Research Sections** (projects per section) → **Research Section × University** (research items by section and funding university) → **Items by Year and Type** → **Resource Type × Language** → **Languages** → **Resource Types** → **Subjects & Tags** → **Items by Country**. Uses the `collectionOverview` layout. Here "items" regroups research items, cluster publications (the curated Publications item set) **and cluster podcasts**: each publication or podcast is folded in under a single synthetic **Publication** / **Podcast** resource type — overriding its bibliographic type — so the whole bibliography reads as one **Publication** category (and the podcast episodes as one **Podcast** category) in *Items by Year and Type*, *Resource Types* **and *Resource Type × Language*** (drill into the Publications block for the per-type breakdown). *Subjects & Tags* spans both controlled LCSH subjects and free tags (both are `dcterms:subject`). *Resource Type × Language* drops any resource type that never co-occurs with a language, collapses its tall axis on mobile and hides the per-cell counts so the matrix stays legible on a phone.
+- **Collection Dashboard** — the full set of collection-wide visualizations (the former "Collection Overview"): stacked timeline, resource-type / language breakdowns, subject trends, co-occurrence chord, sankey, sunburst, geo flows, choropleth, time-aware chord, items-per-project box plot, and more. Uses the full `section` layout.
 
 Both open with a grid of **summary stat cards** — Research Items, Projects (with items), People, Organisations, Locations (with the number of countries they span), Languages, Subjects & Tags, Resource Types, and Cluster Publications — each with a [lucide](https://lucide.dev) icon. All counts come from the precompute: **People, Organisations, Languages, Subjects & Tags, Resource Types and Cluster Publications** are the sizes of their authority item sets (Persons, Institutions, Languages, Subjects, Type of Resource, Publications); **Projects** counts projects that have research items, plus each external partner collection (ILAM, BayGlo) — which the amira dashboard models as a virtual project but which has no template-5 project entity of its own; **Research Items and Locations** reflect what is present in the corpus. Cards with a zero count are dropped.
 
@@ -264,7 +265,7 @@ ResourceVisualizations/
 │   ├── Aggregators/                    # Builders split by concern (one trait per file)
 │   │   ├── SupportTrait.php            # sort/lookup + PageRank/Louvain primitives
 │   │   ├── BasicChartsTrait.php        # aggregateItems, heatmap, roles, templates
-│   │   ├── TemporalChartsTrait.php     # timelines, trends, calendar, boxplot, time-chord, what's-new
+│   │   ├── TemporalChartsTrait.php     # timelines, trends, boxplot, time-chord, what's-new
 │   │   ├── NetworkChartsTrait.php      # chord, sankey, contributor/affiliation/collab/co-author networks
 │   │   ├── GeoChartsTrait.php          # choropleth, geo-flows, country index
 │   │   ├── HierarchyChartsTrait.php    # sunburst, treemap

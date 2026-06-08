@@ -121,28 +121,45 @@ trait BasicChartsTrait
     /**
      * Build resource type × language heatmap data.
      *
+     * `$syntheticTypes` maps an item id to a single resource-type label that
+     * REPLACES that item's own dcterms:type (e.g. every publication shown as one
+     * "Publication" row and every podcast as one "Podcast" row, whatever their
+     * bibliographic type), so the heatmap matches the resource-type pie and the
+     * year×type timeline. Pass `[]` to disable.
+     *
      * Both axes are derived from the populated cells only, so a resource type
      * that never co-occurs with a language at all (and, symmetrically, a
      * language that never co-occurs with a type) is dropped rather than drawn
      * as an all-zero row/column.
+     *
+     * @param array<int,string> $syntheticTypes
      */
-    public static function buildHeatmap(array $itemIds, array $links, array $items): ?array
+    public static function buildHeatmap(array $itemIds, array $links, array $items, array $syntheticTypes = []): ?array
     {
         $cross = [];
 
         foreach ($itemIds as $iid) {
             $itemTypes = [];
             $itemLangs = [];
+            $synType = $syntheticTypes[$iid] ?? null;
+            $hasSyn = $synType !== null && $synType !== '';
             foreach ($links[$iid] ?? [] as [$term, $label, $vrid]) {
                 $title = $items[$vrid]['title'] ?? '';
                 if ($title === '') {
                     continue;
                 }
                 if ($term === 'dcterms:type') {
-                    $itemTypes[] = $title;
+                    if (!$hasSyn) {
+                        $itemTypes[] = $title;
+                    }
                 } elseif ($term === 'dcterms:language') {
                     $itemLangs[] = $title;
                 }
+            }
+            // A synthetic label collapses the item to one type row, overriding its
+            // real (bibliographic) dcterms:type — counted once per language.
+            if ($hasSyn) {
+                $itemTypes = [$synType];
             }
             foreach ($itemTypes as $t) {
                 foreach ($itemLangs as $l) {

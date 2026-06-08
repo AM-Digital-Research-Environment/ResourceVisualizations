@@ -116,6 +116,33 @@ check(A::buildAffiliationMap(999, $afLinks, $afItems, $geo) === null,
 check(A::buildAffiliationMap(60, $afLinks, $afItems, []) === null,
     'buildAffiliationMap null when no affiliation is geocoded');
 
+// --- buildProjectAffiliationMap: a project's members' geocoded affiliations ---
+$pafItems = $afItems + [70 => ['title' => 'ArtWorld', 'template_id' => 5, 'class_term' => 'frapo:Project']];
+$pafLinks = $afLinks + [
+    // Jane Doe (60) is both PI and a team member — counted once.
+    70 => [['dcterms:creator', 'PI', 60], ['foaf:member', 'Member', 60]],
+];
+$pafMap = A::buildProjectAffiliationMap(70, $pafLinks, $pafItems, $geo); // only 51 is in $geo
+check($pafMap !== null && count($pafMap) === 1, 'buildProjectAffiliationMap keeps only geocoded member affiliations');
+check($pafMap[0]['itemId'] === 51 && $pafMap[0]['members'] === ['Jane Doe'],
+    'buildProjectAffiliationMap marker lists the affiliated member once');
+check(A::buildProjectAffiliationMap(70, $pafLinks, $pafItems, []) === null,
+    'buildProjectAffiliationMap null when no member affiliation is geocoded');
+check(A::buildProjectAffiliationMap(999, $pafLinks, $pafItems, $geo) === null,
+    'buildProjectAffiliationMap null when the project has no members');
+
+// --- buildHeatmap synthetic types collapse an item's real type to one row ---
+$synItems = [10 => ['title' => 'Article'], 11 => ['title' => 'English'], 12 => ['title' => 'Book chapter']];
+$synLinks = [
+    1 => [['dcterms:type', 'T', 10], ['dcterms:language', 'L', 11]], // real type Article × English
+    2 => [['dcterms:type', 'T', 12], ['dcterms:language', 'L', 11]], // real type Book chapter × English
+];
+$synHm = A::buildHeatmap([1, 2], $synLinks, $synItems, [1 => 'Publication', 2 => 'Publication']);
+check($synHm !== null && $synHm['rows'] === ['Publication'],
+    'buildHeatmap folds synthetic-typed items into one row');
+check($synHm['cols'] === ['English'] && $synHm['values'][0][2] === 2,
+    'buildHeatmap counts both synthetic-typed items in the one cell');
+
 // --- buildHeatmap drops a resource type that never co-occurs with a language ---
 $hmItems = [10 => ['title' => 'Book'], 11 => ['title' => 'English'], 14 => ['title' => 'Map']];
 $hmLinks = [
@@ -317,13 +344,30 @@ check($kgShared, 'KG: shared edge carries isShared/idf metadata');
 check(isset($g['stats']['maxStrength'], $g['stats']['maxFreqPct']), 'KG: stats present');
 check(KG::buildItemMap(1, $kgLinks, []) === null, 'KG buildItemMap null without geo');
 
-// --- buildCalendarHeatmap (acquisition cadence by created date) ---
-$calItems = [
-    1 => ['created' => '2024-01-05'], 2 => ['created' => '2024-01-05'],
-    3 => ['created' => '2024-02-10'], 4 => ['created' => ''],
+// --- assignCommunities: co-occurring neighbours (via shared items) form a cluster ---
+$cgNodes = [
+    ['id' => 'item_1', 'isCenter' => true],
+    ['id' => 'resource_10'], ['id' => 'resource_11'], ['id' => 'resource_12'],
+    ['id' => 'item_2'], ['id' => 'item_3'],
 ];
-check(A::buildCalendarHeatmap([1, 2, 3, 4], $calItems) === [['2024-01-05', 2], ['2024-02-10', 1]], 'buildCalendarHeatmap groups by day');
-check(A::buildCalendarHeatmap([4], $calItems) === null, 'buildCalendarHeatmap null when no created dates');
+$cgEdges = [
+    ['source' => 'item_1', 'target' => 'resource_10'],
+    ['source' => 'item_1', 'target' => 'resource_11'],
+    ['source' => 'item_1', 'target' => 'resource_12'], // lone attribute (centre only)
+    ['source' => 'item_2', 'target' => 'resource_10', 'isShared' => true],
+    ['source' => 'item_2', 'target' => 'resource_11', 'isShared' => true],
+    ['source' => 'item_3', 'target' => 'resource_10', 'isShared' => true],
+    ['source' => 'item_3', 'target' => 'resource_11', 'isShared' => true],
+];
+[$cgOut, $cgCount] = KG::assignCommunities($cgNodes, $cgEdges);
+$cgCommunity = [];
+foreach ($cgOut as $cgN) { $cgCommunity[$cgN['id']] = $cgN['community']; }
+check($cgCount === 1, 'assignCommunities finds one cluster among shared neighbours');
+check($cgCommunity['item_1'] === -1, 'assignCommunities leaves the centre uncoloured');
+check($cgCommunity['resource_12'] === -1, 'assignCommunities leaves a centre-only leaf uncoloured');
+check($cgCommunity['resource_10'] === 0 && $cgCommunity['resource_11'] === 0
+    && $cgCommunity['item_2'] === 0 && $cgCommunity['item_3'] === 0,
+    'assignCommunities groups co-occurring entities + their shared items together');
 
 // --- buildBoxplot (items-per-project per section; <2 boxes => null) ---
 $bpSections = [10 => ['title' => 'Sec A'], 20 => ['title' => 'Sec B']];
