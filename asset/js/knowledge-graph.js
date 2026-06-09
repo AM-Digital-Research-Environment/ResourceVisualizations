@@ -717,13 +717,30 @@
         });
     }
 
+    // Lazy-mount: the knowledge graph sits below the item metadata, so defer
+    // loading ECharts/MapLibre (ns.ensureLibs) and the graph render until the
+    // block nears the viewport. When the libraries were loaded eagerly, ensureLibs
+    // resolves at once and behaviour is unchanged. Mirrors dashboard.js.
+    function mountWhenVisible(container, render) {
+        var run = function () {
+            (ns.ensureLibs ? ns.ensureLibs() : Promise.resolve()).then(render).catch(function (err) {
+                console.error('DreVisualizations:', err);
+            });
+        };
+        if (!('IntersectionObserver' in window)) { run(); return; }
+        var io = new IntersectionObserver(function (entries) {
+            for (var i = 0; i < entries.length; i++) {
+                if (entries[i].isIntersecting) { io.disconnect(); run(); break; }
+            }
+        }, { rootMargin: '600px 0px' });
+        io.observe(container);
+    }
+
     function init() {
-        if (typeof echarts === 'undefined') {
-            console.warn('DreVisualizations: ECharts not loaded');
-            return;
-        }
         var cs = document.querySelectorAll('.knowledge-graph-container');
-        for (var i = 0; i < cs.length; i++) initKnowledgeGraph(cs[i]);
+        for (var i = 0; i < cs.length; i++) {
+            (function (c) { mountWhenVisible(c, function () { initKnowledgeGraph(c); }); })(cs[i]);
+        }
     }
 
     if (document.readyState === 'loading') {

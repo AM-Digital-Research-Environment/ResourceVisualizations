@@ -118,7 +118,11 @@
                 }).then(function (dash) {
                     var tl = dash && dash.timeline;
                     if (tl && Object.keys(tl).length > 1) {
-                        render(container, block, tl, iYear, p.name, siteBase, p.id);
+                        // Applicable: pull ECharts on demand, then render. Items
+                        // without a matching multi-year project never load it.
+                        (ns.ensureLibs ? ns.ensureLibs() : Promise.resolve()).then(function () {
+                            render(container, block, tl, iYear, p.name, siteBase, p.id);
+                        }).catch(function () {});
                     } else {
                         tryNext(i + 1);
                     }
@@ -128,7 +132,8 @@
     }
 
     function init() {
-        if (typeof echarts === 'undefined') return;
+        // ECharts is loaded on demand inside the render path (ns.ensureLibs), so
+        // the applicability fetch below runs without pulling the heavy library.
         var cs = document.querySelectorAll('.sibling-sparkline-container');
         for (var i = 0; i < cs.length; i++) initSparkline(cs[i]);
     }

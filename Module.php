@@ -45,29 +45,43 @@ class Module extends AbstractModule
     public function addAssets($event)
     {
         $view = $event->getTarget();
-        $view->headLink()->appendStylesheet(
-            $view->assetUrl('css/dre-visualizations.css', 'DreVisualizations')
+        $asset = function ($path) use ($view) {
+            return $view->assetUrl($path, 'DreVisualizations');
+        };
+
+        // dre-visualizations.css styles the (below-the-fold) viz blocks and their
+        // loading spinner. Inject it non-render-blocking via the media="print"→
+        // "all" swap so it never sits on the item page's critical render path.
+        // The viz blocks need JS to render anyway, so a JS-gated stylesheet costs
+        // no real no-script fallback.
+        $cssHref = json_encode($asset('css/dre-visualizations.css'), JSON_UNESCAPED_SLASHES);
+        $view->headScript()->appendScript(
+            '(function(){var l=document.createElement("link");l.rel="stylesheet";'
+            . 'l.media="print";l.href=' . $cssHref . ';'
+            . 'l.onload=function(){this.onload=null;this.media="all";};'
+            . 'document.head.appendChild(l);})();'
         );
-        // defer: keep the ECharts/MapLibre prelude off the critical render path.
-        // Deferred scripts execute in append order, so dashboard-core (and the
-        // chart chain a block appends after) still load first. The library URLs
-        // come from the self-hosted vendor files (single source of truth:
-        // DashboardAssets), resolved to same-origin module-asset URLs.
-        $defer = ['defer' => true];
+
+        // Hand the heavy library URLs to the front end instead of eager-loading
+        // ~660 KiB of ECharts + MapLibre on every item/item-set page. The viz
+        // controllers (dashboard.js, knowledge-graph.js, sibling-sparkline.js)
+        // call ns.ensureLibs() to pull them in only when a block actually needs
+        // to render — on scroll into view, or once an async block resolves as
+        // applicable. Mirrors the lazy 'dashboard' surface in DashboardAssets.
+        $view->headScript()->appendScript('window.RV_LIBS=window.RV_LIBS||' . json_encode([
+            'echarts'     => $asset(DashboardAssets::ECHARTS_JS),
+            'wordcloud'   => $asset(DashboardAssets::WORDCLOUD_JS),
+            'maplibre'    => $asset(DashboardAssets::MAPLIBRE_JS),
+            'maplibreCss' => $asset(DashboardAssets::MAPLIBRE_CSS),
+        ], JSON_UNESCAPED_SLASHES) . ';');
+
+        // dashboard-core.js defines ns.ensureLibs + the shared chart helpers;
+        // deferred so it never blocks first paint, and it pulls in no heavy
+        // library on its own. Blocks append their builder chain (and controller)
+        // after it via the DashboardAssets helper; deferred scripts run in append
+        // order, so the registry is built before any controller's init() fires.
         $view->headScript()->appendFile(
-            $view->assetUrl(DashboardAssets::ECHARTS_JS, 'DreVisualizations'), 'text/javascript', $defer
-        );
-        $view->headScript()->appendFile(
-            $view->assetUrl(DashboardAssets::WORDCLOUD_JS, 'DreVisualizations'), 'text/javascript', $defer
-        );
-        $view->headLink()->appendStylesheet(
-            $view->assetUrl(DashboardAssets::MAPLIBRE_CSS, 'DreVisualizations')
-        );
-        $view->headScript()->appendFile(
-            $view->assetUrl(DashboardAssets::MAPLIBRE_JS, 'DreVisualizations'), 'text/javascript', $defer
-        );
-        $view->headScript()->appendFile(
-            $view->assetUrl('js/dashboard-core.js', 'DreVisualizations'), 'text/javascript', $defer
+            $asset('js/dashboard-core.js'), 'text/javascript', ['defer' => true]
         );
     }
 }
