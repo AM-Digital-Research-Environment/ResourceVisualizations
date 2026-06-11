@@ -104,7 +104,7 @@ class PhotoBrowse extends AbstractBlockLayout
         }
 
         // Auto-apply: when no collection was picked but the chosen item set maps
-        // to exactly one whole-set registry entry (ILAM, Gerd Spittler — not the
+        // to exactly one whole-set registry entry (e.g. ILAM — not the
         // prefix-split Museu sub-collections, which are ambiguous and must be
         // chosen), use it. So those existing gallery pages gain issue grouping /
         // partner credit without re-wiring.

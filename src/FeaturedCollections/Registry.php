@@ -44,12 +44,6 @@ final class Registry
     {
         return array_map([self::class, 'normalize'], [
             [
-                'slug' => 'the-pre-death-bequest-of-gerd-spittler',
-                'itemSetId' => 6279,
-                'title' => 'The Pre-Death Bequest of Gerd Spittler',
-                'description' => 'Research material of Gerd Spittler collected in West Africa from 1967 onwards — field notes, excerpts and copies from African archives, thousands of photographs, and Hausa and Tamacheck audio recordings — dedicated to completed research across the whole Cluster.',
-            ],
-            [
                 'slug' => 'international-library-of-african-music-ilam',
                 'itemSetId' => 27724,
                 'title' => 'International Library of African Music (ILAM)',
