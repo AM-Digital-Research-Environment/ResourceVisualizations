@@ -109,7 +109,7 @@
         surface: '#fafafa',       // ← --surface (export background)
         fontFamily: 'system-ui, sans-serif',  // ← --font-body (in-chart UI text)
         fontDisplay: 'Georgia, serif',        // ← --font-display (in-canvas titles)
-        fontSize: 11,
+        fontSize: 12,   // Hanken sits visually smaller than the canvas default at 11
         fontSizeTitle: 14,
         fontSizeEmphasis: 13,
         labelMaxLen: 30,
