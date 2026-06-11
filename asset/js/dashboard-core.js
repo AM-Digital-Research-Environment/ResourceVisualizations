@@ -55,6 +55,43 @@
 
     ns.COLORS = ns.buildPalette(false);
 
+    // Community-halo ring palette (knowledge graph). A ring encodes the node's
+    // co-occurrence community while the fill encodes its entity type, so the
+    // halos are deliberately DISTINCT from the categorical fills above — but
+    // they stay in the same warm "pigment" world as the brand (no Material
+    // pink/indigo). Light mode uses deep pigment-pot tones, inkier than every
+    // fill, so rings read as drawn outlines on the warm-stone surface; dark
+    // mode lifts the same hue stations luminous for the forest surface.
+    // Rebuilt per mode by readTheme() and mutated IN PLACE like COLORS, so the
+    // graph's _rvRebuild re-colours rings on every light/dark toggle.
+    ns._HALO_LIGHT = [
+        '#8e2a4c', // wine
+        '#9a4a16', // sienna
+        '#67701f', // moss
+        '#11607e', // petrol
+        '#44549b', // slate indigo
+        '#7b2f86', // plum
+        '#6f4a1d', // cocoa
+        '#a83a68'  // magenta clay
+    ];
+    ns._HALO_DARK = [
+        '#e87b9b', // rose
+        '#dd8a55', // copper
+        '#bdc24f', // chartreuse
+        '#54b2d8', // cyan
+        '#9b9bee', // periwinkle
+        '#c873d2', // orchid
+        '#d4a878', // sand
+        '#e388b9'  // pink clay
+    ];
+
+    /** The community-halo ring palette for the given mode (fresh copy). */
+    ns.buildHaloPalette = function (dark) {
+        return (dark ? ns._HALO_DARK : ns._HALO_LIGHT).slice();
+    };
+
+    ns.HALO = ns.buildHaloPalette(false);
+
     // Shared design tokens. Colour values are placeholders here; readTheme()
     // overwrites them in place (so modules that captured `ns.THEME` see updates)
     // from the DRE theme's CSS variables on load and on every theme change.
@@ -70,6 +107,8 @@
         grid: '#e0e0e0',          // ← --border (axis lines)
         gridLight: '#f0f0f0',     // ← --border-light (split lines)
         surface: '#fafafa',       // ← --surface (export background)
+        fontFamily: 'system-ui, sans-serif',  // ← --font-body (in-chart UI text)
+        fontDisplay: 'Georgia, serif',        // ← --font-display (in-canvas titles)
         fontSize: 11,
         fontSizeTitle: 14,
         fontSizeEmphasis: 13,
@@ -213,6 +252,22 @@
         }
     };
 
+    /**
+     * Resolve a CSS custom property holding a font stack (e.g. --font-body)
+     * to the active theme's computed font-family string. Unlike colours this
+     * needs no rasterising — canvas font shorthand accepts a stack directly.
+     */
+    ns.cssFont = function (name, fallback) {
+        try {
+            var probe = getProbe();
+            probe.style.fontFamily = '';
+            probe.style.fontFamily = 'var(' + name + ', ' + fallback + ')';
+            return getComputedStyle(probe).fontFamily || fallback;
+        } catch (e) {
+            return fallback;
+        }
+    };
+
     /** Parse an 'rgb(r,g,b)' / 'rgba(...)' string to a [r,g,b] array. */
     function _parseRGB(s) {
         var m = /(\d+)\D+(\d+)\D+(\d+)/.exec(s || '');
@@ -258,8 +313,21 @@
         ns.COLORS.length = 0;
         Array.prototype.push.apply(ns.COLORS, pal);
 
+        // Same in-place swap for the knowledge-graph community halo rings.
+        var halo = ns.buildHaloPalette(ns._darkMode);
+        ns.HALO.length = 0;
+        Array.prototype.push.apply(ns.HALO, halo);
+
         var t = ns.THEME;
         var c = ns.cssColor;
+
+        // Type follows the DRE theme: Hanken Grotesk for in-chart UI text,
+        // Spectral for the rare in-canvas title — same stacks the page uses,
+        // with the theme's own fallbacks for non-DRE hosts.
+        t.fontFamily = ns.cssFont('--font-body',
+            '"Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif');
+        t.fontDisplay = ns.cssFont('--font-display',
+            '"Spectral", Georgia, "Times New Roman", serif');
 
         t.accent      = c('--primary', '#22817b');
         t.accentDark  = c('--primary-hover', '#1a655f');
@@ -288,26 +356,28 @@
         var axis = {
             axisLine:  { lineStyle: { color: t.grid } },
             axisTick:  { lineStyle: { color: t.grid } },
-            axisLabel: { color: t.textMuted },
+            axisLabel: { color: t.textMuted, fontFamily: t.fontFamily },
             splitLine: { show: false },
             splitArea: { show: false }
         };
         return {
             color: ns.COLORS,
             backgroundColor: 'transparent',   // let the panel --surface show through
-            textStyle: { color: t.text },
+            textStyle: { color: t.text, fontFamily: t.fontFamily },
             title: {
-                textStyle: { color: t.heading },
-                subtextStyle: { color: t.textMuted }
+                // In-canvas titles take the display serif, matching the HTML
+                // <h4> headings the dashboard renders around the charts.
+                textStyle: { color: t.heading, fontFamily: t.fontDisplay },
+                subtextStyle: { color: t.textMuted, fontFamily: t.fontFamily }
             },
             legend: {
-                textStyle: { color: t.text },
+                textStyle: { color: t.text, fontFamily: t.fontFamily },
                 pageTextStyle: { color: t.textMuted }
             },
             tooltip: {
                 backgroundColor: ns.cssColor('--surface-raised', t.surface),
                 borderColor: t.grid,
-                textStyle: { color: t.text }
+                textStyle: { color: t.text, fontFamily: t.fontFamily }
             },
             categoryAxis: axis,
             valueAxis: axis,
@@ -319,7 +389,7 @@
             graph: {
                 itemStyle: { borderColor: t.border },
                 lineStyle: { color: t.grid },
-                label: { color: t.text }
+                label: { color: t.text, fontFamily: t.fontFamily }
             },
             treemap: {
                 itemStyle: { borderColor: t.border },
@@ -331,10 +401,10 @@
                 label: { color: t.text },
                 lineStyle: { color: 'source', opacity: 0.4 }
             },
-            visualMap: { textStyle: { color: t.text } },
+            visualMap: { textStyle: { color: t.text, fontFamily: t.fontFamily } },
             timeline: {
                 lineStyle: { color: t.grid },
-                label: { color: t.textMuted },
+                label: { color: t.textMuted, fontFamily: t.fontFamily },
                 controlStyle: { color: t.textMuted, borderColor: t.grid }
             }
         };

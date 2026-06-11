@@ -2,7 +2,7 @@
  * Knowledge Graph — loads precomputed JSON files, falls back to REST API.
  *
  * Depends on:
- *   - dashboard-core.js (THEME, COLORS, initChart, truncateLabel, getBasemapStyle)
+ *   - dashboard-core.js (THEME, COLORS, HALO, initChart, truncateLabel, getBasemapStyle)
  *
  * Priority:
  * 1. Try /modules/DreVisualizations/asset/data/knowledge-graphs/{id}.json (precomputed, instant)
@@ -17,11 +17,12 @@
     var COLORS = ns.COLORS;
     var THEME = ns.THEME;
 
-    // Bold ring palette for community halos — deliberately distinct from the
+    // Ring palette for community halos — deliberately distinct from the
     // categorical node fills (ns.COLORS) so a node's cluster reads independently
-    // of its entity type. Saturated enough to stay legible in light and dark.
-    var HALO = ['#d81b60', '#1e88e5', '#fb8c00', '#8e24aa', '#00897b',
-                '#c0ca33', '#5e35b1', '#f4511e', '#039be5', '#43a047'];
+    // of its entity type. Lives in dashboard-core next to the brand palette
+    // (deep pigments on light, lifted on dark) and is mutated in place by
+    // readTheme(), so this reference re-colours on every light/dark toggle.
+    var HALO = ns.HALO;
 
     /** Halo colour for a community index (null when none / halos off). */
     function communityColor(c) {
