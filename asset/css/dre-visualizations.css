@@ -2642,6 +2642,29 @@ body.photo-lightbox-open {
     font-variant-numeric: tabular-nums;
 }
 
+/* Legend chips — double as show/hide toggles for the origin / current layers
+ * (off = dimmed + struck through, like .deg-chip and the cluster-map legend). */
+.rv-spatial-legend { display: inline-flex; flex-wrap: wrap; gap: 0.35rem; }
+.rv-spatial-legend-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    height: var(--rv-spatial-control-h);
+    padding: 0 0.6rem;
+    border: 1px solid var(--rv-border);
+    border-radius: 999px;
+    background: var(--rv-bg);
+    color: var(--rv-text-color);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: opacity 0.15s, background 0.15s, border-color 0.15s;
+}
+.rv-spatial-legend-chip:hover { background: var(--rv-bg-raised); border-color: var(--rv-accent); }
+.rv-spatial-legend-chip:focus-visible { outline: none; box-shadow: var(--rv-focus-ring); }
+.rv-spatial-legend-chip.is-off { opacity: 0.45; }
+.rv-spatial-legend-chip.is-off span:not(.rv-spatial-swatch) { text-decoration: line-through; }
+.rv-spatial-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+
 /* Sidebar groups + labels */
 .rv-spatial-group { margin-bottom: 0.9rem; }
 .rv-spatial-label {

@@ -1028,8 +1028,8 @@ final class Runner
         $entityPlaces = [];
 
         // Build a type's picker rows ([id, label, placeCount], densest first) and
-        // populate $entityPlaces[id] = [[locId, count], ...]. High-cardinality types
-        // are capped to the top SPATIAL_PICKER_CAP by mapped-place count.
+        // populate $entityPlaces[id] = [[locId, origin, current], ...]. High-cardinality
+        // types are capped to the top SPATIAL_PICKER_CAP by mapped-place count.
         $buildType = function (array $entities, bool $cap) use (&$entityPlaces): array {
             $rows = [];
             foreach ($entities as $eid => $info) {
@@ -1037,10 +1037,11 @@ final class Runner
                 if (!$places) {
                     continue;
                 }
-                arsort($places);
+                // Densest places (origin + current) first.
+                uasort($places, static fn ($a, $b) => ($b[0] + $b[1]) <=> ($a[0] + $a[1]));
                 $adj = [];
-                foreach ($places as $locId => $cnt) {
-                    $adj[] = [(int) $locId, $cnt];
+                foreach ($places as $locId => $rc) {
+                    $adj[] = [(int) $locId, $rc[0], $rc[1]];
                 }
                 $rows[] = ['id' => (int) $eid, 'label' => $info['label'], 'adj' => $adj];
             }

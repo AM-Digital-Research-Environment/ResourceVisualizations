@@ -98,38 +98,38 @@ check(count($geoAgg['currentLocations']) === 1 && $geoAgg['currentLocations'][0]
     'aggregateItems current location resolves an institution');
 check($geoAgg['currentLocations'][0]['value'] === 1, 'aggregateItems current location count = 1');
 
-// --- placesForItems: distinct items per place, spatial ∪ provenance ---
+// --- placesForItems: per-place [origin, current] counts ---
 $spGeo = [
     50 => ['name' => 'Bayreuth', 'lat' => 49.95, 'lon' => 11.58, 'itemId' => 50],
     80 => ['name' => 'Lagos', 'lat' => 6.45, 'lon' => 3.39, 'itemId' => 80],
 ];
 $spLinks = [
-    1 => [['dcterms:spatial', 'Origin', 50], ['dcterms:provenance', 'Current', 50]], // same place, both roles → once
+    1 => [['dcterms:spatial', 'Origin', 50], ['dcterms:provenance', 'Current', 50]], // 50 is both origin & current
     2 => [['dcterms:spatial', 'Origin', 80]],
     3 => [['dcterms:spatial', 'Origin', 50], ['dcterms:subject', 'S', 999]],          // 999 not geocoded → ignored
 ];
 $spPlaces = A::placesForItems([1, 2, 3], $spLinks, $spGeo);
-check(($spPlaces[50] ?? 0) === 2, 'placesForItems counts distinct items per place (50 = 2, dedup origin+current)');
-check(($spPlaces[80] ?? 0) === 1, 'placesForItems counts a single-item place (80 = 1)');
+check(($spPlaces[50] ?? null) === [2, 1], 'placesForItems splits roles: place 50 = [2 origin, 1 current]');
+check(($spPlaces[80] ?? null) === [1, 0], 'placesForItems: place 80 = [1 origin, 0 current]');
 check(!isset($spPlaces[999]), 'placesForItems ignores non-geocoded references');
 
-// --- buildSpatialPlaces: global bubbles + country index/bounds ---
+// --- buildSpatialPlaces: global bubbles split into origin/current + country index ---
 $spRev = [
-    50 => ['dcterms:spatial' => [1, 3], 'dcterms:provenance' => [1]], // distinct items {1,3} → 2
-    80 => ['dcterms:spatial' => [2]],                                  // → 1
+    50 => ['dcterms:spatial' => [1, 3], 'dcterms:provenance' => [1]], // origin items {1,3}=2, current {1}=1
+    80 => ['dcterms:spatial' => [2]],                                  // origin 1, current 0
 ];
 $spCountryIndex = [50 => 'Germany', 80 => 'Nigeria'];
 $sp = A::buildSpatialPlaces($spGeo, $spRev, $spCountryIndex);
 check(count($sp['locations']) === 2, 'buildSpatialPlaces emits both referenced locations');
-check($sp['locations'][0][0] === 50 && $sp['locations'][0][4] === 2,
-    'buildSpatialPlaces: densest place first, count = distinct referencing items (2)');
-check($sp['locations'][1][0] === 80 && $sp['locations'][1][4] === 1,
-    'buildSpatialPlaces: second place count = 1');
-check($sp['countries'][0][0] === 'Germany' && $sp['countries'][0][1] === 2,
-    'buildSpatialPlaces: countries ordered by item count (Germany first)');
-check($sp['countries'][$sp['locations'][0][5]][0] === 'Germany',
-    'buildSpatialPlaces: location carries the index of its own country');
-check($sp['countries'][$sp['locations'][1][5]][2] === [3.39, 6.45, 3.39, 6.45],
+check($sp['locations'][0][0] === 50 && $sp['locations'][0][4] === 2 && $sp['locations'][0][5] === 1,
+    'buildSpatialPlaces: densest first, row = [id,name,lat,lng,origin=2,current=1,countryIdx]');
+check($sp['locations'][1][0] === 80 && $sp['locations'][1][4] === 1 && $sp['locations'][1][5] === 0,
+    'buildSpatialPlaces: place 80 origin=1, current=0');
+check($sp['countries'][0][0] === 'Germany' && $sp['countries'][0][1] === 3,
+    'buildSpatialPlaces: country count sums origin+current (Germany=3), ordered desc');
+check($sp['countries'][$sp['locations'][0][6]][0] === 'Germany',
+    'buildSpatialPlaces: location carries its country index at row[6]');
+check($sp['countries'][$sp['locations'][1][6]][2] === [3.39, 6.45, 3.39, 6.45],
     'buildSpatialPlaces: single-point country bounds = the point [w,s,e,n]');
 check(A::buildSpatialPlaces($spGeo, [], $spCountryIndex)['locations'] === [],
     'buildSpatialPlaces: drops unreferenced locations');

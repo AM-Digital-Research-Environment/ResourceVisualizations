@@ -1,17 +1,20 @@
 /**
  * Spatial Exploration — the collection-wide places map for the cross-cutting
  * site-page block. Renders the precomputed spatial-exploration.json with MapLibre
- * GL (the same WebGL renderer every DRE map already ships): every geocoded,
- * item-referenced location is a bubble sized by how many items reference it. A
- * sidebar entity picker filters the bubbles to one project / research section /
- * person / organisation / subject, a country dropdown zooms in, and clicking a
- * bubble opens that location's page.
+ * GL (the same WebGL renderer every DRE map already ships). Every geocoded location
+ * the research items reference is drawn as a bubble; origins (dcterms:spatial) and
+ * current locations (dcterms:provenance) are kept as two distinct, separately
+ * coloured layers — the same colour language as the per-entity dashboard map
+ * (origin = brand accent, current = cluster Hellblau) — and the legend doubles as a
+ * show/hide toggle. A sidebar entity picker filters the bubbles to one project /
+ * research section / person / organisation / subject, a country dropdown zooms in,
+ * and clicking a bubble opens that location's page.
  *
  * Self-contained controller (it does NOT use the ECharts window.RV.charts registry
  * — MapLibre is a separate renderer): it fetches the data, builds the UI and owns
  * all interaction, reusing dashboard-core.js only for the shared theme tokens
- * (ns.THEME / ns.cssColor, the Positron/Dark-Matter basemap and ns.trackMap), which
- * it re-reads on every light/dark toggle to recolour the layers in place.
+ * (ns.THEME / ns.COLORS / ns.cssColor, the Positron/Dark-Matter basemap and
+ * ns.trackMap), which it re-reads on every light/dark toggle to recolour in place.
  *
  * Depends on (loaded first, deferred):
  *   - asset/js/dashboard-core.js → window.RV (theme tokens, getBasemapStyle,
@@ -21,10 +24,10 @@
  *
  * Data (compact row arrays, see Aggregators::buildSpatialPlaces + Runner):
  *   { types: ['Project','Section','Person','Organisation','Subject'],
- *     locations: [[id, name, lat, lng, count, countryIdx], ...],
+ *     locations: [[id, name, lat, lng, originCount, currentCount, countryIdx], ...],
  *     countries: [[name, count, [w,s,e,n]], ...],
  *     pickers:   { Project: [[id, label, placeCount], ...], ... },
- *     entityPlaces: { "<entityId>": [[locId, count], ...], ... } }
+ *     entityPlaces: { "<entityId>": [[locId, originCount, currentCount], ...], ... } }
  */
 (function () {
     'use strict';
@@ -32,7 +35,8 @@
     var ns = window.RV || (window.RV = {});
 
     var SRC = 'rv-spatial-places';
-    var L_CIRCLES = 'rv-spatial-circles';
+    var L_ORIGIN = 'rv-spatial-origin';
+    var L_CURRENT = 'rv-spatial-current';
     var L_LABELS = 'rv-spatial-labels';
     var LABEL_FONT = ['Noto Sans Regular']; // served by the CartoCDN basemap glyphs
     var LIST_CAP = 60;
@@ -62,7 +66,7 @@
     }
 
     function fmtNum(n) {
-        return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     }
 
     /* ------------------------------------------------------------------ */
@@ -71,8 +75,12 @@
 
     var THEME_FALLBACK = { text: '#473e33', border: '#dcd6cb', accent: '#007a50' };
     function theme() { return ns.THEME || THEME_FALLBACK; }
-    function accent() {
+    function originColor() {
         return ns.cssColor ? ns.cssColor('--primary', THEME_FALLBACK.accent) : (theme().accent || THEME_FALLBACK.accent);
+    }
+    /** Current-location colour — the cluster Hellblau (COLORS[2]), as the dashboard map uses. */
+    function currentColor() {
+        return (ns.COLORS && ns.COLORS[2]) ? ns.COLORS[2] : '#44b8f2';
     }
 
     /* ------------------------------------------------------------------ */
@@ -83,7 +91,7 @@
         return {
             types: payload.types || [],
             locations: (payload.locations || []).map(function (r) {
-                return { id: r[0], name: r[1], lat: r[2], lng: r[3], count: r[4], ci: r[5] };
+                return { id: r[0], name: r[1], lat: r[2], lng: r[3], oc: r[4], cc: r[5], ci: r[6] };
             }),
             countries: payload.countries || [],     // [name, count, [w,s,e,n]]
             pickers: payload.pickers || {},
@@ -114,9 +122,10 @@
             fmtNum(data.locations.length) + ' places · ' + data.countries.length + ' countries'));
         container.appendChild(header);
         container.appendChild(el('p', 'chart-description',
-            'Every place the collection references, as bubbles sized by how many items mention them. '
-            + 'Pick an entity on the left to see only its places, choose a country to zoom in, or click a '
-            + 'bubble to open that location’s page.'));
+            'Every place the research items reference, as bubbles sized by how many items mention them — '
+            + 'split into places of origin and current locations. Toggle a layer in the legend, pick an '
+            + 'entity on the left to see only its places, choose a country to zoom in, or click a bubble to '
+            + 'open that location’s page.'));
 
         /* -- stage: sidebar + map -- */
         var stage = el('div', 'rv-spatial-stage');
@@ -126,8 +135,27 @@
         stage.appendChild(main);
         container.appendChild(stage);
 
-        /* -- toolbar: country focus + status -- */
+        /* -- toolbar: legend toggle + country focus + status -- */
         var toolbar = el('div', 'rv-spatial-toolbar');
+
+        var showOrigin = true, showCurrent = true;
+        var legend = el('div', 'rv-spatial-legend');
+        var originSwatch = el('span', 'rv-spatial-swatch');
+        var currentSwatch = el('span', 'rv-spatial-swatch');
+        var originChip = el('button', 'rv-spatial-legend-chip', null);
+        originChip.type = 'button';
+        originChip.setAttribute('aria-pressed', 'true');
+        originChip.appendChild(originSwatch);
+        originChip.appendChild(el('span', null, 'Place of origin'));
+        var currentChip = el('button', 'rv-spatial-legend-chip', null);
+        currentChip.type = 'button';
+        currentChip.setAttribute('aria-pressed', 'true');
+        currentChip.appendChild(currentSwatch);
+        currentChip.appendChild(el('span', null, 'Current location'));
+        legend.appendChild(originChip);
+        legend.appendChild(currentChip);
+        toolbar.appendChild(legend);
+
         var focusLabel = el('label', 'rv-spatial-focus');
         focusLabel.appendChild(el('span', 'rv-spatial-focus-cap', 'Country'));
         var focusSelect = el('select', 'rv-spatial-focus-select');
@@ -139,9 +167,16 @@
         });
         focusLabel.appendChild(focusSelect);
         toolbar.appendChild(focusLabel);
+
         var status = el('span', 'rv-spatial-status');
         toolbar.appendChild(status);
         main.appendChild(toolbar);
+
+        function updateLegendSwatches() {
+            originSwatch.style.background = originColor();
+            currentSwatch.style.background = currentColor();
+        }
+        updateLegendSwatches();
 
         /* -- map canvas -- */
         var canvas = el('div', 'rv-spatial-canvas');
@@ -176,7 +211,7 @@
 
         /* -- interaction state -- */
         var entityType = data.types[0] || 'Project';
-        var selection = null;   // null | { id, label, type, adj: [[locId, count], ...] }
+        var selection = null;   // null | { id, label, type, adj: [[locId, oc, cc], ...] }
         var focusIdx = null;    // null | country index
         var map = null;
         var hoverPopup = null;
@@ -190,9 +225,9 @@
         function viewPlaces() {
             var list;
             if (selection) {
-                list = selection.adj.map(function (pair) {
-                    var p = placeById[pair[0]];
-                    return p ? { id: p.id, name: p.name, lat: p.lat, lng: p.lng, count: pair[1], ci: p.ci } : null;
+                list = selection.adj.map(function (t) {     // t = [locId, oc, cc]
+                    var p = placeById[t[0]];
+                    return p ? { id: p.id, name: p.name, lat: p.lat, lng: p.lng, oc: t[1], cc: t[2], ci: p.ci } : null;
                 }).filter(Boolean);
             } else {
                 list = data.locations;
@@ -210,40 +245,49 @@
                     return {
                         type: 'Feature',
                         geometry: { type: 'Point', coordinates: [p.lng, p.lat] },
-                        properties: { id: p.id, name: p.name, count: p.count }
+                        properties: { id: p.id, name: p.name, oc: p.oc, cc: p.cc, total: p.oc + p.cc }
                     };
                 })
             };
         }
 
-        function maxCount(places) {
+        function maxOf(places, key) {
             var m = 1;
-            places.forEach(function (p) { if (p.count > m) m = p.count; });
+            places.forEach(function (p) { if (p[key] > m) m = p[key]; });
             return m;
         }
 
-        function radiusExpr(max) {
-            return ['interpolate', ['linear'], ['get', 'count'], 1, 4, Math.max(max, 2), 26];
+        function radiusExpr(key, max) {
+            return ['interpolate', ['linear'], ['get', key], 1, 4, Math.max(max, 2), 26];
         }
 
         /* ------------------------------------------------------------------ */
         /*  Popups                                                             */
         /* ------------------------------------------------------------------ */
 
-        function hoverHtml(p, count) {
+        function rolesLine(oc, cc) {
+            var parts = [];
+            if (oc > 0) parts.push(fmtNum(oc) + ' as origin');
+            if (cc > 0) parts.push(fmtNum(cc) + ' as current');
+            return parts.join(' · ');
+        }
+
+        function hoverHtml(p, oc, cc) {
             var bits = [];
             var cn = countryName(p.ci);
             if (cn) bits.push(escapeHtml(cn));
-            bits.push(fmtNum(count) + ' item' + (count === 1 ? '' : 's'));
+            var roles = rolesLine(oc, cc);
+            if (roles) bits.push(roles);
             return '<div class="rv-popup-content"><strong>' + escapeHtml(p.name) + '</strong>'
                 + '<span class="deg-popup-meta">' + bits.join(' · ') + '</span></div>';
         }
 
-        function pinnedHtml(p, count) {
+        function pinnedHtml(p, oc, cc) {
             var cn = countryName(p.ci);
             var meta = [];
             if (cn) meta.push(escapeHtml(cn));
-            meta.push(fmtNum(count) + ' item' + (count === 1 ? '' : 's'));
+            var roles = rolesLine(oc, cc);
+            if (roles) meta.push(roles);
             var h = '<div class="rv-popup-content"><strong>' + escapeHtml(p.name) + '</strong>'
                 + '<span class="rv-popup-count">' + meta.join(' · ') + '</span>';
             if (siteBase) {
@@ -270,7 +314,7 @@
                 });
             }
             hoverPopup.setLngLat(f.geometry.coordinates.slice())
-                .setHTML(hoverHtml(p, f.properties.count))
+                .setHTML(hoverHtml(p, f.properties.oc, f.properties.cc))
                 .addTo(map);
         }
 
@@ -284,12 +328,12 @@
             if (hoverPopup) hoverPopup.remove();
         }
 
-        function openPinned(p, lngLat, count) {
+        function openPinned(p, lngLat, oc, cc) {
             hideHover();
             if (pinnedPopup) pinnedPopup.remove();
             pinnedPopup = new window.maplibregl.Popup({ offset: 12, maxWidth: '300px', className: 'rv-map-popup' })
                 .setLngLat(lngLat)
-                .setHTML(pinnedHtml(p, count))
+                .setHTML(pinnedHtml(p, oc, cc))
                 .addTo(map);
         }
 
@@ -297,26 +341,54 @@
             var f = e.features && e.features[0];
             if (!f) return;
             var p = placeById[f.properties.id];
-            if (p) openPinned(p, f.geometry.coordinates.slice(), f.properties.count);
+            if (p) openPinned(p, f.geometry.coordinates.slice(), f.properties.oc, f.properties.cc);
         }
 
         /* ------------------------------------------------------------------ */
         /*  Map                                                                */
         /* ------------------------------------------------------------------ */
 
+        function applyMode() {
+            if (map && map.getLayer(L_ORIGIN)) {
+                map.setLayoutProperty(L_ORIGIN, 'visibility', showOrigin ? 'visible' : 'none');
+            }
+            if (map && map.getLayer(L_CURRENT)) {
+                map.setLayoutProperty(L_CURRENT, 'visibility', showCurrent ? 'visible' : 'none');
+            }
+        }
+
+        function hoverPaint(base, hovered) {
+            return ['case', ['boolean', ['feature-state', 'hover'], false], hovered, base];
+        }
+
         function addLayers() {
             var places = viewPlaces();
             if (!map.getSource(SRC)) {
                 map.addSource(SRC, { type: 'geojson', data: featureCollection(places), generateId: true });
             }
-            if (!map.getLayer(L_CIRCLES)) {
+            // Current drawn first (under origin), so the brand-accent origins sit on top.
+            if (!map.getLayer(L_CURRENT)) {
                 map.addLayer({
-                    id: L_CIRCLES, type: 'circle', source: SRC,
+                    id: L_CURRENT, type: 'circle', source: SRC,
+                    filter: ['>', ['get', 'cc'], 0],
                     paint: {
-                        'circle-radius': radiusExpr(maxCount(places)),
-                        'circle-color': accent(),
-                        'circle-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.95, 0.72],
-                        'circle-stroke-width': ['case', ['boolean', ['feature-state', 'hover'], false], 2.5, 1.2],
+                        'circle-radius': radiusExpr('cc', maxOf(places, 'cc')),
+                        'circle-color': currentColor(),
+                        'circle-opacity': hoverPaint(0.6, 0.9),
+                        'circle-stroke-width': hoverPaint(1, 2),
+                        'circle-stroke-color': theme().border
+                    }
+                });
+            }
+            if (!map.getLayer(L_ORIGIN)) {
+                map.addLayer({
+                    id: L_ORIGIN, type: 'circle', source: SRC,
+                    filter: ['>', ['get', 'oc'], 0],
+                    paint: {
+                        'circle-radius': radiusExpr('oc', maxOf(places, 'oc')),
+                        'circle-color': originColor(),
+                        'circle-opacity': hoverPaint(0.72, 0.95),
+                        'circle-stroke-width': hoverPaint(1.2, 2.5),
                         'circle-stroke-color': theme().border
                     }
                 });
@@ -331,7 +403,7 @@
                         'text-offset': [0, 1.1],
                         'text-anchor': 'top',
                         // Densest bubbles win label-collision (lower sort key = higher priority).
-                        'symbol-sort-key': ['*', -1, ['get', 'count']]
+                        'symbol-sort-key': ['*', -1, ['get', 'total']]
                     },
                     paint: {
                         'text-color': theme().text,
@@ -340,6 +412,7 @@
                     }
                 });
             }
+            applyMode();
         }
 
         function create() {
@@ -359,10 +432,12 @@
             if (window.maplibregl.GlobeControl) {
                 map.addControl(new window.maplibregl.GlobeControl(), 'top-right');
             }
-            map.on('load', function () { addLayers(); applyView(true); });
-            map.on('click', L_CIRCLES, onClickBubble);
-            map.on('mousemove', L_CIRCLES, onHover);
-            map.on('mouseleave', L_CIRCLES, hideHover);
+            map.on('load', function () { addLayers(); updateLegendSwatches(); applyView(true); });
+            [L_ORIGIN, L_CURRENT].forEach(function (layer) {
+                map.on('click', layer, onClickBubble);
+                map.on('mousemove', layer, onHover);
+                map.on('mouseleave', layer, hideHover);
+            });
             if (window.ResizeObserver) {
                 new ResizeObserver(function () { try { map.resize(); } catch (err) {} }).observe(canvas);
             }
@@ -391,8 +466,11 @@
             var places = viewPlaces();
             var src = map && map.getSource(SRC);
             if (src) src.setData(featureCollection(places));
-            if (map && map.getLayer(L_CIRCLES)) {
-                map.setPaintProperty(L_CIRCLES, 'circle-radius', radiusExpr(maxCount(places)));
+            if (map && map.getLayer(L_ORIGIN)) {
+                map.setPaintProperty(L_ORIGIN, 'circle-radius', radiusExpr('oc', maxOf(places, 'oc')));
+            }
+            if (map && map.getLayer(L_CURRENT)) {
+                map.setPaintProperty(L_CURRENT, 'circle-radius', radiusExpr('cc', maxOf(places, 'cc')));
             }
             updateStatus(places);
             renderTopPlaces(places);
@@ -406,6 +484,20 @@
             if (focusIdx != null && data.countries[focusIdx]) bits.push('in ' + data.countries[focusIdx][0]);
             status.textContent = bits.join(' · ');
         }
+
+        /* -- legend toggles -- */
+        originChip.addEventListener('click', function () {
+            showOrigin = !showOrigin;
+            originChip.classList.toggle('is-off', !showOrigin);
+            originChip.setAttribute('aria-pressed', String(showOrigin));
+            applyMode();
+        });
+        currentChip.addEventListener('click', function () {
+            showCurrent = !showCurrent;
+            currentChip.classList.toggle('is-off', !showCurrent);
+            currentChip.setAttribute('aria-pressed', String(showCurrent));
+            applyMode();
+        });
 
         /* ------------------------------------------------------------------ */
         /*  Sidebar: picker + selection + top places                          */
@@ -496,13 +588,13 @@
             if (!places.length) return;
             topBox.appendChild(el('div', 'rv-spatial-label', 'Top places'));
             var ul = el('ul', 'rv-spatial-top-list');
-            places.slice().sort(function (a, b) { return b.count - a.count; })
+            places.slice().sort(function (a, b) { return (b.oc + b.cc) - (a.oc + a.cc); })
                 .slice(0, TOP_PLACES).forEach(function (p) {
                     var li = el('li');
                     var btn = el('button', 'rv-spatial-item');
                     btn.type = 'button';
                     btn.appendChild(el('span', 'rv-spatial-item-name', p.name));
-                    btn.appendChild(el('span', 'rv-spatial-item-count', fmtNum(p.count)));
+                    btn.appendChild(el('span', 'rv-spatial-item-count', fmtNum(p.oc + p.cc)));
                     btn.addEventListener('click', function () { flyTo(p); });
                     li.appendChild(btn);
                     ul.appendChild(li);
@@ -531,7 +623,7 @@
             hideHover();
             try { map.easeTo({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), 6), duration: 700 }); }
             catch (err) { /* ignore */ }
-            setTimeout(function () { openPinned(p, [p.lng, p.lat], p.count); }, 720);
+            setTimeout(function () { openPinned(p, [p.lng, p.lat], p.oc, p.cc); }, 720);
         }
 
         /* -- events -- */
