@@ -2308,8 +2308,20 @@ body.photo-lightbox-open {
 .dre-entity-graph { width: 100%; min-height: 480px; }
 .dre-entity-graph > .rv-loading { min-height: 480px; }
 
-/* Toolbar */
+/* Toolbar
+ * ----------------------------------------------------------------------------
+ * Every control in this row sits on ONE height (--deg-control-h) with one
+ * radius language: rectangular controls use --rv-radius-sm, the type chips use
+ * a pill. The search field and the min-link control are a native <input> and
+ * <select>, so the DRE theme's GLOBAL form skin (44px-tall selects, width:100%,
+ * margin-bottom, appearance:none + a background arrow) cascades in — each such
+ * property is reset below so the controls line up flush on the shared row,
+ * exactly as the module's .rv-btn / .compare-select already do.
+ *
+ * Font sizes follow the module's two-step convention: fields you type into or
+ * pick from are 0.85rem; compact toggles and field captions are 0.8rem. */
 .deg-toolbar {
+    --deg-control-h: 2rem;          /* shared height for the whole control row */
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -2322,7 +2334,9 @@ body.photo-lightbox-open {
 .deg-search { position: relative; flex: 0 1 240px; min-width: 160px; }
 .deg-search-input {
     width: 100%;
-    padding: 0.35rem 0.6rem;
+    height: var(--deg-control-h);
+    margin: 0;                      /* reset the theme's form-field margin-bottom */
+    padding: 0 0.6rem;
     border: 1px solid var(--rv-border);
     border-radius: var(--rv-radius-sm);
     background: var(--rv-bg);
@@ -2332,14 +2346,14 @@ body.photo-lightbox-open {
 .deg-search-input:focus-visible { outline: none; border-color: var(--rv-accent); box-shadow: var(--rv-focus-ring); }
 .deg-search-results {
     position: absolute;
-    z-index: 5;
+    z-index: 30;
     top: calc(100% + 2px);
     left: 0;
     right: 0;
     background: var(--rv-bg-raised);
     border: 1px solid var(--rv-border);
     border-radius: var(--rv-radius-sm);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+    box-shadow: var(--rv-shadow);
     max-height: 260px;
     overflow-y: auto;
 }
@@ -2359,49 +2373,65 @@ body.photo-lightbox-open {
 .deg-search-hit:hover { background: var(--rv-bg-sunken); }
 .deg-search-hit-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* Type-filter chips */
+/* Type-filter chips — a multi-toggle group whose colour dot doubles as the
+   graph legend. The OFF state mirrors the module's other category toggle, the
+   cluster-map legend (.rv-cluster-legend__item.is-off): dimmed + struck out. */
 .deg-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .deg-chip {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.25rem 0.6rem;
+    height: var(--deg-control-h);
+    padding: 0 0.7rem;
     border: 1px solid var(--rv-border);
     border-radius: 999px;
     background: var(--rv-bg);
     color: var(--rv-text-color);
     font-size: 0.8rem;
     cursor: pointer;
-    transition: opacity 0.15s, background 0.15s, border-color 0.15s;
+    transition: opacity 0.15s, background 0.15s, color 0.15s, border-color 0.15s;
 }
-.deg-chip:hover { border-color: var(--rv-accent); }
-.deg-chip:not(.deg-chip-on) { opacity: 0.45; }
+.deg-chip:hover { background: var(--rv-bg-raised); border-color: var(--rv-accent); }
 .deg-chip:focus-visible { outline: none; box-shadow: var(--rv-focus-ring); }
+.deg-chip:not(.deg-chip-on) { opacity: 0.45; }
+.deg-chip:not(.deg-chip-on) span:not(.deg-swatch) { text-decoration: line-through; }
 
-/* Min-weight select */
+/* Min-link <select> — compacted onto the shared row height. Reset the theme's
+   global select skin (height:44px, width:100%, margin, appearance:none + arrow
+   image) and restore a native dropdown arrow, matching .compare-select. */
 .deg-weight {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
+    flex: none;
+    white-space: nowrap;            /* keep the "Min. link" caption on one line */
     font-size: 0.8rem;
     color: var(--rv-text-color);
 }
 .deg-weight-select {
-    padding: 0.25rem 0.4rem;
+    height: var(--deg-control-h);
+    width: auto;
+    margin: 0;
+    padding: 0 0.5rem;
     border: 1px solid var(--rv-border);
     border-radius: var(--rv-radius-sm);
     background: var(--rv-bg);
     color: var(--rv-text-strong);
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+    line-height: 1.2;
     cursor: pointer;
+    appearance: auto;
+    -webkit-appearance: auto;
+    -moz-appearance: auto;
 }
+.deg-weight-select:focus-visible { outline: none; border-color: var(--rv-accent); box-shadow: var(--rv-focus-ring); }
 
-/* Text pill button (colour-mode toggle) */
+/* Text button (colour-mode toggle) */
 .deg-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    height: 2rem;
+    height: var(--deg-control-h);
     padding: 0 0.7rem;
     border: 1px solid var(--rv-border);
     border-radius: var(--rv-radius-sm);
@@ -2448,7 +2478,7 @@ body.photo-lightbox-open {
     border: 1px solid var(--rv-border);
     border-radius: var(--rv-radius);
     background: var(--rv-bg);
-    padding: 0.85rem;
+    padding: 1rem;                  /* match the module's panel padding (.chart-panel) */
     overflow-y: auto;
     font-size: 0.85rem;
     color: var(--rv-text-strong);
@@ -2519,6 +2549,7 @@ body.photo-lightbox-open {
     color: var(--rv-text-color);
 }
 .deg-legend-item { display: inline-flex; align-items: center; gap: 0.4rem; }
+.deg-legend-note { font-style: italic; }
 
 /* Stack the sidebar under the canvas on narrow viewports */
 @media (max-width: 720px) {
