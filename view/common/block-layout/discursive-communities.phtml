@@ -1,29 +1,33 @@
 <?php
 /**
- * Discursive Communities page block.
+ * Discursive Communities page block — the collection-wide Entity Network.
  *
- * Loads the precomputed communities/discursive.json and renders a subject
- * co-occurrence force graph coloured by Louvain community.
+ * Loads the precomputed communities/entity-graph.json and renders a multi-entity
+ * co-occurrence graph (people, organisations, places, subjects, tags) with
+ * MapLibre GL — positions are baked at precompute time (ForceAtlas2 in PHP), so
+ * the client does no layout work. See asset/js/entity-graph.js.
  *
  * @var \Laminas\View\Renderer\PhpRenderer $this
  * @var \Omeka\Api\Representation\SitePageBlockRepresentation $block
  */
 
-// Site-page block (Module.php does not run on page controllers), so request the
-// CDN + core prelude and the communities controller. Single source of truth:
-// DreVisualizations\View\Helper\DashboardAssets.
-$this->dashboardAssets(['cdn' => true, 'controller' => 'communities']);
+// Site-page block (Module.php does not run on page controllers): load the graph
+// stack — MapLibre (already vendored for the module's maps), dashboard-core.js
+// (theme tokens only; it pulls in no heavy library), and the entity-graph
+// controller. The 'graph' mode skips the ECharts chart-builder prelude.
+// Single source of truth: DreVisualizations\View\Helper\DashboardAssets.
+$this->dashboardAssets(['graph' => true]);
 
 $siteSlug = $this->currentSite()->slug();
 ?>
 
 <div class="resource-vis-block communities-block">
-    <div class="communities-container"
+    <div class="dre-entity-graph"
          data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
          data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">
         <div class="rv-loading">
             <div class="rv-spinner"></div>
-            <span><?= $this->translate('Loading discursive communities…') ?></span>
+            <span><?= $this->translate('Loading entity network…') ?></span>
         </div>
     </div>
 </div>

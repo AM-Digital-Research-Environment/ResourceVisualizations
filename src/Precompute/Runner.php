@@ -223,6 +223,7 @@ final class Runner
         $this->generateCategoryOverviews();
         $this->generateCollectionOverview();
         $this->generateCommunities();
+        $this->generateEntityGraph();
         $this->generatePublications();
         $this->generateYouTube();
         $this->generateWhatsNew();
@@ -937,6 +938,46 @@ final class Runner
             }
             file_put_contents($this->communitiesDir . '/discursive.json', json_encode($communities, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
             $this->log('  ' . count($communities['nodes']) . ' subjects, ' . count($communities['communities']) . ' communities');
+        }
+    }
+
+    /**
+     * Global Entity Network: the collection-wide co-occurrence graph linking
+     * people, organizations, locations, subjects and tags, rendered by the
+     * MapLibre block (entity-graph.js). ForceAtlas2 positions are baked into the
+     * payload here, so the client renders nodes + edges with no layout work.
+     */
+    private function generateEntityGraph(): void
+    {
+        $this->log('=== Entity Network ===');
+        $lcshIds = [];
+        foreach ($this->links as $sid => $slinks) {
+            foreach ($slinks as [$term, $label, $vrid]) {
+                if ($term === 'dcterms:type' && $vrid === self::OVERVIEW_LCSH) {
+                    $lcshIds[] = $sid;
+                    break;
+                }
+            }
+        }
+        $researchItems = array_keys($this->itemsWhere(fn ($info) => ($info['template_id'] ?? null) === self::TEMPLATE_RESEARCH_ITEMS));
+        // Fold the curated Publications, Podcasts and YouTube item sets in too, so
+        // their authors (bibo:authorList/editorList), subjects and places join the
+        // network alongside the research items.
+        $scanItems = array_values(array_unique(array_merge(
+            $researchItems,
+            $this->publicationIds(),
+            $this->podcastIds(),
+            $this->youtubeIds()
+        )));
+        // Strong core, uncapped: keep the "share >=2 items" edge rule but lift the
+        // node cap from 1200 so the full connected core shows.
+        $graph = Aggregators::buildEntityGraph($scanItems, $this->links, $this->items, $lcshIds, 2, 4000);
+        if ($graph) {
+            if (!is_dir($this->communitiesDir)) {
+                mkdir($this->communitiesDir, 0775, true);
+            }
+            file_put_contents($this->communitiesDir . '/entity-graph.json', json_encode($graph, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            $this->log('  ' . count($graph['nodes']) . ' entities, ' . count($graph['edges']) . ' links, ' . ($graph['meta']['communityCount'] ?? 0) . ' communities');
         }
     }
 

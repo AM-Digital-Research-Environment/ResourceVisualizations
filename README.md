@@ -112,9 +112,11 @@ A single project selector that retunes a full project dashboard (~12 charts) ben
 
 Side-by-side comparison of two entities of the **same type** — paired charts, an overlaid A/B **radar** profile, and overlap statistics (shared-item percentage + shared badges). Added as the **Compare (any entity)** site-page block (Admin > Sites > [site] > Pages): an in-page type switcher across **projects, people, institutions, subjects, languages** (opens on projects by default), each with its own paired-chart set + overlap key (e.g. co-occurring subjects when comparing subjects). Loads the matching `{type}-index.json`.
 
-### Discursive Communities
+### Discursive Communities — Entity Network
 
-A collection-wide subject co-occurrence network: subjects that appear together across items are clustered into communities (Louvain) and sized by influence (PageRank), each community a distinct colour. Added as a **site-page block** (Admin > Sites > [site] > Pages), it loads `asset/data/communities/discursive.json`. Defaults to LCSH-only subjects to cut free-text-tag noise. Click any subject to open its page.
+A collection-wide **entity network**: people, organisations, places, subjects and tags that co-occur across the research items, drawn as an explorable force-directed graph with **MapLibre GL** (WebGL). Positions are **precomputed** (ForceAtlas2 in PHP, projected onto a pseudo-Mercator plane), so the client renders ~15k edges with zero layout cost and the network looks identical on every load. Nodes are coloured by entity type and sized by connectivity; an optional toggle re-colours by Louvain co-occurrence cluster. Added as a **site-page block** (Admin > Sites > [site] > Pages), it loads `asset/data/communities/entity-graph.json`. Hover a node to isolate its links, scroll to zoom, search or filter by entity type, raise the minimum link weight, and click an entity for its details and page. Organisations are surfaced through their authors' affiliations (`person → dcterms:isPartOf → foaf:Organization`); subjects split into LCSH **Subjects** vs free **Tags**.
+
+> The graph renders on the **MapLibre GL** the module already vendors for its maps — no extra front-end dependency and no build step. Node positions are baked by `src/Precompute/ForceLayout.php` (a pure-PHP ForceAtlas2 port of graphology's, projected to pseudo lng/lat). The earlier ECharts subject-only `discursive.json` graph is still generated but no longer used by this block.
 
 ### Publications
 
@@ -261,8 +263,9 @@ DreVisualizations/
 │   │   ├── dashboard-charts-geo-flows.js         # Origin → current location flow map
 │   │   ├── dashboard-charts-choropleth.js        # Country choropleth (MapLibre fill)
 │   │   ├── dashboard-charts-radar.js             # Entity breadth-profile radar (ECharts)
-│   │   ├── dashboard-charts-communities.js       # Discursive communities force graph
-│   │   ├── dashboard-communities.js              # Discursive Communities block controller
+│   │   ├── dashboard-charts-communities.js       # Subject co-occurrence force graph (ECharts; legacy)
+│   │   ├── dashboard-communities.js              # Old Discursive Communities controller (legacy)
+│   │   ├── entity-graph.js                       # Entity Network — sigma.js renderer + controller
 │   │   ├── dashboard-charts-contributor-network.js # Contributor + affiliation networks
 │   │   ├── dashboard-collab-network.js           # Institution collaboration network
 │   │   ├── dashboard-compare.js                  # Compare controller (any entity type)
@@ -273,11 +276,14 @@ DreVisualizations/
 │   │   └── dashboard.js                          # Orchestrator: render + async/inline init
 │   ├── css/
 │   │   └── dre-visualizations.css # Styles with CSS custom properties
+│   ├── vendor/                    # Committed third-party bundles (byte-identical upstream)
+│   │   └── echarts.min.js, maplibre-gl.js, …   # ECharts + MapLibre (self-hosted)
 │   └── data/
 │       ├── geo/
 │       │   └── countries.geojson       # Natural Earth 110m boundaries (choropleth)
 │       ├── communities/
-│       │   └── discursive.json         # Subject co-occurrence + Louvain communities
+│       │   ├── discursive.json         # Subject co-occurrence + Louvain communities (legacy)
+│       │   └── entity-graph.json       # Multi-entity co-occurrence network (MapLibre; baked positions)
 │       ├── knowledge-graphs/           # Per-item graph JSON — gitignored, regenerated in-Omeka
 │       ├── photo-galleries/            # Per-item-set gallery JSON — gitignored, regenerated in-Omeka
 │       └── item-dashboards/            # Dashboard JSON + {type}-index.json (projects/people/…)
@@ -291,10 +297,12 @@ DreVisualizations/
 │   │   ├── NetworkChartsTrait.php      # chord, sankey, contributor/affiliation/collab/co-author networks
 │   │   ├── GeoChartsTrait.php          # choropleth, geo-flows, country index
 │   │   ├── HierarchyChartsTrait.php    # sunburst, treemap
-│   │   ├── CommunityTrait.php          # discursive communities
+│   │   ├── CommunityTrait.php          # discursive communities (subject-only, legacy)
+│   │   ├── EntityGraphTrait.php        # global multi-entity co-occurrence graph (MapLibre block)
 │   │   ├── PublicationChartsTrait.php  # top venues, top authors
 │   │   └── OverviewChartsTrait.php     # radar, stat cards, sections/section×university, cluster map
 │   ├── KnowledgeGraphs.php             # Per-item knowledge-graph builder (IDF-ranked)
+│   ├── ForceLayout.php                 # Pure-PHP ForceAtlas2 — bakes entity-network positions
 │   └── Runner.php                      # Entities, overviews, publications, knowledge graphs
 ├── ROADMAP.md                          # Full visualization roadmap
 └── README.md

@@ -10,6 +10,7 @@ use DreVisualizations\Precompute\Aggregators\NetworkChartsTrait;
 use DreVisualizations\Precompute\Aggregators\GeoChartsTrait;
 use DreVisualizations\Precompute\Aggregators\HierarchyChartsTrait;
 use DreVisualizations\Precompute\Aggregators\CommunityTrait;
+use DreVisualizations\Precompute\Aggregators\EntityGraphTrait;
 use DreVisualizations\Precompute\Aggregators\PublicationChartsTrait;
 use DreVisualizations\Precompute\Aggregators\OverviewChartsTrait;
 
@@ -24,8 +25,11 @@ require_once __DIR__ . '/Aggregators/NetworkChartsTrait.php';
 require_once __DIR__ . '/Aggregators/GeoChartsTrait.php';
 require_once __DIR__ . '/Aggregators/HierarchyChartsTrait.php';
 require_once __DIR__ . '/Aggregators/CommunityTrait.php';
+require_once __DIR__ . '/Aggregators/EntityGraphTrait.php';
 require_once __DIR__ . '/Aggregators/PublicationChartsTrait.php';
 require_once __DIR__ . '/Aggregators/OverviewChartsTrait.php';
+// ForceAtlas2 layout helper that EntityGraphTrait uses to bake node positions.
+require_once __DIR__ . '/ForceLayout.php';
 
 /**
  * Pure aggregation + chart-data builders for the dashboard precompute.
@@ -58,6 +62,7 @@ final class Aggregators
     use GeoChartsTrait;
     use HierarchyChartsTrait;
     use CommunityTrait;
+    use EntityGraphTrait;
     use PublicationChartsTrait;
     use OverviewChartsTrait;
 

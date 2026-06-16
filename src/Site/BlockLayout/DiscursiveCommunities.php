@@ -17,7 +17,7 @@ class DiscursiveCommunities extends AbstractBlockLayout
     public function form(PhpRenderer $view, SiteRepresentation $site,
         ?SitePageRepresentation $page = null, ?SitePageBlockRepresentation $block = null)
     {
-        return '<p>' . $view->translate('Subject co-occurrence network with community detection (Louvain) across the whole collection. No configuration needed.') . '</p>';
+        return '<p>' . $view->translate('Collection-wide entity network: people, organisations, places, subjects and tags that co-occur across the research items, rendered as an explorable force-directed graph (MapLibre GL, positions precomputed) and coloured by entity type. No configuration needed.') . '</p>';
     }
 
     public function render(PhpRenderer $view, SitePageBlockRepresentation $block,

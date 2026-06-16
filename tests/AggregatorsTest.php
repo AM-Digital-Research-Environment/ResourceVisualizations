@@ -454,5 +454,61 @@ check($cp['points'][0]['sublabel'] === 'Africa Multiple Research Centres' && $cp
 check($cp['categories'] === [['key' => 'amrc', 'label' => 'Africa Multiple Research Centres'], ['key' => 'cooperation', 'label' => 'Cooperation partners']], 'clusterPartners: ordered categories labelled from authorities, empty "global" dropped');
 check(A::clusterPartners([], [], [], $cpAuth) === [], 'clusterPartners: empty when no partners');
 
+// --- buildEntityGraph (multi-entity co-occurrence; affiliations; LCSH/Tag; Louvain) ---
+// Entity ids (10,11,12,20,100,101,200) are kept disjoint from the research-item
+// ids (1000+) so the two namespaces never collide, as in the real data.
+$egItems = [
+    100 => ['title' => 'Jane', 'template_id' => 4, 'class_term' => 'foaf:Person'],
+    101 => ['title' => 'John', 'template_id' => 4, 'class_term' => 'foaf:Person'],
+    200 => ['title' => 'University X', 'template_id' => 2, 'class_term' => 'foaf:Organization'],
+    10 => ['title' => 'Islam', 'class_term' => ''],
+    11 => ['title' => 'Politics', 'class_term' => ''],
+    12 => ['title' => 'Fieldwork', 'class_term' => ''],
+    20 => ['title' => 'Lagos', 'class_term' => ''],
+];
+$egLinks = [
+    100 => [['dcterms:isPartOf', 'Affiliation', 200]], // Jane is affiliated with University X
+];
+$rid = 1000;
+$egAdd = function (array $rels) use (&$egLinks, &$rid) { $egLinks[$rid++] = $rels; };
+for ($k = 0; $k < 5; $k++) { $egAdd([['dcterms:creator', 'Creator', 100], ['dcterms:subject', 'Subject', 10], ['dcterms:spatial', 'Origin', 20]]); }
+for ($k = 0; $k < 5; $k++) { $egAdd([['dcterms:creator', 'Creator', 101], ['dcterms:subject', 'Subject', 11], ['dcterms:subject', 'Tag', 12]]); }
+for ($k = 0; $k < 2; $k++) { $egAdd([['dcterms:subject', 'Subject', 10], ['dcterms:subject', 'Subject', 11]]); } // bridge
+$eg = A::buildEntityGraph(range(1000, $rid - 1), $egLinks, $egItems, [10, 11], 2);
+check($eg !== null, 'buildEntityGraph returns a graph');
+check($eg['types'] === ['Person', 'Organization', 'Location', 'Subject', 'Tag'], 'buildEntityGraph emits the five entity types');
+$egById = [];
+foreach ($eg['nodes'] as $nd) { $egById[$nd[0]] = $nd; } // row: [id, label, type, count, degree, community, lng, lat, rank]
+check(count($eg['nodes']) === 7, 'buildEntityGraph: 7 entity nodes (incl. affiliated org)');
+check(($egById[200][2] ?? null) === 1, 'buildEntityGraph: organization surfaced via author affiliation');
+check(($egById[10][2] ?? null) === 3 && ($egById[12][2] ?? null) === 4, 'buildEntityGraph: LCSH subject (3) vs free tag (4) split');
+check(($egById[20][2] ?? null) === 2, 'buildEntityGraph: location typed from dcterms:spatial');
+check(count($eg['edges']) === 10 && $eg['meta']['edgeCount'] === 10, 'buildEntityGraph: 10 co-occurrence edges');
+check(($eg['meta']['communityCount'] ?? 0) === 2, 'buildEntityGraph: two Louvain communities');
+$egCa = $egById[100][5];
+$egCb = $egById[101][5];
+check($egCa !== -1 && $egCb !== -1 && $egCa !== $egCb, 'buildEntityGraph: the two author clusters land in distinct communities');
+check($egById[200][5] === $egCa && $egById[20][5] === $egCa, 'buildEntityGraph: org + location share their author\'s community');
+// Baked ForceAtlas2 positions (pseudo lng/lat) + label rank + bounds envelope.
+check(($eg['meta']['columns']['nodes'] ?? []) === ['id', 'label', 'type', 'count', 'degree', 'community', 'lng', 'lat', 'rank'],
+    'buildEntityGraph: node columns advertise baked lng/lat/rank');
+check(count($eg['nodes'][0]) === 9, 'buildEntityGraph: each node row carries 9 fields');
+$egFinite = true;
+$egLngs = [];
+foreach ($eg['nodes'] as $nd) {
+    if (!is_finite($nd[6]) || !is_finite($nd[7]) || abs($nd[6]) > 140.001 || abs($nd[7]) > 86) { $egFinite = false; }
+    $egLngs[(string) round($nd[6], 3)] = true;
+}
+check($egFinite, 'buildEntityGraph: every node has a finite lng/lat inside the layout plane');
+check(count($egLngs) > 1, 'buildEntityGraph: ForceAtlas2 spreads the nodes (not collapsed to one point)');
+$egBounds = $eg['meta']['bounds'] ?? null;
+check(is_array($egBounds) && count($egBounds) === 4 && $egBounds[0] <= $egBounds[2] && $egBounds[1] <= $egBounds[3],
+    'buildEntityGraph: meta.bounds is a valid [w,s,e,n] envelope');
+$egRanks = array_map(static function ($nd) { return $nd[8]; }, $eg['nodes']);
+sort($egRanks);
+check($egRanks === range(0, count($eg['nodes']) - 1), 'buildEntityGraph: label ranks are a 0..n-1 permutation');
+check(($egById[10][8] ?? null) === 0, 'buildEntityGraph: the top hub (Islam) gets label rank 0');
+check(A::buildEntityGraph(range(1000, $rid - 1), $egLinks, $egItems, [10, 11], 99) === null, 'buildEntityGraph: null when the weight threshold prunes every edge');
+
 echo $failures ? "\n$failures FAILURE(S)\n" : "\nALL PHP AGGREGATOR TESTS PASS\n";
 exit($failures ? 1 : 0);

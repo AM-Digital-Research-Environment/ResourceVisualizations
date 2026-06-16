@@ -112,6 +112,27 @@ class DashboardAssets extends AbstractHelper
             return $view->assetUrl($path, 'DreVisualizations');
         };
 
+        // Entity Network (MapLibre) block: a self-contained graph that needs the
+        // MapLibre engine (already vendored for the module's maps) plus the theme
+        // tokens from dashboard-core.js, but neither the ECharts prelude nor the
+        // chart-builder chain. Hand the front end the MapLibre URL and load it on
+        // demand through ns.ensureLibs (dashboard-core.js) — the SAME lazy loader
+        // the dashboards use — so a page carrying BOTH a dashboard and this graph
+        // loads MapLibre exactly once. (An eager <script> here would otherwise hang
+        // the dashboard's ensureLibs, which waits on a load event that already
+        // fired.) Object.assign-merge into RV_LIBS so neither block's entry shadows
+        // the other's, regardless of block order on the page.
+        if (!empty($options['graph'])) {
+            $headLink->appendStylesheet($asset('css/dre-visualizations.css'));
+            $headScript->appendScript('window.RV_LIBS=Object.assign(' . json_encode([
+                'maplibre'    => $asset(self::MAPLIBRE_JS),
+                'maplibreCss' => $asset(self::MAPLIBRE_CSS),
+            ], JSON_UNESCAPED_SLASHES) . ', window.RV_LIBS||{});');
+            $headScript->appendFile($asset('js/dashboard-core.js'), 'text/javascript', $defer);
+            $headScript->appendFile($asset('js/entity-graph.js'), 'text/javascript', $defer);
+            return $this;
+        }
+
         if ($cdn) {
             $headLink->appendStylesheet($asset('css/dre-visualizations.css'));
             if ($controller === 'dashboard') {
@@ -123,12 +144,14 @@ class DashboardAssets extends AbstractHelper
                 // view (ns.ensureLibs + IntersectionObserver). dashboard-core.js
                 // still loads (deferred) so the theme-token probe and watchers are
                 // ready, but it pulls in no heavy library on its own.
-                $headScript->appendScript('window.RV_LIBS=window.RV_LIBS||' . json_encode([
+                // Object.assign-merge (not ||) so an Entity Network graph block's
+                // partial RV_LIBS on the same page can't shadow these (and vice-versa).
+                $headScript->appendScript('window.RV_LIBS=Object.assign(' . json_encode([
                     'echarts'     => $asset(self::ECHARTS_JS),
                     'wordcloud'   => $asset(self::WORDCLOUD_JS),
                     'maplibre'    => $asset(self::MAPLIBRE_JS),
                     'maplibreCss' => $asset(self::MAPLIBRE_CSS),
-                ], JSON_UNESCAPED_SLASHES) . ';');
+                ], JSON_UNESCAPED_SLASHES) . ', window.RV_LIBS||{});');
                 $headScript->appendFile($asset('js/dashboard-core.js'), 'text/javascript', $defer);
             } else {
                 // Dedicated dashboard pages (compare / explorer / communities /
