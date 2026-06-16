@@ -7,6 +7,7 @@ return [
             'collectionOverview' => Site\BlockLayout\CollectionOverview::class,
             'collectionDashboard' => Site\BlockLayout\CollectionDashboard::class,
             'discursiveCommunities' => Site\BlockLayout\DiscursiveCommunities::class,
+            'spatialExploration' => Site\BlockLayout\SpatialExploration::class,
             'publications' => Site\BlockLayout\Publications::class,
             'youtube' => Site\BlockLayout\YouTube::class,
             'projectExplorer' => Site\BlockLayout\ProjectExplorer::class,

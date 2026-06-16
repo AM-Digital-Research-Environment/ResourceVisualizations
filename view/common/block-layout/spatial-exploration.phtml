@@ -1,0 +1,34 @@
+<?php
+/**
+ * Spatial Exploration page block — the collection-wide places map.
+ *
+ * Loads the precomputed spatial-exploration.json (every geocoded, item-referenced
+ * location as a bubble; per-country bounds; per-type picker indexes; and a compact
+ * entity→places adjacency) and renders it with MapLibre GL: a sidebar entity picker
+ * filters the bubbles, a country dropdown zooms, and clicking a bubble links to that
+ * location's page. See asset/js/spatial-exploration.js.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var \Omeka\Api\Representation\SitePageBlockRepresentation $block
+ */
+
+// Site-page block (Module.php does not run on page controllers): load the MapLibre
+// stack only — MapLibre (already vendored for the module's maps), dashboard-core.js
+// (theme tokens + the shared ensureLibs loader), and the spatial-exploration
+// controller. The 'spatial' mode skips the ECharts chart-builder prelude.
+// Single source of truth: DreVisualizations\View\Helper\DashboardAssets.
+$this->dashboardAssets(['spatial' => true]);
+
+$siteSlug = $this->currentSite()->slug();
+?>
+
+<div class="resource-vis-block spatial-exploration-block">
+    <div class="dre-spatial-exploration"
+         data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
+         data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">
+        <div class="rv-loading">
+            <div class="rv-spinner"></div>
+            <span><?= $this->translate('Loading spatial exploration…') ?></span>
+        </div>
+    </div>
+</div>

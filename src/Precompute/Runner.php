@@ -145,6 +145,14 @@ final class Runner
     /** Safety bound on a single gallery's serialised records (matches the block). */
     private const MAX_GALLERY_PHOTOS = 600;
 
+    /**
+     * Spatial Exploration picker cap: the high-cardinality picker types (People,
+     * Organisations, Subjects) are trimmed to this many entities — the top N by
+     * mapped-place count — so the precomputed payload stays lean. Projects and
+     * Research Sections are bounded (~40 / ~6) and kept whole.
+     */
+    private const SPATIAL_PICKER_CAP = 400;
+
     private int $fileCount = 0;
 
     /** @var callable|null A log sink: fn(string $message): void */
@@ -224,6 +232,7 @@ final class Runner
         $this->generateCollectionOverview();
         $this->generateCommunities();
         $this->generateEntityGraph();
+        $this->generateSpatialExploration();
         $this->generatePublications();
         $this->generateYouTube();
         $this->generateWhatsNew();
@@ -979,6 +988,138 @@ final class Runner
             file_put_contents($this->communitiesDir . '/entity-graph.json', json_encode($graph, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
             $this->log('  ' . count($graph['nodes']) . ' entities, ' . count($graph['edges']) . ' links, ' . ($graph['meta']['communityCount'] ?? 0) . ' communities');
         }
+    }
+
+    /**
+     * Spatial Exploration: the collection-wide place map for the cross-cutting
+     * site-page block (asset/js/spatial-exploration.js). Bakes every geocoded,
+     * item-referenced location as a bubble (sized by referencing-item count), the
+     * countries they fall in (with bounds for zoom-to), per-type picker indexes,
+     * and a compact entity→places adjacency so selecting a project / section /
+     * person / organisation / subject filters the bubbles client-side with no extra
+     * fetch. Entity ids are globally unique, so one flat entityPlaces map keyed by
+     * id is unambiguous. Saved as spatial-exploration.json.
+     */
+    private function generateSpatialExploration(): void
+    {
+        $this->log('=== Spatial Exploration ===');
+        $spatial = Aggregators::buildSpatialPlaces($this->geo, $this->reverseLinks, $this->countryIndex);
+        if (!$spatial['locations']) {
+            $this->log('  no geocoded, item-referenced locations — skipped');
+            return;
+        }
+
+        // Person / organisation contributor-role terms, assembled exactly as in
+        // generatePeople() / generateInstitutions() (the fixed credits plus every
+        // marcrel:* role actually present in the data).
+        $personTerms = ['dcterms:creator', 'dcterms:contributor', 'foaf:member', 'bibo:authorList', 'bibo:editorList'];
+        $instTerms = ['frapo:isFundedBy', 'dcterms:provenance'];
+        foreach ($this->reverseLinks as $rev) {
+            foreach ($rev as $t => $_) {
+                if (str_starts_with($t, 'marcrel:')) {
+                    $personTerms[$t] = $t;
+                    $instTerms[$t] = $t;
+                }
+            }
+        }
+        $personTerms = array_values(array_unique($personTerms));
+        $instTerms = array_values(array_unique($instTerms));
+
+        $entityPlaces = [];
+
+        // Build a type's picker rows ([id, label, placeCount], densest first) and
+        // populate $entityPlaces[id] = [[locId, count], ...]. High-cardinality types
+        // are capped to the top SPATIAL_PICKER_CAP by mapped-place count.
+        $buildType = function (array $entities, bool $cap) use (&$entityPlaces): array {
+            $rows = [];
+            foreach ($entities as $eid => $info) {
+                $places = Aggregators::placesForItems($info['itemIds'], $this->links, $this->geo);
+                if (!$places) {
+                    continue;
+                }
+                arsort($places);
+                $adj = [];
+                foreach ($places as $locId => $cnt) {
+                    $adj[] = [(int) $locId, $cnt];
+                }
+                $rows[] = ['id' => (int) $eid, 'label' => $info['label'], 'adj' => $adj];
+            }
+            usort($rows, static fn ($a, $b) => count($b['adj']) <=> count($a['adj']));
+            if ($cap && count($rows) > self::SPATIAL_PICKER_CAP) {
+                $rows = array_slice($rows, 0, self::SPATIAL_PICKER_CAP);
+            }
+            $picker = [];
+            foreach ($rows as $r) {
+                $picker[] = [$r['id'], $r['label'], count($r['adj'])];
+                $entityPlaces[$r['id']] = $r['adj'];
+            }
+            return $picker;
+        };
+
+        // Projects (uncapped — ~40): their member research items.
+        $projects = [];
+        foreach ($this->itemsWhere(fn ($i) => ($i['template_id'] ?? null) === self::TEMPLATE_PROJECTS) as $pid => $pinfo) {
+            $projects[$pid] = ['label' => $pinfo['title'], 'itemIds' => $this->childrenOf[$pid] ?? []];
+        }
+
+        // Research sections (uncapped — ~6): items unioned over their child projects.
+        $sections = [];
+        foreach ($this->itemsWhere(fn ($i) => ($i['class_term'] ?? '') === 'frapo:ResearchGroup') as $sid => $sinfo) {
+            $itemIds = [];
+            foreach ($this->childrenOf[$sid] ?? [] as $pid) {
+                foreach ($this->childrenOf[$pid] ?? [] as $iid) {
+                    $itemIds[] = $iid;
+                }
+            }
+            $sections[$sid] = ['label' => $sinfo['title'], 'itemIds' => $itemIds];
+        }
+
+        // People (capped): the items they are credited on.
+        $people = [];
+        foreach ($this->itemsWhere(fn ($i) => ($i['template_id'] ?? null) === self::TEMPLATE_PERSONS) as $pid => $pinfo) {
+            $people[$pid] = ['label' => $pinfo['title'], 'itemIds' => Aggregators::findItemsLinkingTo($pid, $this->reverseLinks, $personTerms)];
+        }
+
+        // Organisations (capped): items funded by / held by / credited to them.
+        $orgs = [];
+        foreach ($this->itemsWhere(fn ($i) => ($i['class_term'] ?? '') === 'foaf:Organization') as $oid => $oinfo) {
+            $orgs[$oid] = ['label' => $oinfo['title'], 'itemIds' => Aggregators::findItemsLinkingTo($oid, $this->reverseLinks, $instTerms)];
+        }
+
+        // Subjects (capped): the items they classify (dcterms:subject).
+        $subjects = [];
+        foreach ($this->itemsWhere(fn ($i) => ($i['template_id'] ?? null) === self::TEMPLATE_AUTHORITY) as $sid => $sinfo) {
+            $subjects[$sid] = ['label' => $sinfo['title'], 'itemIds' => Aggregators::findItemsLinkingTo($sid, $this->reverseLinks, ['dcterms:subject'])];
+        }
+
+        $pickers = [
+            'Project' => $buildType($projects, false),
+            'Section' => $buildType($sections, false),
+            'Person' => $buildType($people, true),
+            'Organisation' => $buildType($orgs, true),
+            'Subject' => $buildType($subjects, true),
+        ];
+
+        $payload = [
+            'meta' => ['locations' => count($spatial['locations']), 'generatedAt' => date('Y-m-d')],
+            'types' => ['Project', 'Section', 'Person', 'Organisation', 'Subject'],
+            'locations' => $spatial['locations'],
+            'countries' => $spatial['countries'],
+            'pickers' => $pickers,
+            // Force a JSON object even when empty (an empty PHP array encodes as []).
+            'entityPlaces' => $entityPlaces ?: new \stdClass(),
+        ];
+        file_put_contents(
+            $this->outputDir . '/spatial-exploration.json',
+            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+        );
+        $this->fileCount++;
+        $pickerSummary = [];
+        foreach ($pickers as $type => $rows) {
+            $pickerSummary[] = $type . '=' . count($rows);
+        }
+        $this->log('  ' . count($spatial['locations']) . ' locations, ' . count($spatial['countries'])
+            . ' countries; pickers: ' . implode(', ', $pickerSummary));
     }
 
     /**

@@ -118,6 +118,12 @@ A collection-wide **entity network**: people, organisations, places, subjects an
 
 > The graph renders on the **MapLibre GL** the module already vendors for its maps — no extra front-end dependency and no build step. Node positions are baked by `src/Precompute/ForceLayout.php` (a pure-PHP ForceAtlas2 port of graphology's, projected to pseudo lng/lat). The earlier ECharts subject-only `discursive.json` graph is still generated but no longer used by this block.
 
+### Spatial Exploration
+
+A collection-wide **places map**: every geocoded location the research items reference — origins (`dcterms:spatial`) and current locations (`dcterms:provenance`) — drawn as **MapLibre GL** bubbles sized by how many items mention each place. Added as a **site-page block** (Admin > Sites > [site] > Pages), it loads `asset/data/spatial-exploration.json`. A sidebar entity picker filters the map to a single **project, research section, person, organisation or subject** — the selection is served from a baked entity→places adjacency, so it filters client-side with no extra fetch — a country dropdown (built from the point-in-polygon country index, with per-country zoom bounds) focuses the map, and clicking a bubble opens that location's page. The high-cardinality picker types (people, organisations, subjects) are capped to the top entities by mapped-place count to keep the payload lean.
+
+> Shares the **MapLibre GL** engine and the `dashboardAssets(['spatial' => true])` asset mode (mirroring the entity network's `['graph' => true]`), so a page carrying this block alongside the Discursive Communities graph and the dashboards loads MapLibre exactly once. Built by `Aggregators\SpatialTrait` + `Runner::generateSpatialExploration()`; rendered by `asset/js/spatial-exploration.js`.
+
 ### Publications
 
 A bibliographic analytics view over the cluster **Publications** item set (articles, books, chapters, working papers, …). Added as a **site-page block** (Admin > Sites > [site] > Pages), it loads `asset/data/item-dashboards/publications.json` and shows:
@@ -205,6 +211,7 @@ Visualizations load from pre-computed JSON in `asset/data/`. **Everything regene
 
 - per-entity & category **dashboards** + the **collection overview**
 - the **Discursive Communities** graph
+- the **Spatial Exploration** places map (`spatial-exploration.json`)
 - the **Publications** analytics (`publications.json`)
 - the **Photo Browsing** galleries (one JSON per image-bearing item set)
 - the per-item **knowledge graphs** + item location maps
@@ -405,7 +412,7 @@ This module is the Omeka S half of a two-project initiative with the sibling **[
 
 The two are complementary and were brought to **analytical parity** over the shared dataset — tracked in [AM-Digital-Research-Environment/amira#10](https://github.com/AM-Digital-Research-Environment/amira/issues/10):
 
-- **This module** renders a full per-entity dashboard (7–20 charts) inline on each Omeka resource page, plus cross-cutting site-page blocks — Collection Overview, Collection Dashboard, Compare, Project Explorer, What's New, Discursive Communities, Publications, YouTube, and Photo Browsing.
+- **This module** renders a full per-entity dashboard (7–20 charts) inline on each Omeka resource page, plus cross-cutting site-page blocks — Collection Overview, Collection Dashboard, Compare, Project Explorer, What's New, Discursive Communities, Spatial Exploration, Publications, YouTube, and Photo Browsing.
 - **amira** provides the broad cross-archive overviews as a standalone site.
 
 A reader should find roughly the same analytical toolkit on either side. The "how to add a visualization" recipes and architecture guardrails distilled from that initiative live in [ROADMAP.md](ROADMAP.md).

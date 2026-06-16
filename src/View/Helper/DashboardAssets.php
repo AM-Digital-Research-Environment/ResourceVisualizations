@@ -133,6 +133,22 @@ class DashboardAssets extends AbstractHelper
             return $this;
         }
 
+        // Spatial Exploration block: the SAME MapLibre-only stack as the Entity
+        // Network graph above (theme tokens from dashboard-core.js + ns.ensureLibs,
+        // no ECharts prelude, no chart-builder chain), loading the spatial
+        // controller instead. Object.assign-merge into RV_LIBS so a page carrying
+        // this block AND a dashboard or graph loads MapLibre exactly once.
+        if (!empty($options['spatial'])) {
+            $headLink->appendStylesheet($asset('css/dre-visualizations.css'));
+            $headScript->appendScript('window.RV_LIBS=Object.assign(' . json_encode([
+                'maplibre'    => $asset(self::MAPLIBRE_JS),
+                'maplibreCss' => $asset(self::MAPLIBRE_CSS),
+            ], JSON_UNESCAPED_SLASHES) . ', window.RV_LIBS||{});');
+            $headScript->appendFile($asset('js/dashboard-core.js'), 'text/javascript', $defer);
+            $headScript->appendFile($asset('js/spatial-exploration.js'), 'text/javascript', $defer);
+            return $this;
+        }
+
         if ($cdn) {
             $headLink->appendStylesheet($asset('css/dre-visualizations.css'));
             if ($controller === 'dashboard') {
