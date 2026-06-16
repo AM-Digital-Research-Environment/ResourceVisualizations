@@ -561,7 +561,7 @@
         var basePath = container.dataset.basePath || '';
         var siteBase = container.dataset.siteBase || '';
         ns.basePath = basePath;
-        var url = basePath + '/modules/DreVisualizations/asset/data/spatial-exploration.json';
+        var url = basePath + '/modules/DreVisualizations/asset/data/item-dashboards/spatial-exploration.json';
 
         var libs = (typeof ns.ensureLibs === 'function') ? ns.ensureLibs() : Promise.resolve();
         Promise.all([
