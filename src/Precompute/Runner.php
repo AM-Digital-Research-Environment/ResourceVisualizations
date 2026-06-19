@@ -227,11 +227,12 @@ final class Runner
         $this->generateSubjects();
         $this->generateByItemSet(self::ITEM_SET_RESOURCE_TYPE, 'dcterms:type', 'Resource Types', 'authority', ['types']);
         $this->generateByItemSet(self::ITEM_SET_LANGUAGE, 'dcterms:language', 'Languages', 'authority', ['languages'], 'languages-index.json');
-        $this->generateByItemSet(self::ITEM_SET_GENRE, 'dcterms:format', 'Genres', 'genre', []);
+        $this->generateByItemSet(self::ITEM_SET_GENRE, 'dcterms:format', 'Genres', 'genre', [], 'genres-index.json');
         $this->generateCategoryOverviews();
         $this->generateCollectionOverview();
         $this->generateCommunities();
         $this->generateEntityGraph();
+        $this->generateNetworkExplorer();
         $this->generateSpatialExploration();
         $this->generatePublications();
         $this->generateYouTube();
@@ -988,6 +989,44 @@ final class Runner
             file_put_contents($this->communitiesDir . '/entity-graph.json', json_encode($graph, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
             $this->log('  ' . count($graph['nodes']) . ' entities, ' . count($graph['edges']) . ' links, ' . ($graph['meta']['communityCount'] ?? 0) . ' communities');
         }
+    }
+
+    /**
+     * Collection-wide Network Explorer payload.
+     *
+     * The static /network page had four ECharts-based network views in addition
+     * to the separate discursive-communities graph. This emits those four graphs
+     * as one JSON file for the Network Explorer site-page block.
+     */
+    private function generateNetworkExplorer(): void
+    {
+        $researchItems = array_keys($this->itemsWhere(fn ($info) => ($info['template_id'] ?? null) === self::TEMPLATE_RESEARCH_ITEMS));
+        $this->log('=== Network Explorer (' . count($researchItems) . ' research items) ===');
+        if (!$researchItems) {
+            return;
+        }
+
+        $payload = [
+            'contributors' => Aggregators::buildGlobalContributorNetwork($researchItems, $this->items, $this->links),
+            'collaboration' => Aggregators::buildPersonCollaborationNetwork($researchItems, $this->items, $this->links),
+            'affiliations' => Aggregators::buildGlobalAffiliationNetwork($this->items, $this->links),
+            'institutions' => Aggregators::buildGlobalInstitutionCollaborationNetwork($researchItems, $this->items, $this->links),
+        ];
+        $payload = array_filter($payload, static fn ($v) => $v !== null);
+        if (!$payload) {
+            $this->log('  no network explorer graphs had enough data');
+            return;
+        }
+
+        $path = dirname($this->outputDir) . '/network-explorer.json';
+        file_put_contents($path, json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $this->fileCount++;
+
+        $summary = [];
+        foreach ($payload as $key => $graph) {
+            $summary[] = $key . ': ' . count($graph['nodes'] ?? []) . ' nodes / ' . count($graph['links'] ?? []) . ' links';
+        }
+        $this->log('  network-explorer.json: ' . implode('; ', $summary));
     }
 
     /**

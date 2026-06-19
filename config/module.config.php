@@ -12,6 +12,8 @@ return [
             'youtube' => Site\BlockLayout\YouTube::class,
             'projectExplorer' => Site\BlockLayout\ProjectExplorer::class,
             'compareEntity' => Site\BlockLayout\CompareEntity::class,
+            'compareGenres' => Site\BlockLayout\CompareGenres::class,
+            'networkExplorer' => Site\BlockLayout\NetworkExplorer::class,
             'whatsNew' => Site\BlockLayout\WhatsNew::class,
             'photoBrowse' => Site\BlockLayout\PhotoBrowse::class,
             'featuredCollections' => Site\BlockLayout\FeaturedCollections::class,

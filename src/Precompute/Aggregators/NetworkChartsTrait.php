@@ -13,6 +13,15 @@ namespace DreVisualizations\Precompute\Aggregators;
  */
 trait NetworkChartsTrait
 {
+    private static function isPersonContributionTerm(string $term): bool
+    {
+        return str_starts_with($term, 'marcrel:')
+            || $term === 'dcterms:creator'
+            || $term === 'dcterms:contributor'
+            || $term === 'bibo:authorList'
+            || $term === 'bibo:editorList';
+    }
+
     /** Build a co-occurrence chord diagram for a given property. */
     public static function buildChord(array $itemIds, array $links, array $items, string $termFilter = 'dcterms:subject', int $maxNodes = 20, int $minCooccurrence = 2): ?array
     {
@@ -208,6 +217,356 @@ trait NetworkChartsTrait
             }
         }
         return $netLinks ? ['nodes' => $nodes, 'links' => $netLinks, 'categories' => ['person', 'project']] : null;
+    }
+
+    /**
+     * Collection-wide person -> project force graph from research items.
+     *
+     * Same chart shape as buildContributorNetwork(), but without anchoring the
+     * graph to one entity. This backs the Network Explorer page block.
+     */
+    public static function buildGlobalContributorNetwork(array $itemIds, array $items, array $links, int $maxPersons = 120, int $maxProjects = 80): ?array
+    {
+        $personProject = [];
+        $personCounts = [];
+        $projectCounts = [];
+
+        foreach ($itemIds as $iid) {
+            $itemPersons = [];
+            $itemProject = null;
+            foreach ($links[$iid] ?? [] as [$term, , $vrid]) {
+                if (self::isPersonContributionTerm($term)) {
+                    if (($items[$vrid]['template_id'] ?? null) === self::TEMPLATE_PERSONS) {
+                        $itemPersons[$vrid] = true;
+                    }
+                } elseif ($term === 'dcterms:isPartOf') {
+                    if (($items[$vrid]['template_id'] ?? null) === self::TEMPLATE_PROJECTS) {
+                        $itemProject = $vrid;
+                    }
+                }
+            }
+            if (!$itemProject || !$itemPersons) {
+                continue;
+            }
+            foreach (array_keys($itemPersons) as $pid) {
+                $personProject[$pid . ',' . $itemProject] = ($personProject[$pid . ',' . $itemProject] ?? 0) + 1;
+                $personCounts[$pid] = ($personCounts[$pid] ?? 0) + 1;
+            }
+            $projectCounts[$itemProject] = ($projectCounts[$itemProject] ?? 0) + 1;
+        }
+        if (!$personProject) {
+            return null;
+        }
+
+        arsort($personCounts);
+        arsort($projectCounts);
+        $topPersons = array_flip(array_slice(array_keys($personCounts), 0, $maxPersons));
+        $topProjects = array_flip(array_slice(array_keys($projectCounts), 0, $maxProjects));
+
+        $nodes = [];
+        $nodeNames = [];
+        foreach (array_keys($topPersons) as $pid) {
+            $title = $items[$pid]['title'] ?? ('Person ' . $pid);
+            $nodes[] = ['name' => $title, 'value' => $personCounts[$pid], 'itemId' => $pid, 'category' => 'person'];
+            $nodeNames[$title] = true;
+        }
+        foreach (array_keys($topProjects) as $pid) {
+            $title = $items[$pid]['title'] ?? ('Project ' . $pid);
+            $nodes[] = ['name' => $title, 'value' => $projectCounts[$pid], 'itemId' => $pid, 'category' => 'project'];
+            $nodeNames[$title] = true;
+        }
+
+        $netLinks = [];
+        foreach ($personProject as $key => $count) {
+            [$personId, $projId] = array_map('intval', explode(',', $key));
+            if (isset($topPersons[$personId], $topProjects[$projId])) {
+                $pTitle = $items[$personId]['title'] ?? '';
+                $prTitle = $items[$projId]['title'] ?? '';
+                if (isset($nodeNames[$pTitle], $nodeNames[$prTitle])) {
+                    $netLinks[] = ['source' => $pTitle, 'target' => $prTitle, 'value' => $count];
+                }
+            }
+        }
+
+        return $netLinks ? ['nodes' => $nodes, 'links' => $netLinks, 'categories' => ['person', 'project']] : null;
+    }
+
+    /**
+     * Collection-wide person-person collaboration network from research items.
+     *
+     * This is a projection of the contributor graph: two persons are linked when
+     * they appear together on the same research item. Louvain communities and
+     * weighted PageRank are computed so the existing community graph builder can
+     * render the result.
+     */
+    public static function buildPersonCollaborationNetwork(array $itemIds, array $items, array $links, int $minCooccurrence = 2, int $maxNodes = 120): ?array
+    {
+        $pairCounts = [];
+        $nodeCounts = [];
+        $titles = [];
+
+        foreach ($itemIds as $iid) {
+            $persons = [];
+            foreach ($links[$iid] ?? [] as [$term, , $vrid]) {
+                if (!self::isPersonContributionTerm($term)) {
+                    continue;
+                }
+                if (($items[$vrid]['template_id'] ?? null) === self::TEMPLATE_PERSONS) {
+                    $persons[$vrid] = true;
+                    $titles[$vrid] = $items[$vrid]['title'] ?? ('Person ' . $vrid);
+                }
+            }
+            $persons = array_keys($persons);
+            foreach ($persons as $pid) {
+                $nodeCounts[$pid] = ($nodeCounts[$pid] ?? 0) + 1;
+            }
+            $n = count($persons);
+            for ($i = 0; $i < $n; $i++) {
+                for ($j = $i + 1; $j < $n; $j++) {
+                    $a = $persons[$i];
+                    $b = $persons[$j];
+                    if ($a > $b) {
+                        [$a, $b] = [$b, $a];
+                    }
+                    $pairCounts[$a . ',' . $b] = ($pairCounts[$a . ',' . $b] ?? 0) + 1;
+                }
+            }
+        }
+
+        $adj = [];
+        $deg = [];
+        $edges = 0;
+        foreach ($pairCounts as $key => $w) {
+            if ($w < $minCooccurrence) {
+                continue;
+            }
+            [$a, $b] = array_map('intval', explode(',', $key));
+            $adj[$a][$b] = $w;
+            $adj[$b][$a] = $w;
+            $deg[$a] = ($deg[$a] ?? 0) + $w;
+            $deg[$b] = ($deg[$b] ?? 0) + $w;
+            $edges++;
+        }
+        if (count($adj) < 3 || $edges < 2) {
+            return null;
+        }
+
+        $m = array_sum($deg) / 2.0;
+        $rawComm = self::louvain($adj, $deg, $m);
+        $relabel = [];
+        $next = 0;
+        $commOf = [];
+        foreach ($rawComm as $node => $c) {
+            if (!isset($relabel[$c])) {
+                $relabel[$c] = $next++;
+            }
+            $commOf[$node] = $relabel[$c];
+        }
+
+        $pr = self::weightedPagerank($adj, $deg);
+        $rankNodes = array_keys($adj);
+        usort($rankNodes, static fn ($x, $y) => ($pr[$y] ?? 0) <=> ($pr[$x] ?? 0));
+        $ranked = array_slice($rankNodes, 0, $maxNodes);
+        $topSet = array_flip($ranked);
+
+        $nodes = [];
+        foreach ($ranked as $nd) {
+            $nodes[] = [
+                'name' => $titles[$nd] ?? ('Person ' . $nd),
+                'value' => $nodeCounts[$nd] ?? 0,
+                'itemId' => $nd,
+                'community' => $commOf[$nd] ?? 0,
+                'rank' => round($pr[$nd] ?? 0, 6),
+                'matched' => true,
+                'role' => 'contributor',
+            ];
+        }
+
+        $outLinks = [];
+        foreach ($pairCounts as $key => $w) {
+            if ($w < $minCooccurrence) {
+                continue;
+            }
+            [$a, $b] = array_map('intval', explode(',', $key));
+            if (isset($topSet[$a], $topSet[$b])) {
+                $outLinks[] = ['source' => $titles[$a] ?? ('Person ' . $a), 'target' => $titles[$b] ?? ('Person ' . $b), 'value' => $w];
+            }
+        }
+
+        $summary = [];
+        foreach ($ranked as $nd) {
+            $ci = $commOf[$nd] ?? 0;
+            if (!isset($summary[$ci])) {
+                $summary[$ci] = ['id' => $ci, 'size' => 0, 'anchor' => null, '_rank' => -1.0];
+            }
+            $summary[$ci]['size']++;
+            if (($pr[$nd] ?? 0) > $summary[$ci]['_rank']) {
+                $summary[$ci]['_rank'] = $pr[$nd] ?? 0;
+                $summary[$ci]['anchor'] = $titles[$nd] ?? null;
+            }
+        }
+        $communitiesList = [];
+        foreach ($summary as $s) {
+            $communitiesList[] = ['id' => $s['id'], 'size' => $s['size'], 'anchor' => $s['anchor']];
+        }
+        usort($communitiesList, static fn ($a, $b) => $b['size'] <=> $a['size']);
+
+        return ['nodes' => $nodes, 'links' => $outLinks, 'communities' => $communitiesList];
+    }
+
+    /** Build a collection-wide person -> institution affiliation network. */
+    public static function buildGlobalAffiliationNetwork(array $items, array $links, int $maxPersons = 120, int $maxInstitutions = 80): ?array
+    {
+        $personAffiliations = [];
+        $personCounts = [];
+        $institutionCounts = [];
+
+        foreach ($items as $pid => $info) {
+            if (($info['template_id'] ?? null) !== self::TEMPLATE_PERSONS) {
+                continue;
+            }
+            $affiliations = [];
+            foreach ($links[$pid] ?? [] as [$term, , $vrid]) {
+                if ($term === 'dcterms:isPartOf' && ($items[$vrid]['class_term'] ?? '') === 'foaf:Organization') {
+                    $affiliations[$vrid] = true;
+                }
+            }
+            if (!$affiliations) {
+                continue;
+            }
+            $personAffiliations[$pid] = array_keys($affiliations);
+            $personCounts[$pid] = count($affiliations);
+            foreach (array_keys($affiliations) as $iid) {
+                $institutionCounts[$iid] = ($institutionCounts[$iid] ?? 0) + 1;
+            }
+        }
+        if (!$personAffiliations) {
+            return null;
+        }
+
+        arsort($personCounts);
+        arsort($institutionCounts);
+        $topPersons = array_flip(array_slice(array_keys($personCounts), 0, $maxPersons));
+        $topInstitutions = array_flip(array_slice(array_keys($institutionCounts), 0, $maxInstitutions));
+
+        $nodes = [];
+        $nodeNames = [];
+        foreach (array_keys($topPersons) as $pid) {
+            $title = $items[$pid]['title'] ?? ('Person ' . $pid);
+            $nodes[] = ['name' => $title, 'value' => $personCounts[$pid], 'itemId' => $pid, 'category' => 'person'];
+            $nodeNames[$title] = true;
+        }
+        foreach (array_keys($topInstitutions) as $iid) {
+            $title = $items[$iid]['title'] ?? ('Institution ' . $iid);
+            $nodes[] = ['name' => $title, 'value' => $institutionCounts[$iid], 'itemId' => $iid, 'category' => 'institution'];
+            $nodeNames[$title] = true;
+        }
+
+        $netLinks = [];
+        foreach ($personAffiliations as $pid => $affiliations) {
+            if (!isset($topPersons[$pid])) {
+                continue;
+            }
+            $personTitle = $items[$pid]['title'] ?? '';
+            foreach ($affiliations as $iid) {
+                if (!isset($topInstitutions[$iid])) {
+                    continue;
+                }
+                $institutionTitle = $items[$iid]['title'] ?? '';
+                if (isset($nodeNames[$personTitle], $nodeNames[$institutionTitle])) {
+                    $netLinks[] = ['source' => $personTitle, 'target' => $institutionTitle, 'value' => 1];
+                }
+            }
+        }
+
+        return $netLinks ? ['nodes' => $nodes, 'links' => $netLinks, 'categories' => ['person', 'institution']] : null;
+    }
+
+    /**
+     * Build a collection-wide institution collaboration graph.
+     *
+     * Institutions are linked when they co-occur through direct research-item
+     * organisation links, contributor affiliations on the same item, or project
+     * funding organisations associated with that item's project.
+     */
+    public static function buildGlobalInstitutionCollaborationNetwork(array $itemIds, array $items, array $links, int $minShared = 1, int $maxNodes = 80): ?array
+    {
+        $pairCounts = [];
+        $nodeCounts = [];
+        $titles = [];
+
+        foreach ($itemIds as $iid) {
+            $institutions = [];
+            $projectId = null;
+            foreach ($links[$iid] ?? [] as [$term, , $vrid]) {
+                $isOrg = ($items[$vrid]['class_term'] ?? '') === 'foaf:Organization';
+                if ($term === 'dcterms:isPartOf' && ($items[$vrid]['template_id'] ?? null) === self::TEMPLATE_PROJECTS) {
+                    $projectId = $vrid;
+                } elseif ($isOrg && ($term === 'frapo:isFundedBy' || $term === 'dcterms:provenance' || str_starts_with($term, 'marcrel:'))) {
+                    $institutions[$vrid] = true;
+                } elseif (self::isPersonContributionTerm($term) && ($items[$vrid]['template_id'] ?? null) === self::TEMPLATE_PERSONS) {
+                    foreach ($links[$vrid] ?? [] as [$pTerm, , $affId]) {
+                        if ($pTerm === 'dcterms:isPartOf' && ($items[$affId]['class_term'] ?? '') === 'foaf:Organization') {
+                            $institutions[$affId] = true;
+                        }
+                    }
+                }
+            }
+            if ($projectId !== null) {
+                foreach ($links[$projectId] ?? [] as [$pTerm, , $fundId]) {
+                    if ($pTerm === 'frapo:isFundedBy' && ($items[$fundId]['class_term'] ?? '') === 'foaf:Organization') {
+                        $institutions[$fundId] = true;
+                    }
+                }
+            }
+
+            $ids = array_keys($institutions);
+            foreach ($ids as $instId) {
+                $nodeCounts[$instId] = ($nodeCounts[$instId] ?? 0) + 1;
+                $titles[$instId] = $items[$instId]['title'] ?? ('Institution ' . $instId);
+            }
+            $n = count($ids);
+            for ($i = 0; $i < $n; $i++) {
+                for ($j = $i + 1; $j < $n; $j++) {
+                    $a = $ids[$i];
+                    $b = $ids[$j];
+                    if ($a > $b) {
+                        [$a, $b] = [$b, $a];
+                    }
+                    $pairCounts[$a . ',' . $b] = ($pairCounts[$a . ',' . $b] ?? 0) + 1;
+                }
+            }
+        }
+        if (!$pairCounts) {
+            return null;
+        }
+
+        arsort($nodeCounts);
+        $topInstitutions = array_flip(array_slice(array_keys($nodeCounts), 0, $maxNodes));
+        $nodes = [];
+        $nodeNames = [];
+        foreach (array_keys($topInstitutions) as $iid) {
+            $title = $titles[$iid] ?? ($items[$iid]['title'] ?? ('Institution ' . $iid));
+            $nodes[] = ['name' => $title, 'value' => $nodeCounts[$iid], 'itemId' => $iid];
+            $nodeNames[$title] = true;
+        }
+
+        $netLinks = [];
+        foreach ($pairCounts as $key => $count) {
+            if ($count < $minShared) {
+                continue;
+            }
+            [$a, $b] = array_map('intval', explode(',', $key));
+            if (isset($topInstitutions[$a], $topInstitutions[$b])) {
+                $aTitle = $titles[$a] ?? ($items[$a]['title'] ?? '');
+                $bTitle = $titles[$b] ?? ($items[$b]['title'] ?? '');
+                if (isset($nodeNames[$aTitle], $nodeNames[$bTitle])) {
+                    $netLinks[] = ['source' => $aTitle, 'target' => $bTitle, 'value' => $count];
+                }
+            }
+        }
+
+        return $netLinks ? ['nodes' => $nodes, 'links' => $netLinks] : null;
     }
 
     /** Build person -> institution affiliation network centred on an institution. */

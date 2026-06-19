@@ -2,7 +2,7 @@
  * Compare: side-by-side comparison of two entities of the same type.
  *
  * Generic over entity type (projects, people, institutions, subjects,
- * languages). The block sets `data-entity-type` to lock a type; when absent the
+ * languages, genres). The block sets `data-entity-type` to lock a type; when absent the
  * controller shows an in-page type switcher (the "Compare (any entity)" block).
  * Fetches the matching {type}-index.json for the dropdowns, loads two dashboard
  * JSONs, and renders paired charts + an overlaid radar headline + overlap stats.
@@ -77,9 +77,21 @@
             ],
             unifyKeys: ['types', 'subjects', 'contributors'],
             overlapKey: 'subjects', overlapLabel: 'Subject', radar: false, grouped: false
+        },
+        genres: {
+            index: 'genres-index.json', label: 'Genres', singular: 'Genre',
+            charts: [
+                { key: 'timeline',     label: 'Timeline',               tall: false },
+                { key: 'types',        label: 'Resource Types',         tall: false },
+                { key: 'languages',    label: 'Languages',              tall: false },
+                { key: 'subjects',     label: 'Subjects',               tall: true  },
+                { key: 'contributors', label: 'Top Associated Persons', tall: false }
+            ],
+            unifyKeys: ['types', 'languages', 'subjects', 'contributors'],
+            overlapKey: 'subjects', overlapLabel: 'Subject', radar: false, grouped: false
         }
     };
-    var TYPE_ORDER = ['projects', 'people', 'institutions', 'subjects', 'languages'];
+    var TYPE_ORDER = ['projects', 'people', 'institutions', 'subjects', 'languages', 'genres'];
 
     /* ------------------------------------------------------------------ */
     /*  Overlap computation                                                */

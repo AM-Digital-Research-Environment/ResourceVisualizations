@@ -1,0 +1,27 @@
+<?php
+/**
+ * Dedicated Genre Comparison page block.
+ *
+ * Reuses the generic compare controller, but locks it to the `genres` type so
+ * page authors can add a one-purpose block without exposing the type switcher.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var \Omeka\Api\Representation\SitePageBlockRepresentation $block
+ */
+
+$this->dashboardAssets(['cdn' => true, 'controller' => 'compare']);
+
+$siteSlug = $this->currentSite()->slug();
+?>
+
+<div class="resource-vis-block compare-block compare-genres-block">
+    <div class="compare-container"
+         data-entity-type="genres"
+         data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
+         data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">
+        <div class="rv-loading">
+            <div class="rv-spinner"></div>
+            <span><?= $this->translate('Loading genre comparison…') ?></span>
+        </div>
+    </div>
+</div>

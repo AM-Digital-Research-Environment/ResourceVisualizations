@@ -1,0 +1,26 @@
+<?php
+/**
+ * Network Explorer page block.
+ *
+ * Renders collection-wide network visualisations from
+ * asset/data/network-explorer.json via asset/js/dashboard-network-explorer.js.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var \Omeka\Api\Representation\SitePageBlockRepresentation $block
+ */
+
+$this->dashboardAssets(['cdn' => true, 'controller' => 'network']);
+
+$siteSlug = $this->currentSite()->slug();
+?>
+
+<div class="resource-vis-block network-explorer-block">
+    <div class="network-explorer-container"
+         data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
+         data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">
+        <div class="rv-loading">
+            <div class="rv-spinner"></div>
+            <span><?= $this->translate('Loading network explorer…') ?></span>
+        </div>
+    </div>
+</div>

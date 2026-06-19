@@ -1128,6 +1128,17 @@ button.rv-toolbar-btn:focus-visible,
     color: var(--rv-heading-color);
 }
 
+.compare-type-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.compare-type-btn:disabled:hover {
+    background: var(--rv-bg);
+    border-color: var(--rv-border);
+    color: var(--rv-text-strong);
+}
+
 .compare-type-btn:focus-visible {
     outline: none;
     box-shadow: var(--rv-focus-ring);
