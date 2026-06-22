@@ -547,8 +547,10 @@ details.rv-collapsible[open] > .rv-collapsible__head .rv-collapsible__chevron {
 /*  Buttons                                                            */
 /* ------------------------------------------------------------------ */
 
-/* Override theme button resets (e.g. Lively sets padding/border-radius/bg on all buttons).
-   Double class selector for specificity over theme's `button, .button` rules. */
+/* Override a host theme's bare-button skin (e.g. Lively sets padding/border-radius/bg
+   on all <button>s). Double class selector for specificity over a theme's `button`
+   rule. (The DRE theme only skins `.button` as of theme v2.13.0 — which these
+   controls don't use — so under DRE this is a harmless no-op.) */
 button.rv-btn,
 button.rv-toolbar-btn,
 .rv-btn,
@@ -1514,11 +1516,13 @@ button.rv-toolbar-btn:focus-visible,
 }
 
 /* Segmented view switch — a sunken track that holds pill-shaped tabs, with the
-   active view floating on an accent pill. These are <button>s, so the DRE theme's
-   global button skin (green fill + translateY lift + glow on :hover, specificity
-   0,3,1) would otherwise hijack them; the interactive rules below are scoped
-   through .photo-view-toggle (4+ selectors) so they clear that and the control
-   keeps its own quiet, intentional look — colour transitions only, never a lift. */
+   active view floating on an accent pill. These are <button>s, so a host theme
+   that skins every <button> (e.g. Lively: fill + lift + glow on :hover) would
+   otherwise hijack them; the interactive rules below are scoped through
+   .photo-view-toggle (4+ selectors) so they out-rank any such rule and the
+   control keeps its own quiet, intentional look — colour transitions only, never
+   a lift. (The DRE theme no longer skins bare <button>s as of theme v2.13.0, so
+   under DRE this scoping is simply defensive.) */
 .photo-view-toggle {
     display: inline-flex;
     gap: 2px;
@@ -1862,9 +1866,9 @@ body.photo-lightbox-open {
     position: absolute;
     z-index: 2;
     margin: 0;
-    /* Shed the theme button's inherited padding (0.7rem 1.4rem) — under
-       border-box it overflows the fixed width and warps the circle to an
-       ellipse. These are icon buttons; width/height set the size. */
+    /* Shed any host-theme button padding — under border-box it would overflow the
+       fixed width and warp the circle to an ellipse. These are icon buttons;
+       width/height set the size. */
     padding: 0;
     box-sizing: border-box;
     border: 1px solid color-mix(in oklab, #fff 24%, transparent);
@@ -1884,10 +1888,11 @@ body.photo-lightbox-open {
 }
 
 /* Hover/active/focus skin. Scoped 4 selectors deep (.photo-browse-container
-   .photo-lightbox …:hover) so it clears the DRE theme's global button:hover,
-   whose :not() chain gives it specificity (0,3,1) — that rule was turning these
-   controls green, adding a glow, and applying a translateY lift that fought the
-   arrows' centring. We grow with `scale` and reset its `transform` to none. */
+   .photo-lightbox …:hover) so it out-ranks a host theme's global button:hover
+   (e.g. Lively), which would otherwise turn these controls green, add a glow, and
+   apply a translateY lift that fights the arrows' centring. We grow with `scale`
+   and reset its `transform` to none. (The DRE theme stopped skinning bare
+   <button>s in theme v2.13.0; this stays for non-DRE hosts.) */
 .photo-browse-container .photo-lightbox .photo-lightbox-close:hover,
 .photo-browse-container .photo-lightbox .photo-lightbox-nav:hover,
 .photo-browse-container .photo-lightbox .photo-lightbox-close:focus-visible,
