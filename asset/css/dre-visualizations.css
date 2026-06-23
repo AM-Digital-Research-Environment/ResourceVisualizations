@@ -604,15 +604,31 @@ button.rv-toolbar-btn:focus-visible,
 /*  Loading / error states                                             */
 /* ------------------------------------------------------------------ */
 
+/* Loading state — a token-driven skeleton, not a bare "Loading…" line. The
+   container is a --rv-bg-sunken block at the chart's reserved height with a slow
+   shimmer sweep; the spinner + label sit centred on top. One grammar for every
+   chart block (dashboards, knowledge graph, maps, compare, …) so the whole
+   module loads with one composed voice. Shimmer + spin are both suppressed
+   under prefers-reduced-motion (see the media query below). */
 .rv-loading {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 100%;
+    min-height: 200px;              /* reserve an area when the parent sets no height */
     gap: 0.75rem;
     color: var(--rv-text-color);
     font-size: 0.9rem;
+    border-radius: var(--rv-radius);
+    background-color: var(--rv-bg-sunken);
+    background-image: linear-gradient(100deg,
+        transparent 30%,
+        var(--rv-bg) 50%,
+        transparent 70%);
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation: rv-shimmer 1.6s ease-in-out infinite;
 }
 
 .rv-spinner {
@@ -628,15 +644,40 @@ button.rv-toolbar-btn:focus-visible,
     to { transform: rotate(360deg); }
 }
 
+@keyframes rv-shimmer {
+    from { background-position: 150% 0; }
+    to   { background-position: -50% 0; }
+}
+
+/* Empty + error states: a quiet composed panel (not bare centred text), on the
+   same sunken surface and reserved height as the skeleton — no shimmer, since
+   nothing is loading. */
 .rv-no-data,
 .rv-error {
     display: flex;
     align-items: center;
     justify-content: center;
     height: 100%;
+    min-height: 200px;
+    margin: 0;
+    padding: 1.5rem;
+    text-align: center;
     color: var(--rv-text-color);
     font-size: 0.9rem;
-    margin: 0;
+    background-color: var(--rv-bg-sunken);
+    border-radius: var(--rv-radius);
+}
+
+/* Honour reduced-motion: no shimmer sweep, no spin — static sunken panels. */
+@media (prefers-reduced-motion: reduce) {
+    .rv-loading {
+        animation: none;
+        background-image: none;
+    }
+
+    .rv-spinner {
+        animation: none;
+    }
 }
 
 /* ------------------------------------------------------------------ */
@@ -689,7 +730,7 @@ button.rv-toolbar-btn:focus-visible,
 /* Consistent close button for ALL MapLibre popups in the module. */
 .resource-vis-block .maplibregl-popup-close-button,
 .rv-item-map-panel .maplibregl-popup-close-button {
-    font-size: 18px;
+    font-size: 1.125rem;
     font-weight: bold;
     width: 24px;
     height: 24px;

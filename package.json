@@ -1,0 +1,15 @@
+{
+  "name": "dre-visualizations",
+  "version": "2.9.0",
+  "private": true,
+  "description": "DRE Visualizations Omeka S module — ECharts/MapLibre dashboards & knowledge graphs. This package.json exists only to run the dependency-free design-token contract lint; the module ships plain CSS/JS with no build step.",
+  "scripts": {
+    "lint:tokens": "node scripts/check-design-tokens.mjs"
+  },
+  "author": "Frédérick Madore",
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AM-Digital-Research-Environment/DRE-Visualizations.git"
+  }
+}
