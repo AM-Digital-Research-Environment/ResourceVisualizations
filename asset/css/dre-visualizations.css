@@ -650,6 +650,28 @@ button.rv-toolbar-btn:focus-visible,
     border-color: var(--rv-accent) !important;
 }
 
+/* Coarse-pointer (touch) tap targets — the dense chart + knowledge-graph toolbar
+   icon buttons stay visually compact (26–32px) but gain a centred ≥44px invisible
+   hit area (the theme's --size-control-lg WCAG ambition) so they are comfortable
+   to tap. Fine-pointer (mouse) layout is unchanged. (F4) */
+@media (pointer: coarse) {
+    .rv-btn,
+    .rv-toolbar-btn {
+        position: relative;
+    }
+
+    .rv-btn::before,
+    .rv-toolbar-btn::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: max(100%, var(--size-control-lg, 2.75rem));
+        height: max(100%, var(--size-control-lg, 2.75rem));
+        transform: translate(-50%, -50%);
+    }
+}
+
 /* ------------------------------------------------------------------ */
 /*  Loading / error states                                             */
 /* ------------------------------------------------------------------ */
