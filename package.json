@@ -1,6 +1,6 @@
 {
   "name": "dre-visualizations",
-  "version": "2.9.0",
+  "version": "2.10.0",
   "private": true,
   "description": "DRE Visualizations Omeka S module — ECharts/MapLibre dashboards & knowledge graphs. This package.json exists only to run the dependency-free design-token contract lint; the module ships plain CSS/JS with no build step.",
   "scripts": {
