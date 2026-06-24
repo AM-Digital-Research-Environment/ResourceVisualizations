@@ -43,9 +43,13 @@
         var descOverrides = data.descriptions || {};
         var builderOverrides = data.builders || {};
 
-        // Summary stat cards (Collection Overview only — other dashboards carry
-        // no `stats` array, so this is empty for them).
-        var statsHtml = (ns.renderStatCards && data.stats) ? ns.renderStatCards(data.stats) : '';
+        // Summary stat cards. The home "Collection Overview" layout OMITS them: the
+        // DRE theme's home banner renders the same stat set (read from this very
+        // precompute), so drawing them here too would duplicate the cards on the
+        // home page. Every other dashboard that carries a `stats` array — the full
+        // Collection Dashboard, Publications, YouTube — keeps its cards.
+        var statsHtml = (ns.renderStatCards && data.stats && layoutKey !== 'collectionOverview')
+            ? ns.renderStatCards(data.stats) : '';
 
         var headInner = '<h3>Visualisations</h3>';
 
