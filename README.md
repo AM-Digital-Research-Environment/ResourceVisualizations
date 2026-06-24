@@ -393,10 +393,13 @@ load and on every theme change:
 | `border` | `--surface` | segment gaps, marker outlines |
 | `grid` / `gridLight` | `--border` / `--border-light` | axis lines, split lines |
 
-The 20-colour categorical palette (`COLORS`) for multi-series charts is kept
-theme-independent: the brand token set has only six colours, and compare-mode
-relies on a stable colour-by-index mapping. The brand identity is carried by
-`THEME.accent` (= `--primary`).
+The 12-colour categorical palette (`COLORS`) for multi-series charts follows the
+data-colour contract: **stops 1–6 are the `--brand-*` pigments and must stay in
+sync; stops 7–12 are an independent harmonious extension.** Stops 1–6 therefore
+duplicate the brand tokens on purpose — change them in lockstep with `--brand-*`
+(see the theme's [DESIGN.md §9](https://github.com/AM-Digital-Research-Environment/DRE-theme/blob/master/DESIGN.md)).
+Compare-mode relies on a stable colour-by-index mapping, and the brand identity is
+carried by `THEME.accent` (= `--primary`).
 
 ## Dependencies
 
