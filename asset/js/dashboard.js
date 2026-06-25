@@ -51,7 +51,12 @@
         var statsHtml = (ns.renderStatCards && data.stats && layoutKey !== 'collectionOverview')
             ? ns.renderStatCards(data.stats) : '';
 
-        var headInner = '<h3>Visualisations</h3>';
+        // Header title. Defaults to "Visualisations" (Publications, YouTube,
+        // Collection Dashboard, item-page dashboards) unless the block template
+        // pins its own via `data-title` — the curated "Collection Overview"
+        // names itself "Collection overview" so its heading matches the block.
+        var headTitle = (container && container.dataset && container.dataset.title) || 'Visualisations';
+        var headInner = '<h2>' + headTitle + '</h2>';
 
         var chartsHtml = '<div class="dashboard-charts">';
         chartKeys.forEach(function (key) {
@@ -73,7 +78,7 @@
                 ? descOverrides[key]
                 : ((ns.CHART_DESCRIPTIONS && ns.CHART_DESCRIPTIONS[key]) || '');
             chartsHtml += '<div class="chart-panel' + wide + '">'
-                + '<h4>' + label + '</h4>'
+                + '<h3>' + label + '</h3>'
                 + (desc ? '<p class="chart-description">' + desc + '</p>' : '')
                 + '<div class="chart-container' + tall + '" data-chart="' + key + '"></div>'
                 + '</div>';

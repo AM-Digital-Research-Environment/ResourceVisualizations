@@ -691,7 +691,7 @@
                 var wrapper = document.createElement('div');
                 wrapper.className = 'rv-item-map-panel';
 
-                var heading = document.createElement('h4');
+                var heading = document.createElement('h3');
                 heading.textContent = 'Locations';
                 wrapper.appendChild(heading);
 

@@ -116,7 +116,7 @@ $dashboardData = json_encode([
 ?>
 
 <div class="dashboard-header">
-    <h3><?= $this->translate('Dashboard') ?></h3>
+    <h2><?= $this->translate('Dashboard') ?></h2>
     <span class="dashboard-total">
         <?= sprintf($this->translatePlural('%d item', '%d items', count($items)), count($items)) ?>
     </span>
@@ -127,35 +127,35 @@ $dashboardData = json_encode([
     <div class="dashboard-charts">
         <?php if (!empty($timeline)): ?>
         <div class="chart-panel chart-panel-wide">
-            <h4><?= $this->translate('Timeline') ?></h4>
+            <h3><?= $this->translate('Timeline') ?></h3>
             <div class="chart-container" data-chart="timeline"></div>
         </div>
         <?php endif; ?>
 
         <?php if (!empty($types)): ?>
         <div class="chart-panel">
-            <h4><?= $this->translate('Resource Types') ?></h4>
+            <h3><?= $this->translate('Resource Types') ?></h3>
             <div class="chart-container" data-chart="types"></div>
         </div>
         <?php endif; ?>
 
         <?php if (!empty($languages)): ?>
         <div class="chart-panel">
-            <h4><?= $this->translate('Languages') ?></h4>
+            <h3><?= $this->translate('Languages') ?></h3>
             <div class="chart-container" data-chart="languages"></div>
         </div>
         <?php endif; ?>
 
         <?php if (!empty($subjects)): ?>
         <div class="chart-panel chart-panel-wide">
-            <h4><?= $this->translate('Subjects') ?></h4>
+            <h3><?= $this->translate('Subjects') ?></h3>
             <div class="chart-container chart-container-tall" data-chart="subjects"></div>
         </div>
         <?php endif; ?>
 
         <?php if (!empty($contributors)): ?>
         <div class="chart-panel">
-            <h4><?= $this->translate('Top Contributors') ?></h4>
+            <h3><?= $this->translate('Top Contributors') ?></h3>
             <div class="chart-container" data-chart="contributors"></div>
         </div>
         <?php endif; ?>

@@ -45,11 +45,11 @@
     function render(container, block, timeline, itemYear, projectName, siteBase, projectId) {
         var years = Object.keys(timeline).sort();
         block.hidden = false;
-        container.innerHTML = '<div class="sibling-sparkline-head"><h4>'
-            + escapeHtml(projectName || 'Project') + ' — items per year</h4></div>'
+        container.innerHTML = '<div class="sibling-sparkline-head"><h2>'
+            + escapeHtml(projectName || 'Project') + ' — items per year</h2></div>'
             + '<div class="sibling-sparkline-chart"></div>';
 
-        var head = container.querySelector('.sibling-sparkline-head h4');
+        var head = container.querySelector('.sibling-sparkline-head h2');
         if (siteBase && projectId) {
             head.classList.add('sibling-sparkline-link');
             head.addEventListener('click', function () {

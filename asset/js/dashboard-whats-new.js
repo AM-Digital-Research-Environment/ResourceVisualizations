@@ -23,7 +23,7 @@
 
         var header = document.createElement('div');
         header.className = 'dashboard-header';
-        header.innerHTML = "<h3>What's New</h3>"
+        header.innerHTML = "<h2>What's New</h2>"
             + '<span class="dashboard-total">as of ' + escapeHtml(data.reference) + '</span>';
         container.appendChild(header);
 
@@ -55,7 +55,7 @@
             if (active.topProjects && active.topProjects.length) {
                 var panel = document.createElement('div');
                 panel.className = 'chart-panel chart-panel-wide';
-                panel.innerHTML = '<h4>Most active projects</h4>';
+                panel.innerHTML = '<h3>Most active projects</h3>';
                 var el = document.createElement('div');
                 el.className = 'chart-container';
                 panel.appendChild(el);
@@ -66,7 +66,7 @@
                 }
             }
 
-            var heading = document.createElement('h4');
+            var heading = document.createElement('h3');
             heading.className = 'whats-new-heading';
             heading.textContent = active.count + ' new item' + (active.count === 1 ? '' : 's');
             body.appendChild(heading);

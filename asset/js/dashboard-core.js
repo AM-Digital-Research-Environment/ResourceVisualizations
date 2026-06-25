@@ -366,7 +366,7 @@
             textStyle: { color: t.text, fontFamily: t.fontFamily },
             title: {
                 // In-canvas titles take the display serif, matching the HTML
-                // <h4> headings the dashboard renders around the charts.
+                // <h3> headings the dashboard renders around the charts.
                 textStyle: { color: t.heading, fontFamily: t.fontDisplay },
                 subtextStyle: { color: t.textMuted, fontFamily: t.fontFamily }
             },
@@ -670,8 +670,8 @@
             + '<button type="button" class="rv-toolbar-btn" data-action="save" title="Save as image">'
             + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'
             + '</button>';
-        var h4 = panel.querySelector('h4');
-        if (h4) h4.appendChild(bar);
+        var title = panel.querySelector('h3');
+        if (title) title.appendChild(bar);
         bar.addEventListener('click', function (e) {
             var btn = e.target.closest('[data-action]');
             if (!btn) return;
@@ -679,7 +679,7 @@
                 var url = chart.getDataURL({ pixelRatio: 2, backgroundColor: ns.exportBg() });
                 var a = document.createElement('a');
                 a.href = url;
-                a.download = (panel.querySelector('h4').textContent || 'chart').trim() + '.png';
+                a.download = (panel.querySelector('h3').textContent || 'chart').trim() + '.png';
                 a.click();
             } else if (btn.dataset.action === 'decal') {
                 ns.toggleDecals();

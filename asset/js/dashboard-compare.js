@@ -402,9 +402,9 @@
 
         var panel = document.createElement('div');
         panel.className = 'chart-panel chart-panel-wide compare-radar-panel';
-        var h4 = document.createElement('h4');
-        h4.textContent = 'Profile';
-        panel.appendChild(h4);
+        var title = document.createElement('h3');
+        title.textContent = 'Profile';
+        panel.appendChild(title);
         var el = document.createElement('div');
         el.className = 'chart-container chart-container-tall';
         el.setAttribute('data-chart', 'radar');
@@ -429,9 +429,9 @@
         var panel = document.createElement('div');
         panel.className = 'chart-panel compare-chart-panel';
 
-        var h4 = document.createElement('h4');
-        h4.textContent = label;
-        panel.appendChild(h4);
+        var title = document.createElement('h3');
+        title.textContent = label;
+        panel.appendChild(title);
 
         var chartData = data ? data[key] : null;
         // For stacked timeline, fall back to basic timeline.
@@ -525,7 +525,7 @@
 
             var header = document.createElement('div');
             header.className = 'dashboard-header';
-            header.innerHTML = '<h3>Compare ' + cfg.label + '</h3>';
+            header.innerHTML = '<h2>Compare ' + cfg.label + '</h2>';
             container.appendChild(header);
 
             if (hasSwitcher) {

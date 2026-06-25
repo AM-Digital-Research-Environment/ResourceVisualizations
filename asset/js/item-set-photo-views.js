@@ -215,7 +215,7 @@
             var body = document.createElement('div');
             body.className = 'photo-card-body';
 
-            var title = document.createElement('h4');
+            var title = document.createElement('h3');
             title.className = 'photo-card-title';
             title.textContent = p.title || '';
             body.appendChild(title);
@@ -315,7 +315,7 @@
 
         var body = document.createElement('div');
         body.className = 'photo-card-body';
-        var title = document.createElement('h4');
+        var title = document.createElement('h3');
         title.className = 'photo-card-title';
         title.textContent = group.label;
         body.appendChild(title);

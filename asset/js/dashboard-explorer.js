@@ -92,7 +92,7 @@
 
             var header = document.createElement('div');
             header.className = 'dashboard-header';
-            header.innerHTML = '<h3>Project Explorer</h3>';
+            header.innerHTML = '<h2>Project Explorer</h2>';
             container.appendChild(header);
 
             var controls = document.createElement('div');

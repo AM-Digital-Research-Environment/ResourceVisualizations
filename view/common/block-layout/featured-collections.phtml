@@ -52,7 +52,7 @@ $footer = function (array $entry, array $d) {
 
 <div class="resource-vis-block featured-collections-block">
     <?php if ($heading !== ''): ?>
-    <h3 class="featured-collections-heading"><?= $this->escapeHtml($heading) ?></h3>
+    <h2 class="featured-collections-heading"><?= $this->escapeHtml($heading) ?></h2>
     <?php endif; ?>
 
     <div class="featured-collections">
@@ -84,7 +84,7 @@ $footer = function (array $entry, array $d) {
             </div>
 
             <div class="collection-card-body">
-                <h4 class="collection-card-title"><?= $this->escapeHtml($entry['title']) ?></h4>
+                <h3 class="collection-card-title"><?= $this->escapeHtml($entry['title']) ?></h3>
                 <?php if (!empty($entry['tagline'])): ?>
                 <p class="collection-card-tagline"><?= $this->escapeHtml($entry['tagline']) ?></p>
                 <?php endif; ?>

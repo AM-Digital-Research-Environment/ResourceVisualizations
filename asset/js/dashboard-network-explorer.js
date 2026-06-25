@@ -149,7 +149,7 @@
 
         var header = document.createElement('div');
         header.className = 'dashboard-header';
-        header.innerHTML = '<h3>Network Explorer</h3>'
+        header.innerHTML = '<h2>Network Explorer</h2>'
             + '<span class="dashboard-total">' + esc(tab.label) + '</span>';
         container.appendChild(header);
 
@@ -175,7 +175,7 @@
         charts.className = 'dashboard-charts';
         var panel = document.createElement('div');
         panel.className = 'chart-panel chart-panel-wide';
-        panel.innerHTML = '<h4>' + esc(tab.title) + '</h4>'
+        panel.innerHTML = '<h3>' + esc(tab.title) + '</h3>'
             + '<p class="chart-description">' + esc(tab.description) + '</p>'
             + '<div class="chart-container chart-container-tall" data-network-chart="' + esc(tab.id) + '"></div>';
         charts.appendChild(panel);

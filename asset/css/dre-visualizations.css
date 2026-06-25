@@ -150,12 +150,12 @@ body {
     margin: var(--rv-space-8) 0;
 }
 
-.resource-vis-block h3 {
-    /* Inherit the host theme's global h3 size/weight (DRE theme: 1.5rem, and
-       1.875rem from >=768px, weight 700) so the module's section headings match
-       the theme's own headings and the "Linked resources" disclosure, stepping
-       cleanly down from the page h1/h2. Chart titles are <h4>, so they are
-       unaffected. */
+.resource-vis-block h2 {
+    /* Block-level section titles. Inherit the host theme's global h2 size/weight
+       (DRE theme: 1.875rem, fluid to 2.75rem from >=768px, weight 800) so the
+       module's blocks read as proper page sections under the page/item <h1> and
+       match sibling sections such as the theme's "Linked resources" disclosure.
+       Visualisation titles inside a block are <h3>, so they step cleanly down. */
     color: var(--rv-heading-color);
     margin: 0 0 var(--rv-space-3);
 }
@@ -198,12 +198,12 @@ details.rv-collapsible {
 }
 
 /* Reuse the block heading style; just neutralise its margin in the flex head. */
-.rv-collapsible__head h3 {
+.rv-collapsible__head h2 {
     margin: 0;
     transition: color var(--rv-transition-fast);
 }
 
-.rv-collapsible__head:hover h3 {
+.rv-collapsible__head:hover h2 {
     color: var(--rv-accent);
 }
 
@@ -233,7 +233,7 @@ details.rv-collapsible[open] > .rv-collapsible__head .rv-collapsible__chevron {
 
 @media (prefers-reduced-motion: reduce) {
     .rv-collapsible__chevron,
-    .rv-collapsible__head h3 {
+    .rv-collapsible__head h2 {
         transition: none;
     }
 }
@@ -429,7 +429,7 @@ details.rv-collapsible[open] > .rv-collapsible__head .rv-collapsible__chevron {
     background: var(--rv-bg);
 }
 
-.rv-item-map-panel h4 {
+.rv-item-map-panel h3 {
     font-size: var(--rv-text-sm);
     font-weight: 600;
     color: var(--rv-heading-color);
@@ -470,15 +470,15 @@ details.rv-collapsible[open] > .rv-collapsible__head .rv-collapsible__chevron {
     margin-bottom: var(--rv-space-4);
 }
 
-.dashboard-header h3 {
-    /* Inherit the host theme's global h3 scale -- see .resource-vis-block h3. */
+.dashboard-header h2 {
+    /* Inherit the host theme's global h2 scale -- see .resource-vis-block h2. */
     margin: 0;
     color: var(--rv-heading-color);
 }
 
 /* Inline count/meta badge used by the Discursive Communities, What's New and
-   item-page dashboard headers (the Collection Overview "Visualisations" header
-   no longer shows one). */
+   item-page dashboard headers (the Collection overview header no longer shows
+   one). */
 .dashboard-total {
     font-size: var(--rv-text-sm);
     color: var(--rv-text-color);
@@ -508,7 +508,7 @@ details.rv-collapsible[open] > .rv-collapsible__head .rv-collapsible__chevron {
     grid-column: 1 / -1;
 }
 
-.chart-panel h4 {
+.chart-panel h3 {
     display: flex;
     align-items: center;
     gap: var(--rv-space-2);
@@ -534,8 +534,8 @@ details.rv-collapsible[open] > .rv-collapsible__head .rv-collapsible__chevron {
     height: 1.6rem;
 }
 
-.dashboard-header h3,
-.resource-vis-block h3 {
+.dashboard-header h2,
+.resource-vis-block h2 {
     overflow-wrap: break-word;
     word-break: break-word;
 }
@@ -1312,8 +1312,12 @@ button.rv-toolbar-btn:focus-visible,
 }
 
 .whats-new-heading {
+    /* A sub-section divider (the new-items count) sitting beside the chart
+       panel inside the What's New block. Now an <h3> for outline correctness,
+       but pinned small so it doesn't inherit the theme's full h3 scale. */
     margin: var(--rv-space-6) 0 var(--rv-space-3);
     color: var(--rv-heading-color);
+    font-size: var(--rv-text-lg);
 }
 
 .whats-new-grid {
@@ -1357,7 +1361,10 @@ button.rv-toolbar-btn:focus-visible,
     margin: var(--rv-space-4) 0;
 }
 
-.sibling-sparkline-head h4 {
+.sibling-sparkline-head h2 {
+    /* A minor resource-page block: keep the heading at the page outline's h2
+       level (sibling to the other item-page blocks) but pin it small so the
+       compact sparkline caption doesn't inherit the theme's full h2 scale. */
     margin: 0 0 var(--rv-space-2);
     color: var(--rv-heading-color);
     font-size: var(--rv-text-sm);

@@ -17,7 +17,7 @@
 
         var header = document.createElement('div');
         header.className = 'dashboard-header';
-        header.innerHTML = '<h3>' + 'Discursive Communities' + '</h3>'
+        header.innerHTML = '<h2>' + 'Discursive Communities' + '</h2>'
             + '<span class="dashboard-total">' + data.nodes.length + ' subjects · '
             + (data.communities ? data.communities.length : 0) + ' communities</span>';
         container.appendChild(header);
