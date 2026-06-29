@@ -99,6 +99,13 @@ return [
                         'options' => [
                             'route' => '/dre-embed',
                             'defaults' => [
+                                // The core `site` route defaults __NAMESPACE__ to
+                                // Omeka\Controller\Site; child routes inherit it and
+                                // ModuleRouteListener would prepend it to our
+                                // controller, mangling the FQCN to a non-existent
+                                // class (→ controller-not-found 404). Override it
+                                // here, mirroring this module's admin route.
+                                '__NAMESPACE__' => 'DreVisualizations\Controller\Site',
                                 'controller' => Controller\Site\EmbedController::class,
                                 'action' => 'index',
                             ],
