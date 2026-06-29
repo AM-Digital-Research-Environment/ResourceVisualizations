@@ -18,7 +18,7 @@
  *
  * @var \Laminas\View\Renderer\PhpRenderer $this
  * @var string      $content
- * @var string|null $embedTheme    'light' | 'dark' | '' (follow the OS pref)
+ * @var string|null $embedTheme    'dark' opts into dark; anything else renders light (the embed default)
  * @var string|null $embedPrimary  '#rrggbb' brand-seed override, or ''
  * @var string|null $embedTitle    Block label, for <title>
  * @var bool|null   $isGallery     True on the snippet-gallery / not-found page
@@ -61,12 +61,20 @@ if ($primary !== '') {
     }
 }
 
-// Force the colour mode on BOTH <html> and <body> only when requested — the
-// theme reads data-theme on body, and html must carry it too so the
-// prefers-color-scheme dark path (`:root:not([data-theme="light"])`) is
-// suppressed for a forced mode. No attribute ⇒ the embed follows the OS pref.
-$forced = ($embedTheme === 'light' || $embedTheme === 'dark');
-$themeAttr = $forced ? ' data-theme="' . $escapeAttr($embedTheme) . '"' : '';
+// Embeds render LIGHT by default, for predictability: an iframe can't read its
+// host page's colour scheme, and the viewer's OS preference is a poor proxy for
+// it (a dark-OS viewer on a light host would otherwise get a dark widget on a
+// light page). The embedder opts into dark explicitly with ?theme=dark. Stamp
+// data-theme on BOTH <html> and <body> so the theme's prefers-color-scheme dark
+// path (`:root:not([data-theme="light"])`) never overrides the chosen mode.
+$mode = ($embedTheme === 'dark') ? 'dark' : 'light';
+$themeAttr = ' data-theme="' . $escapeAttr($mode) . '"';
+
+// Provenance link shown on every embedded widget (not the gallery): a quiet
+// "Source: <site>" back to the site this data lives on.
+$site = $this->currentSite();
+$sourceUrl = $site ? $site->siteUrl(null, true) : rtrim((string) $this->serverUrl(false), '/');
+$sourceLabel = $this->translate('Source') . ': ' . ($site ? $site->title() : 'Africa Multiple DRE');
 ?>
 <!doctype html>
 <html lang="<?= $escapeAttr($locale) ?>"<?= $themeAttr ?>>
@@ -82,6 +90,9 @@ $themeAttr = $forced ? ' data-theme="' . $escapeAttr($embedTheme) . '"' : '';
         /* The block self-paces; keep it edge-to-edge inside the frame. */
         .dre-embed-body .resource-vis-block { margin: 0; }
         .dre-embed-body .dre-embed-wrap { padding-inline: 0; }
+        .dre-embed-source { margin: 0; padding: var(--space-2, 0.5rem) var(--space-4, 1rem); text-align: right; font-size: var(--text-xs, 0.8125rem); border-top: 1px solid var(--border-light, #ece9e3); background: var(--surface, #fff); }
+        .dre-embed-source a { color: var(--ink-light, #595650); text-decoration: none; }
+        .dre-embed-source a:hover { color: var(--primary, #009260); text-decoration: underline; }
     </style>
     <?php if ($primary !== ''): ?>
     <style>
@@ -94,6 +105,9 @@ $themeAttr = $forced ? ' data-theme="' . $escapeAttr($embedTheme) . '"' : '';
 <body class="dre-embed-body<?= $isGallery ? ' dre-embed-gallery' : '' ?>"<?= $themeAttr ?>>
 <?= $content ?>
 <?php if (!$isGallery): ?>
+<footer class="dre-embed-source">
+    <a href="<?= $escapeAttr($sourceUrl) ?>" target="_blank" rel="noopener"><?= $escapeHtml($sourceLabel) ?></a>
+</footer>
 <script>
 /* iframe height reporter — posts the document height to the parent on load,
    resize, and DOM mutations (charts populate asynchronously and lazily). The

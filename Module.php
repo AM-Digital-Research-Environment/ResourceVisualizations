@@ -32,6 +32,49 @@ class Module extends AbstractModule
         // null (all) role access to the site-facing embed controller only; the
         // public site route itself still scopes it to a published site.
         $acl->allow(null, [Controller\Site\EmbedController::class]);
+
+        // Allow that widget to be framed cross-origin (slides, project sites, …):
+        // on the /dre-embed routes only, swap the site's X-Frame-Options for a
+        // permissive CSP frame-ancestors. See relaxEmbedFraming().
+        $event->getApplication()->getEventManager()->attach(
+            MvcEvent::EVENT_FINISH,
+            [$this, 'relaxEmbedFraming'],
+            100
+        );
+    }
+
+    /**
+     * Replace X-Frame-Options with a permissive CSP frame-ancestors on the
+     * /dre-embed routes, so the public, read-only widget can be framed on other
+     * origins. X-Frame-Options only understands DENY / SAMEORIGIN — it cannot
+     * allowlist origins — which is why the CSP frame-ancestors form is needed.
+     *
+     * Effective only when the header is set by Omeka/PHP. If the reverse proxy
+     * (nginx) adds `X-Frame-Options ... always`, that overrides PHP and must be
+     * relaxed for the /dre-embed path there too — but this CSP is then already in
+     * place, so only the X-Frame-Options removal is left to do at the proxy.
+     */
+    public function relaxEmbedFraming(MvcEvent $event)
+    {
+        $match = $event->getRouteMatch();
+        if (!$match || strpos((string) $match->getMatchedRouteName(), 'site/dre-embed') !== 0) {
+            return;
+        }
+        $response = $event->getResponse();
+        if (!$response instanceof \Laminas\Http\Response) {
+            return;
+        }
+        $headers = $response->getHeaders();
+        $xfo = $headers->get('X-Frame-Options');
+        if ($xfo) {
+            foreach (($xfo instanceof \Traversable ? iterator_to_array($xfo) : [$xfo]) as $header) {
+                $headers->removeHeader($header);
+            }
+        }
+        // Public read-only widget — any parent may frame it. Swap in an explicit
+        // allowlist (e.g. "frame-ancestors 'self' https://slides.example") here if
+        // embedding should ever be restricted.
+        $headers->addHeaderLine('Content-Security-Policy', 'frame-ancestors *');
     }
 
     public function attachListeners(SharedEventManagerInterface $sharedEventManager)

@@ -26,7 +26,7 @@ use Laminas\View\Model\ViewModel;
  *   /s/:site-slug/dre-embed/:block/:viz      → blockAction  (one chart, dashboards)
  *
  * Query params honoured by blockAction (all optional):
- *   ?theme=light|dark   force the colour mode (else follows the viewer's OS pref)
+ *   ?theme=dark         opt into dark mode (embeds render light by default)
  *   ?primary=RRGGBB     override the brand seed (else the site's primary_color)
  */
 class EmbedController extends AbstractActionController
@@ -159,10 +159,9 @@ class EmbedController extends AbstractActionController
             return $this->notFound();
         }
 
-        // Colour mode: only stamp data-theme when forced, so an unspecified embed
-        // follows the viewer's OS preference (the DRE theme's dark tokens key off
-        // `:root:not([data-theme="light"])` under prefers-color-scheme when no
-        // attribute is set).
+        // Colour mode. Embeds render light by default (the layout stamps
+        // data-theme=light); ?theme=dark opts into dark. Pass the raw value
+        // through — the layout treats anything but 'dark' as light.
         $theme = strtolower((string) $this->params()->fromQuery('theme', ''));
         if ($theme !== 'light' && $theme !== 'dark') {
             $theme = '';
