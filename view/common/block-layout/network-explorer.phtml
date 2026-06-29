@@ -16,6 +16,7 @@ $siteSlug = $this->currentSite()->slug();
 
 <div class="resource-vis-block network-explorer-block">
     <div class="network-explorer-container"
+         data-embed-slug="network-explorer"
          data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
          data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">
         <div class="rv-loading">

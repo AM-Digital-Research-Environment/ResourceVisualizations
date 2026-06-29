@@ -1,0 +1,334 @@
+<?php
+/**
+ * Embed snippet gallery.
+ *
+ * A self-contained helper page that lists every embeddable DRE visualization
+ * block with a live preview and a copy-paste `<iframe>` + auto-resize snippet.
+ * Authors visit /s/<site>/dre-embed to grab the code for any block and drop it
+ * into a third-party site.
+ *
+ * Dashboard blocks additionally expose their individual charts: that list is
+ * built client-side from RV.LAYOUTS + RV.CHART_LABELS (the same definitions the
+ * dashboards render from, so the menu can never drift), filtered to the charts
+ * that actually carry data in the block's precomputed JSON.
+ *
+ * Runs on the bare embed layout, which loads the active theme's style.css — so
+ * the page reads in the DRE theme's tokens (surfaces, inks, brand accent, fonts)
+ * with the documented fallbacks as a safety net.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var array  $blocks    slug => info (label/template/kind[/itemId/layout])
+ * @var string $siteSlug  current site slug
+ */
+$escapeHtml = $this->plugin('escapeHtml');
+$escapeAttr = $this->plugin('escapeHtmlAttr');
+
+// Make RV.LAYOUTS + RV.CHART_LABELS available for the single-chart menu below.
+$this->dashboardAssets(['cdn' => true]);
+
+// Absolute origin so a generated snippet works when pasted on another domain.
+$origin = rtrim($this->serverUrl(false), '/');
+$embedBase = $origin . $this->url('site/dre-embed', ['site-slug' => $siteSlug]);
+$basePath = $this->basePath();
+
+// Snippets (iframe + resize listener) are built client-side via RV.embedSnippet
+// — the single source shared with the on-page copy-embed buttons — so the format
+// is never restated here. Each copy target carries data-embed-* attributes.
+?>
+<style>
+    /* Colours / spacing / type resolve through the DRE theme tokens (style.css is
+       loaded by the embed layout); the fallbacks keep the page legible if a
+       non-DRE theme is active. */
+    .dre-embed-gallery {
+        color: var(--ink, #33312e);
+        background: var(--background, #f7f6f3);
+        font-family: var(--font-body, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+        font-size: 1rem;
+        line-height: var(--line-height-relaxed, 1.6);
+        padding: var(--space-2xl, 3rem) var(--space-md, 1rem) var(--space-3xl, 4rem);
+    }
+    .dre-embed-wrap { max-width: var(--measure-wide, 72.5rem); margin: 0 auto; }
+    .dre-embed-gallery h1 {
+        font-family: var(--font-display, Georgia, serif);
+        font-size: var(--text-3xl, 2rem);
+        font-weight: 600;
+        letter-spacing: var(--tracking-tight, -0.02em);
+        color: var(--ink-strong, #24221f);
+        margin: 0 0 var(--space-xs, 0.25rem);
+    }
+    .dre-embed-gallery .lede {
+        color: var(--ink-light, #595650);
+        max-width: var(--measure-base, 52.5rem);
+        margin: 0 0 var(--space-2xl, 3rem);
+    }
+    .dre-embed-card {
+        border: 1px solid var(--border, #ddd9d2);
+        border-radius: var(--radius-lg, 0.75rem);
+        background: var(--surface, #fff);
+        box-shadow: var(--shadow-sm, 0 1px 3px 0 rgba(40, 35, 25, 0.08));
+        margin-bottom: var(--space-xl, 2rem);
+        overflow: hidden;
+    }
+    .dre-embed-card > header {
+        display: flex; align-items: baseline; justify-content: space-between;
+        gap: var(--space-md, 1rem);
+        padding: var(--space-md, 1rem) var(--space-lg, 1.5rem);
+        border-bottom: 1px solid var(--border-light, #ece9e3);
+        background: var(--surface-raised, #faf9f6);
+    }
+    .dre-embed-card h2 {
+        font-family: var(--font-display, Georgia, serif);
+        font-size: var(--text-xl, 1.5rem);
+        font-weight: 600;
+        color: var(--ink-strong, #24221f);
+        margin: 0;
+    }
+    .dre-embed-card .slug {
+        font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+        font-size: var(--text-xs, 0.8125rem);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted, #79766f);
+        border: 1px solid var(--border, #ddd9d2);
+        border-radius: var(--radius-full, 9999px);
+        padding: 0.15em 0.7em;
+        white-space: nowrap;
+    }
+    .dre-embed-preview {
+        width: 100%; border: 0; height: 460px; display: block;
+        background: var(--surface-sunken, #f1efe9);
+    }
+    .dre-embed-code { position: relative; }
+    .dre-embed-code pre {
+        margin: 0;
+        padding: var(--space-md, 1rem) var(--space-lg, 1.5rem);
+        overflow-x: auto;
+        font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+        font-size: var(--text-xs, 0.8125rem);
+        line-height: 1.55;
+        color: var(--ink, #33312e);
+        background: var(--surface-sunken, #f1efe9);
+        white-space: pre-wrap; word-break: break-all;
+    }
+    .dre-embed-copy {
+        cursor: pointer;
+        font-family: var(--font-body, system-ui, sans-serif);
+        font-size: var(--text-xs, 0.8125rem); font-weight: 600;
+        letter-spacing: var(--tracking-wide, 0.04em); text-transform: uppercase;
+        padding: 0.5em 0.85em;
+        border: 1px solid var(--border, #ddd9d2);
+        border-radius: var(--radius-sm, 0.375rem);
+        background: var(--surface, #fff);
+        color: var(--ink-light, #595650);
+        transition: background var(--transition-fast, 150ms) var(--ease-out-quart, ease),
+                    color var(--transition-fast, 150ms) var(--ease-out-quart, ease);
+    }
+    .dre-embed-code .dre-embed-copy {
+        position: absolute; top: var(--space-sm, 0.5rem); right: var(--space-sm, 0.5rem);
+    }
+    .dre-embed-copy:hover { background: var(--surface-sunken, #f1efe9); color: var(--ink-strong, #24221f); }
+    .dre-embed-copy:focus-visible { outline: none; box-shadow: var(--ring-focus, 0 0 0 3px var(--focus-ring, rgba(0, 146, 96, 0.4))); }
+    /* Confirmation is the one sanctioned use of the brand accent here: state, not chrome. */
+    .dre-embed-copy.copied {
+        background: color-mix(in oklab, var(--primary, #009260) 38%, var(--surface, #fff));
+        border-color: var(--primary, #009260);
+        color: var(--ink-strong, #24221f);
+    }
+    /* Individual-chart menu (dashboards), populated client-side. */
+    .dre-embed-charts { padding: var(--space-md, 1rem) var(--space-lg, 1.5rem) var(--space-lg, 1.5rem); border-top: 1px solid var(--border-light, #ece9e3); }
+    .dre-embed-charts:empty { display: none; }
+    .dre-embed-charts-title {
+        font-family: var(--font-body, system-ui, sans-serif);
+        font-size: var(--text-sm, 0.9375rem); font-weight: 700;
+        text-transform: uppercase; letter-spacing: var(--tracking-wide, 0.04em);
+        color: var(--ink-light, #595650); margin: 0 0 var(--space-sm, 0.5rem);
+    }
+    .dre-embed-viz-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-xs, 0.25rem); }
+    .dre-embed-viz {
+        display: flex; align-items: center; gap: var(--space-sm, 0.5rem);
+        padding: var(--space-xs, 0.35rem) var(--space-sm, 0.5rem);
+        border-radius: var(--radius-sm, 0.375rem);
+    }
+    .dre-embed-viz:hover { background: var(--surface-sunken, #f1efe9); }
+    .dre-embed-viz-label { flex: 1 1 auto; min-width: 0; }
+    .dre-embed-viz-key {
+        font-family: var(--font-mono, ui-monospace, monospace); font-size: var(--text-xs, 0.8125rem);
+        color: var(--muted, #79766f); white-space: nowrap;
+    }
+    .dre-embed-viz-open {
+        font-size: var(--text-xs, 0.8125rem); color: var(--primary, #009260);
+        text-decoration: none; white-space: nowrap;
+    }
+    .dre-embed-viz-open:hover { text-decoration: underline; }
+    .dre-embed-copy--sm { padding: 0.3em 0.7em; }
+    .dre-embed-note {
+        font-size: var(--text-sm, 0.9375rem); color: var(--ink-light, #595650);
+        margin: var(--space-xl, 2rem) 0 0;
+    }
+    .dre-embed-note code {
+        font-family: var(--font-mono, ui-monospace, monospace);
+        font-size: 0.85em;
+        background: var(--surface-sunken, #f1efe9);
+        border: 1px solid var(--border-light, #ece9e3);
+        padding: 0.1em 0.4em; border-radius: var(--radius-sm, 0.375rem);
+    }
+</style>
+
+<div class="dre-embed-wrap">
+    <h1><?= $escapeHtml($this->translate('Embed DRE visualizations')) ?></h1>
+    <p class="lede"><?= $escapeHtml($this->translate(
+        'Copy a snippet below to embed any visualization on another website. Each iframe loads live from this site, follows the theme, and resizes itself to fit. Dashboard blocks also let you embed a single chart.'
+    )) ?></p>
+
+    <?php foreach ($blocks as $slug => $info): ?>
+        <?php
+        $label = $info['label'];
+        $src = $embedBase . '/' . $slug;
+        $isDashboard = ($info['kind'] ?? '') === 'dashboard';
+        ?>
+        <section class="dre-embed-card">
+            <header>
+                <h2><?= $escapeHtml($this->translate($label)) ?></h2>
+                <span class="slug"><?= $escapeHtml($slug) ?></span>
+            </header>
+            <iframe class="dre-embed-preview" src="<?= $escapeAttr($src) ?>"
+                    title="<?= $escapeAttr($this->translate($label)) ?>" loading="lazy"></iframe>
+            <div class="dre-embed-code">
+                <button type="button" class="dre-embed-copy"
+                        data-embed-src="<?= $escapeAttr($src) ?>"
+                        data-embed-title="<?= $escapeAttr($this->translate($label)) ?>"
+                        data-embed-height="600">
+                    <?= $escapeHtml($this->translate('Copy')) ?>
+                </button>
+                <pre><code></code></pre>
+            </div>
+            <?php if ($isDashboard): ?>
+                <div class="dre-embed-charts"
+                     data-embed-charts="<?= $escapeAttr($slug) ?>"
+                     data-item-id="<?= $escapeAttr($info['itemId']) ?>"
+                     data-layout="<?= $escapeAttr($info['layout']) ?>"></div>
+            <?php endif; ?>
+        </section>
+    <?php endforeach; ?>
+
+    <p class="dre-embed-note"><?= $this->translate(
+        'Tip: append <code>?theme=dark</code> to force dark mode (otherwise the embed follows the viewer&rsquo;s system preference), or <code>?primary=2b6cb0</code> to override the brand colour.'
+    ) ?></p>
+</div>
+
+<script>
+(function () {
+    var RV = window.RV || {};
+    var basePath = <?= json_encode($basePath, JSON_UNESCAPED_SLASHES) ?>;
+    var embedBase = <?= json_encode($embedBase, JSON_UNESCAPED_SLASHES) ?>;
+    var dataBase = basePath.replace(/\/$/, '') + '/modules/DreVisualizations/asset/data/item-dashboards/';
+    var copyLabel = <?= json_encode($this->translate('Copy')) ?>;
+    var doneLabel = <?= json_encode($this->translate('Copied!')) ?>;
+    var previewLabel = <?= json_encode($this->translate('Preview')) ?>;
+    var chartsHeading = <?= json_encode($this->translate('Individual charts')) ?>;
+    function hasData(d) {
+        return Array.isArray(d) ? d.length > 0 : (!!d && typeof d === 'object' && Object.keys(d).length > 0);
+    }
+
+    // Build a copy button's snippet from its data-embed-* attributes via the
+    // shared builder in dashboard-core.js (the single source for the iframe +
+    // resize-listener format), so the gallery never restates it.
+    function snippetFor(btn) {
+        var src = btn.getAttribute('data-embed-src');
+        if (!src) return '';
+        var height = parseInt(btn.getAttribute('data-embed-height'), 10) || 600;
+        return RV.embedSnippet
+            ? RV.embedSnippet(src, btn.getAttribute('data-embed-title') || '', height)
+            : '<iframe src="' + src + '" loading="lazy" style="width:100%;border:0;height:' + height + 'px"></iframe>';
+    }
+
+    // Copy via event delegation, so the per-chart buttons added later work too.
+    document.addEventListener('click', function (e) {
+        var btn = e.target && e.target.closest ? e.target.closest('.dre-embed-copy') : null;
+        if (!btn) return;
+        var done = function () {
+            btn.textContent = doneLabel; btn.classList.add('copied');
+            setTimeout(function () { btn.textContent = copyLabel; btn.classList.remove('copied'); }, 1600);
+        };
+        var text = snippetFor(btn);
+        if (RV.copyToClipboard) { RV.copyToClipboard(text).then(done, done); }
+        else if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(done, done); }
+        else { done(); }
+    });
+
+    // Mirror the generated code in each whole-block card's <pre> (same builder,
+    // so the preview matches exactly what Copy yields).
+    function fillPreviews() {
+        var btns = document.querySelectorAll('.dre-embed-code .dre-embed-copy[data-embed-src]');
+        for (var i = 0; i < btns.length; i++) {
+            var code = btns[i].parentNode.querySelector('pre code');
+            if (code) code.textContent = snippetFor(btns[i]);
+        }
+    }
+
+    // Populate a dashboard card's single-chart menu from the real layout + labels
+    // and the precomputed JSON (only charts that carry data are offered).
+    function fillCharts(host) {
+        var LAYOUTS = RV.LAYOUTS || {};
+        var LABELS = RV.CHART_LABELS || {};
+        var slug = host.getAttribute('data-embed-charts');
+        var itemId = host.getAttribute('data-item-id');
+        var layoutKey = host.getAttribute('data-layout');
+        var order = (LAYOUTS[layoutKey] && LAYOUTS[layoutKey].order) || [];
+        if (!order.length) return;
+        fetch(dataBase + itemId + '.json').then(function (r) { return r.ok ? r.json() : null; }).then(function (data) {
+            if (!data) return;
+            var seen = {};
+            var keys = order.filter(function (k) {
+                if (seen[k] || !hasData(data[k])) return false;
+                seen[k] = true; return true;
+            });
+            if (!keys.length) return;
+            var h3 = document.createElement('h3');
+            h3.className = 'dre-embed-charts-title';
+            h3.textContent = chartsHeading;
+            var ul = document.createElement('ul');
+            ul.className = 'dre-embed-viz-list';
+            keys.forEach(function (k) {
+                var label = LABELS[k] || k;
+                var src = embedBase + '/' + slug + '/' + k;
+                var li = document.createElement('li');
+                li.className = 'dre-embed-viz';
+                var lab = document.createElement('span');
+                lab.className = 'dre-embed-viz-label';
+                lab.textContent = label;
+                var key = document.createElement('code');
+                key.className = 'dre-embed-viz-key';
+                key.textContent = k;
+                var open = document.createElement('a');
+                open.className = 'dre-embed-viz-open';
+                open.href = src; open.target = '_blank'; open.rel = 'noopener';
+                open.textContent = previewLabel;
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'dre-embed-copy dre-embed-copy--sm';
+                btn.textContent = copyLabel;
+                btn.setAttribute('data-embed-src', src);
+                btn.setAttribute('data-embed-title', label);
+                btn.setAttribute('data-embed-height', '520');
+                li.appendChild(lab); li.appendChild(key); li.appendChild(open); li.appendChild(btn);
+                ul.appendChild(li);
+            });
+            host.appendChild(h3); host.appendChild(ul);
+        }).catch(function () {});
+    }
+
+    // RV.LAYOUTS / RV.CHART_LABELS are defined by deferred module scripts, which
+    // run before DOMContentLoaded — so enumerate then.
+    function start() {
+        fillPreviews();
+        var hosts = document.querySelectorAll('[data-embed-charts]');
+        for (var i = 0; i < hosts.length; i++) fillCharts(hosts[i]);
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start);
+    } else {
+        start();
+    }
+})();
+</script>

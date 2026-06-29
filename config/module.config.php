@@ -40,6 +40,7 @@ return [
     'controllers' => [
         'invokables' => [
             Controller\Admin\MaintenanceController::class => Controller\Admin\MaintenanceController::class,
+            Controller\Site\EmbedController::class => Controller\Site\EmbedController::class,
         ],
     ],
     'form_elements' => [
@@ -80,6 +81,56 @@ return [
                                     'defaults' => [
                                         'controller' => Controller\Admin\MaintenanceController::class,
                                         'action' => 'regenerate',
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            // Public embed endpoint (children of Omeka's `site` route, so the
+            // current site + public theme are resolved from :site-slug). Renders
+            // any viz block — or a single chart from a dashboard block — on a
+            // bare, theme-following page for iframe embedding on other sites.
+            'site' => [
+                'child_routes' => [
+                    'dre-embed' => [
+                        'type' => \Laminas\Router\Http\Literal::class,
+                        'options' => [
+                            'route' => '/dre-embed',
+                            'defaults' => [
+                                'controller' => Controller\Site\EmbedController::class,
+                                'action' => 'index',
+                            ],
+                        ],
+                        'may_terminate' => true,
+                        'child_routes' => [
+                            'block' => [
+                                'type' => \Laminas\Router\Http\Segment::class,
+                                'options' => [
+                                    'route' => '/:block',
+                                    'constraints' => [
+                                        'block' => '[a-z0-9-]+',
+                                    ],
+                                    'defaults' => [
+                                        'action' => 'block',
+                                    ],
+                                ],
+                                'may_terminate' => true,
+                                'child_routes' => [
+                                    // Single chart from a dashboard block, e.g.
+                                    // /dre-embed/publications/coAuthorNetwork.
+                                    'viz' => [
+                                        'type' => \Laminas\Router\Http\Segment::class,
+                                        'options' => [
+                                            'route' => '/:viz',
+                                            'constraints' => [
+                                                'viz' => '[a-zA-Z0-9._-]+',
+                                            ],
+                                            'defaults' => [
+                                                'action' => 'block',
+                                            ],
+                                        ],
                                     ],
                                 ],
                             ],

@@ -184,6 +184,26 @@ Inline dashboard for item set pages with server-side aggregation.
 - **Globe projection**: Main maps default to globe view with a toggle control
 - **Scale control**: Metric scale bar on all maps
 
+## Embedding visualizations
+
+Every site-page visualization block can be embedded on another website via an `<iframe>`. The embed renders on a bare, chrome-less page that still **follows the active theme** — it loads the site theme's stylesheet, so the design tokens, self-hosted fonts, and light/dark mode all carry over and an embed reads as a native DRE panel rather than a generic chart.
+
+Each site exposes a **snippet gallery** at `/s/<site-slug>/dre-embed` (also linked from **Admin → DRE Visualizations**): it lists every embeddable block with a live preview and a copy-paste iframe + auto-resize snippet.
+
+- **Whole block** — `/s/<site-slug>/dre-embed/<block>`, e.g. `…/dre-embed/publications`. Renders the exact on-page block.
+- **Single chart** (dashboard blocks only) — `/s/<site-slug>/dre-embed/<block>/<chart>`, e.g. `…/dre-embed/publications/coAuthorNetwork`. Renders one chart full-bleed, without the dashboard header/accordion. The gallery lists each dashboard's available charts, enumerated live from the layout definitions and filtered to the charts that actually carry data.
+
+You can also grab the code **without leaving the page**: every embeddable visualization on the live site carries a small **copy-embed-code** button — one per chart in the dashboards' toolbars (next to *Save as image*), and one per block on the single-view maps/networks — that copies the matching snippet to the clipboard. It reuses the chart toolbar styling, follows light/dark, and never appears inside an embed itself.
+
+Embeddable blocks: **Collection Overview**, **Collection Dashboard**, **Publications**, **YouTube** (these four also support single-chart embeds), **Discursive Communities**, **Spatial Exploration**, **Network Explorer**, **Compare (any entity)**, **Compare Genres**, **Project Explorer**, **What's New**.
+
+The iframe auto-resizes to its content (the snippet pairs each frame with a tiny `postMessage` listener). Two optional query params:
+
+- `?theme=light|dark` — force the colour mode (otherwise the embed follows the viewer's OS preference).
+- `?primary=RRGGBB` — override the brand seed; the theme re-tints every accent, hover, and focus colour from it.
+
+> The endpoint is public (it is served into third-party pages), reuses each block's existing precomputed JSON over same-origin fetches, and adds no build step. Single-chart embeds work by pinning the dashboard orchestrator to one chart key via `data-chart-only` (see `asset/js/dashboard.js`), wired up in `src/Controller/Site/EmbedController.php` and `view/dre-visualizations/layout/embed.phtml` + `view/dre-visualizations/embed/*.phtml`.
+
 ## Installation
 
 Download via Omeka S CLI:
@@ -248,6 +268,12 @@ DreVisualizations/
 │   ├── linked-items-dashboard.phtml    # Lightweight async container
 │   ├── item-set-dashboard.phtml        # Server-side rendered
 │   └── partials/dashboard-charts.phtml # Shared chart rendering (inline mode)
+├── src/Controller/Site/EmbedController.php # Public iframe-embed endpoint (gallery + block/chart)
+├── view/dre-visualizations/
+│   ├── layout/embed.phtml              # Bare, theme-following layout for iframes
+│   ├── embed/index.phtml               # Per-site embed snippet gallery
+│   ├── embed/block.phtml               # Whole-block or single-chart embed body
+│   └── embed/not-found.phtml           # Bare 404 inside the frame
 ├── asset/
 │   ├── js/
 │   │   ├── knowledge-graph.js                    # Graph + item map

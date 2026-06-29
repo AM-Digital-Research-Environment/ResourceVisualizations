@@ -215,7 +215,8 @@ The module styles itself entirely from the [DRE theme](https://github.com/AM-Dig
 | 3 | `view/common/block-layout/xxx.phtml` | Call `$this->dashboardAssets(['cdn' => true, 'controller' => 'xxx'])` (or a lean prelude), emit a `.xxx-container` + spinner. |
 | 4 | `asset/js/dashboard-xxx.js` + `DashboardAssets::CONTROLLERS` | Controller IIFE that fetches its JSON, builds UI, renders via `CHART_MAP`; register the chain under `CONTROLLERS['xxx']`. |
 | 5 | *(if data-driven)* `src/Precompute/{Aggregators,Runner}.php` | New aggregator emitting an index/feed JSON under `asset/data/`. |
-| 6 | README | Document adding the block (Admin → Sites → [site] → Pages). |
+| 6 | *(to make it embeddable)* `EmbedController.php` + the step-3 template | In `src/Controller/Site/EmbedController.php` add a `BLOCKS` entry: slug ⇒ `label` + `template` (the `common/block-layout/<template>` partial) + `kind`. Use `kind => 'dashboard'` with `itemId`/`layout` only if dashboard.js renders it from a chart-key layout (then it gets single-chart embeds for free); otherwise `kind => 'widget'`. Zero-config partials only — the embed route has no `$block`. Then stamp the **same slug** as `data-embed-slug` on the container in the step-3 template, so the on-page copy-embed buttons (`dashboard-core.js`) can build the URL. |
+| 7 | README | Document adding the block (Admin → Sites → [site] → Pages). |
 
 ### Recipe C — add stat cards to a dashboard
 

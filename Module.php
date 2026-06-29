@@ -26,6 +26,12 @@ class Module extends AbstractModule
             [Acl::ROLE_EDITOR, Acl::ROLE_SITE_ADMIN, Acl::ROLE_GLOBAL_ADMIN],
             [Controller\Admin\MaintenanceController::class]
         );
+
+        // The embed endpoint is served into third-party pages via <iframe>, so it
+        // must be reachable by everyone — including anonymous visitors. Grant the
+        // null (all) role access to the site-facing embed controller only; the
+        // public site route itself still scopes it to a published site.
+        $acl->allow(null, [Controller\Site\EmbedController::class]);
     }
 
     public function attachListeners(SharedEventManagerInterface $sharedEventManager)

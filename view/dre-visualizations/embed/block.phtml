@@ -1,0 +1,42 @@
+<?php
+/**
+ * Embed block renderer.
+ *
+ * Whole-block embed renders the canonical `common/block-layout/<template>`
+ * partial verbatim — identical markup, assets, and behaviour to the on-page
+ * block (it enqueues its own front-end stack through dashboardAssets). A single-
+ * chart embed (dashboard blocks only) instead mounts a bare dashboard container
+ * pinned to one chart key via data-chart-only, which dashboard.js renders full-
+ * bleed, without the stat cards / header / collapsible accordion.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var string $slug
+ * @var array  $info  the EmbedController::BLOCKS entry (label/template/kind[/itemId/layout])
+ * @var string $viz   chart key for a single-chart embed, or '' for the whole block
+ */
+$viz = isset($viz) ? (string) $viz : '';
+
+if ($viz === '') {
+    // Whole block: reuse the exact on-page partial, no duplication.
+    echo $this->partial('common/block-layout/' . $info['template']);
+    return;
+}
+
+// Single chart from a dashboard block. Module.php does not run on this route, so
+// request the CDN + core prelude and the dashboard controller ourselves.
+$this->dashboardAssets(['cdn' => true]);
+$siteSlug = $this->currentSite()->slug();
+?>
+<div class="resource-vis-block dashboard-block dre-embed-single">
+    <div class="dashboard-async-container"
+         data-item-id="<?= $this->escapeHtmlAttr($info['itemId']) ?>"
+         data-layout="<?= $this->escapeHtmlAttr($info['layout']) ?>"
+         data-chart-only="<?= $this->escapeHtmlAttr($viz) ?>"
+         data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
+         data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">
+        <div class="rv-loading">
+            <div class="rv-spinner"></div>
+            <span><?= $this->translate('Loading visualization…') ?></span>
+        </div>
+    </div>
+</div>

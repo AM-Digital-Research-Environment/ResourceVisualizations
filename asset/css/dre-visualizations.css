@@ -594,6 +594,64 @@ details.rv-collapsible[open] > .rv-collapsible__head .rv-collapsible__chevron {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Single-visualization embed (/dre-embed/<block>/<viz>)              */
+/* ------------------------------------------------------------------ */
+
+/* The bare embed route renders one chart full-bleed: drop the 2-column grid and
+   the panel chrome so the chart meets the frame edges, and give it room. The
+   iframe auto-resizes to this height via the embed layout's postMessage
+   reporter, so a stable pixel height (not vh) is what the host reads. */
+.dre-embed-single {
+    margin: 0;
+}
+
+.dre-embed-single .dashboard-charts--single {
+    display: block;
+    gap: 0;
+}
+
+.dre-embed-single .chart-panel {
+    border: 0;
+    border-radius: 0;
+    padding: var(--rv-space-3);
+    background: transparent;
+}
+
+.dre-embed-single .chart-container,
+.dre-embed-single .chart-container-tall {
+    height: 480px;
+}
+
+/* Quiet fallback when a single-chart embed has no data for that key. */
+.rv-embed-empty {
+    margin: 0;
+    padding: var(--rv-space-8) var(--rv-space-4);
+    text-align: center;
+    color: var(--rv-text-color);
+    font-size: var(--rv-text-sm);
+}
+
+/* Copy-embed-code buttons. The icon-only form rides the .rv-toolbar-btn skin in
+   the chart toolbars; the labelled form is the single-widget block's button. */
+.rv-embed-btn--labeled {
+    width: auto;
+    gap: var(--rv-space-1);
+    padding: 0 var(--rv-space-2);
+    font-size: var(--rv-text-xs);
+    font-weight: 600;
+}
+
+/* Right-aligned strip holding a single-widget block's whole-block embed button.
+   Mounted on the outer .resource-vis-block wrapper, above the visualization, so
+   the block's own controller (which rebuilds the inner container) never wipes it
+   and it never overlaps a map's own controls. */
+.rv-embed-block-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--rv-space-2);
+}
+
+/* ------------------------------------------------------------------ */
 /*  Buttons                                                            */
 /* ------------------------------------------------------------------ */
 

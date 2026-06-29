@@ -41,3 +41,25 @@ echo $this->pageTitle($translate('DRE Visualizations: maintenance'), 1);
         <?= $this->form()->closeTag() ?>
     </section>
 </div>
+
+<?php $sites = $this->api()->search('sites')->getContent(); ?>
+<?php if ($sites): ?>
+<div style="margin-top:1.5rem;max-width:640px;">
+    <section style="border:1px solid #ddd;border-radius:6px;padding:1.5rem;background:#fff;">
+        <h3 style="margin-top:0;"><?= $translate('Embed visualizations') ?></h3>
+        <p>
+            <?= $translate('Each site has a public embed gallery with copy-paste iframe snippets for every visualization block — and, for dashboards, for each individual chart. Open it to preview a block and grab its code.') ?>
+        </p>
+        <ul>
+            <?php foreach ($sites as $site): ?>
+                <li style="margin-bottom:0.35rem;">
+                    <a href="<?= $this->escapeHtmlAttr($this->url('site/dre-embed', ['site-slug' => $site->slug()])) ?>" target="_blank" rel="noopener">
+                        <?= $this->escapeHtml($site->title()) ?>
+                    </a>
+                    <code style="margin-left:0.5rem;font-size:0.85em;color:#666;">/s/<?= $this->escapeHtml($site->slug()) ?>/dre-embed</code>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    </section>
+</div>
+<?php endif; ?>

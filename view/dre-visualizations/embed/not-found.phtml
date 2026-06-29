@@ -1,0 +1,15 @@
+<?php
+/**
+ * Bare 404 for the embed endpoint — an unknown block slug (or a :viz segment on
+ * a non-dashboard block). Rendered on the embed layout so it stays inside the
+ * frame instead of bleeding the site's themed error page into the iframe.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ */
+$escapeHtml = $this->plugin('escapeHtml');
+?>
+<div class="dre-embed-wrap" style="padding: var(--space-2xl, 3rem) 0; text-align: center; color: var(--ink-light, #595650); font-family: var(--font-body, system-ui, sans-serif);">
+    <p style="margin: 0; font-size: var(--text-lg, 1.1875rem);">
+        <?= $escapeHtml($this->translate('This visualization is not available for embedding.')) ?>
+    </p>
+</div>

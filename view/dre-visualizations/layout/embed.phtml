@@ -1,0 +1,124 @@
+<?php
+/**
+ * Bare layout for the DRE Visualizations embed endpoint.
+ *
+ * Replaces the public theme's layout (set via the controller's
+ * `layout()->setTemplate()`) so an embedded block renders without site chrome —
+ * just the doctype, the head placeholders the block populates (headLink /
+ * headScript), and the rendered block.
+ *
+ * Theme fidelity on this chrome-less route comes from loading the ACTIVE theme's
+ * compiled stylesheet: it carries the full design-token layer (surfaces, inks,
+ * borders, radii, shadows, the brand-derived accents) plus the self-hosted
+ * @font-face rules, all of which the module's own `--rv-*` aliases (enqueued by
+ * the block through dashboardAssets) resolve against. Dark mode then works
+ * unchanged — the theme's tokens flip on `body[data-theme]` / prefers-color-
+ * scheme. The only thing the theme's own layout does that its style.css cannot
+ * is inject the admin-set `primary_color` seed, so we replicate that below.
+ *
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var string      $content
+ * @var string|null $embedTheme    'light' | 'dark' | '' (follow the OS pref)
+ * @var string|null $embedPrimary  '#rrggbb' brand-seed override, or ''
+ * @var string|null $embedTitle    Block label, for <title>
+ * @var bool|null   $isGallery     True on the snippet-gallery / not-found page
+ */
+$escapeAttr = $this->plugin('escapeHtmlAttr');
+$escapeHtml = $this->plugin('escapeHtml');
+
+// <html lang> follows the site locale (drives the dashboards' number/label i18n).
+$locale = (string) ($this->siteSetting('locale') ?: $this->setting('locale') ?: 'en');
+$locale = substr($locale, 0, 2) ?: 'en';
+
+$embedTheme = isset($embedTheme) ? (string) $embedTheme : '';
+$embedPrimary = isset($embedPrimary) ? (string) $embedPrimary : '';
+$embedTitle = isset($embedTitle) ? (string) $embedTitle : 'DRE Visualizations';
+$isGallery = !empty($isGallery);
+
+// Load the active theme's compiled stylesheet first, so its :root tokens and
+// fonts are present before the module CSS (appended by the block) reads them.
+// assetUrl() with no module resolves against the current theme; on a non-DRE
+// theme that lacks css/style.css the module's token fallbacks still apply.
+$this->headLink()->prependStylesheet($this->assetUrl('css/style.css'));
+
+// Brand seed: `?primary=` (validated upstream) wins, else the site's admin-set
+// primary_color. The DRE theme derives every accent from --primary-base via
+// OKLCH colour-mix, so this single value re-tints the whole embed in both modes.
+$hex = function ($v) {
+    $v = trim((string) $v);
+    return preg_match('/^#?[0-9a-fA-F]{3}([0-9a-fA-F]{3}([0-9a-fA-F]{2})?)?$/', $v)
+        ? '#' . ltrim($v, '#') : '';
+};
+$primary = $embedPrimary !== '' ? $embedPrimary : $hex($this->themeSetting('primary_color', ''));
+
+// Match the theme layout: pick a legible contrast for text on the brand fill,
+// when the theme ships its contrastColor helper (skipped on other themes).
+$primaryContrast = '';
+if ($primary !== '') {
+    $helpers = $this->getHelperPluginManager();
+    if ($helpers->has('contrastColor')) {
+        $primaryContrast = (string) $this->contrastColor($primary, ['#ffffff', '#1a1a1a']);
+    }
+}
+
+// Force the colour mode on BOTH <html> and <body> only when requested — the
+// theme reads data-theme on body, and html must carry it too so the
+// prefers-color-scheme dark path (`:root:not([data-theme="light"])`) is
+// suppressed for a forced mode. No attribute ⇒ the embed follows the OS pref.
+$forced = ($embedTheme === 'light' || $embedTheme === 'dark');
+$themeAttr = $forced ? ' data-theme="' . $escapeAttr($embedTheme) . '"' : '';
+?>
+<!doctype html>
+<html lang="<?= $escapeAttr($locale) ?>"<?= $themeAttr ?>>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?= $escapeHtml($embedTitle) ?></title>
+    <?= $this->headLink() ?>
+    <?= $this->headStyle() ?>
+    <style>
+        html, body { margin: 0; padding: 0; }
+        body.dre-embed-body { background: var(--background, #fff); display: block; -webkit-text-size-adjust: 100%; }
+        /* The block self-paces; keep it edge-to-edge inside the frame. */
+        .dre-embed-body .resource-vis-block { margin: 0; }
+        .dre-embed-body .dre-embed-wrap { padding-inline: 0; }
+    </style>
+    <?php if ($primary !== ''): ?>
+    <style>
+        :root { --primary-base: <?= $escapeAttr($primary) ?>;<?php
+            if ($primaryContrast !== ''): ?> --primary-contrast: <?= $escapeAttr($primaryContrast) ?>;<?php endif; ?> }
+    </style>
+    <?php endif; ?>
+    <?= $this->headScript() ?>
+</head>
+<body class="dre-embed-body<?= $isGallery ? ' dre-embed-gallery' : '' ?>"<?= $themeAttr ?>>
+<?= $content ?>
+<?php if (!$isGallery): ?>
+<script>
+/* iframe height reporter — posts the document height to the parent on load,
+   resize, and DOM mutations (charts populate asynchronously and lazily). The
+   host page pairs this with the listener emitted in the embed snippet. */
+(function () {
+    if (window.parent === window) return;
+    var last = 0;
+    function post() {
+        var h = Math.ceil(document.documentElement.getBoundingClientRect().height);
+        if (h && h !== last) {
+            last = h;
+            window.parent.postMessage({ type: 'dre-embed-height', height: h }, '*');
+        }
+    }
+    window.addEventListener('load', post);
+    window.addEventListener('resize', post);
+    if ('ResizeObserver' in window) {
+        new ResizeObserver(post).observe(document.body);
+    } else {
+        setInterval(post, 1000);
+    }
+    // Nudge a few times early, before the charts/maps finish their first paint.
+    var t = 0, iv = setInterval(function () { post(); if (++t > 20) clearInterval(iv); }, 300);
+})();
+</script>
+<?php endif; ?>
+</body>
+</html>

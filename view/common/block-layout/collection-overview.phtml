@@ -28,6 +28,7 @@ $siteSlug = $this->currentSite()->slug();
     <div class="dashboard-async-container"
          data-item-id="collection-overview"
          data-layout="collectionOverview"
+         data-embed-slug="collection-overview"
          data-title="<?= $this->escapeHtmlAttr($this->translate('Collection overview')) ?>"
          data-base-path="<?= $this->escapeHtmlAttr($this->basePath()) ?>"
          data-site-base="<?= $this->escapeHtmlAttr($this->basePath() . '/s/' . $siteSlug) ?>">

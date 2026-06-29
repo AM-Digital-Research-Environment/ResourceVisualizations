@@ -34,6 +34,17 @@
         var layout = (ns.LAYOUTS && ns.LAYOUTS[layoutKey]) || ns.DEFAULT_LAYOUT;
         var chartKeys = layout.order;
 
+        // Single-visualization embed: the bare /dre-embed/<block>/<viz> route pins
+        // one chart via data-chart-only. Render just that chart — full-bleed, and
+        // with no stat cards, dashboard header, or collapsible accordion. The key
+        // need not be in this layout's order; the builder loop below still resolves
+        // it from the registry and renders it if the JSON carries its data.
+        var chartOnly = (container && container.dataset && container.dataset.chartOnly) || '';
+        if (chartOnly) {
+            chartKeys = [chartOnly];
+            collapsible = false;
+        }
+
         // Optional per-dashboard overrides over the shared registry: retitle a
         // chart (`labels`), reword its subheader (`descriptions`), or swap its
         // builder (`builders`, e.g. the Publications page renders Languages as a
@@ -48,7 +59,7 @@
         // precompute), so drawing them here too would duplicate the cards on the
         // home page. Every other dashboard that carries a `stats` array — the full
         // Collection Dashboard, Publications, YouTube — keeps its cards.
-        var statsHtml = (ns.renderStatCards && data.stats && layoutKey !== 'collectionOverview')
+        var statsHtml = (!chartOnly && ns.renderStatCards && data.stats && layoutKey !== 'collectionOverview')
             ? ns.renderStatCards(data.stats) : '';
 
         // Header title. Defaults to "Visualisations" (Publications, YouTube,
@@ -58,7 +69,7 @@
         var headTitle = (container && container.dataset && container.dataset.title) || 'Visualisations';
         var headInner = '<h2>' + headTitle + '</h2>';
 
-        var chartsHtml = '<div class="dashboard-charts">';
+        var chartsHtml = '<div class="dashboard-charts' + (chartOnly ? ' dashboard-charts--single' : '') + '">';
         chartKeys.forEach(function (key) {
             var d = data[key];
             var hasData = Array.isArray(d) ? d.length > 0 : (d && Object.keys(d).length > 0);
@@ -69,10 +80,12 @@
                 hasData = true;
             }
             if (!hasData) return;
-            // Skip basic timeline when stacked timeline is available (redundant).
-            if (key === 'timeline' && data.stackedTimeline && data.stackedTimeline.years && data.stackedTimeline.years.length > 0) return;
-            var wide = layout.wide.indexOf(key) >= 0 ? ' chart-panel-wide' : '';
-            var tall = layout.tall.indexOf(key) >= 0 ? ' chart-container-tall' : '';
+            // Skip basic timeline when stacked timeline is available (redundant) —
+            // unless a single-chart embed explicitly asked for the basic timeline.
+            if (!chartOnly && key === 'timeline' && data.stackedTimeline && data.stackedTimeline.years && data.stackedTimeline.years.length > 0) return;
+            // A single-chart embed fills the frame: always full-width and tall.
+            var wide = (chartOnly || layout.wide.indexOf(key) >= 0) ? ' chart-panel-wide' : '';
+            var tall = (chartOnly || layout.tall.indexOf(key) >= 0) ? ' chart-container-tall' : '';
             var label = labelOverrides[key] || (ns.CHART_LABELS && ns.CHART_LABELS[key]) || key;
             var desc = Object.prototype.hasOwnProperty.call(descOverrides, key)
                 ? descOverrides[key]
@@ -103,7 +116,7 @@
                 + '</details>';
         } else {
             container.innerHTML = statsHtml
-                + '<div class="dashboard-header">' + headInner + '</div>'
+                + (chartOnly ? '' : '<div class="dashboard-header">' + headInner + '</div>')
                 + chartsHtml;
         }
 
@@ -120,6 +133,18 @@
                 ns.attachToolbar(el.closest('.chart-panel'), chart);
             }
         });
+
+        // Single-chart embed for a key with no data in this JSON (or an unknown
+        // key): leave a quiet note instead of a blank frame.
+        if (chartOnly && !container.querySelector('[data-chart]')) {
+            container.innerHTML = '<p class="rv-embed-empty">'
+                + 'No data available for this visualization.</p>';
+        }
+
+        // Live-site only: add a copy-embed-code button to each chart on an
+        // embeddable dashboard (no-op elsewhere). Shared impl in dashboard-core.js.
+        if (ns.addEmbedButtons) ns.addEmbedButtons(container);
+
         // Window resizing + light/dark theme changes are handled globally in
         // dashboard-core.js (ns.refresh / the global resize handler). Re-fitting
         // charts after a collapsed panel re-opens is handled by the `toggle`
