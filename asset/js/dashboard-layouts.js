@@ -200,10 +200,11 @@
         publications: {
             order: ['types', 'languages', 'stackedTimeline',
                     'topVenues', 'topAuthors', 'coAuthorNetwork',
-                    'chord', 'subjects', 'subjectTrends'],
+                    'chord', 'subjects', 'subjectTrends', 'abstractWordcloud'],
             wide:  ['stackedTimeline', 'coAuthorNetwork', 'chord',
-                    'subjects', 'subjectTrends'],
-            tall:  ['coAuthorNetwork', 'chord', 'subjects', 'subjectTrends']
+                    'subjects', 'subjectTrends', 'abstractWordcloud'],
+            tall:  ['coAuthorNetwork', 'chord', 'subjects', 'subjectTrends',
+                    'abstractWordcloud']
         },
         // Cluster YouTube channel (youtube.json). Videos carry no resource type
         // or geography, so the layout shows uploads over time, the language mix,

@@ -1228,6 +1228,14 @@ final class Runner
         if ($v = Aggregators::buildSubjectTrends($pubs, $this->links, $this->items, $this->itemYear)) {
             $dashboard['subjectTrends'] = $v;
         }
+        // Abstract word cloud — lemmatised frequencies from the wordclouds Action
+        // (asset/data/wordclouds/publications.json), or an in-PHP fallback over the
+        // raw dcterms:abstract text when that committed input is absent.
+        $absWc = $this->wordCloudInput('publications')
+            ?? Aggregators::buildTranscriptWordCloud($this->loadTextValues($pubs, 'dcterms:abstract'));
+        if ($absWc) {
+            $dashboard['abstractWordcloud'] = $absWc;
+        }
 
         // Summary stat cards: total publications, distinct publication types
         // (dcterms:type), languages, and the people credited as authors or editors
@@ -1259,6 +1267,7 @@ final class Runner
             'chord' => 'Keyword Co-occurrence',
             'subjects' => 'Keywords',
             'subjectTrends' => 'Keyword Trends over Time',
+            'abstractWordcloud' => 'Abstract Word Cloud',
         ];
         $dashboard['descriptions'] = [
             'types' => 'Breakdown of publications by type (article, book, chapter, thesis, …).',
@@ -1270,6 +1279,7 @@ final class Runner
             'chord' => 'Keywords that frequently appear together across these publications.',
             'subjects' => 'Most frequent keywords assigned to these publications.',
             'subjectTrends' => 'How the most frequent keywords evolve over time.',
+            'abstractWordcloud' => 'Most frequent words across the publication abstracts (lemmatised; common stop-words removed).',
         ];
 
         $dashboard['resourceType'] = 'publications';
@@ -1366,7 +1376,10 @@ final class Runner
         if ($v = Aggregators::buildDurationHistogram($durations)) {
             $dashboard['duration'] = $v;
         }
-        if ($v = Aggregators::buildTranscriptWordCloud($transcripts)) {
+        // Prefer the lemmatised frequencies from the wordclouds Action
+        // (asset/data/wordclouds/podcasts.json); fall back to the in-PHP tokeniser
+        // over the raw transcripts when that committed input is absent.
+        if ($v = ($this->wordCloudInput('podcasts') ?? Aggregators::buildTranscriptWordCloud($transcripts))) {
             $dashboard['transcriptWordcloud'] = $v;
         }
 
@@ -1510,6 +1523,54 @@ final class Runner
             return 0;
         }
         return ((int) ($m[1] ?? 0)) * 3600 + ((int) ($m[2] ?? 0)) * 60 + ((int) ($m[3] ?? 0));
+    }
+
+    /**
+     * Read a committed, lemmatised word-frequency input for a corpus — produced
+     * by the wordclouds GitHub Action (tools/wordclouds/build_wordclouds.py) and
+     * served from asset/data/wordclouds/<corpus>.json, a static INPUT like the
+     * countries geojson (not regenerated in-Omeka). Returns the combined ('all')
+     * `[{name,value}]` list, or null when the file is absent/empty so callers fall
+     * back to the in-PHP tokeniser.
+     *
+     * @return list<array{name:string,value:int}>|null
+     */
+    private function wordCloudInput(string $corpus): ?array
+    {
+        $path = dirname($this->outputDir) . '/wordclouds/' . $corpus . '.json';
+        if (!is_file($path)) {
+            return null;
+        }
+        $json = json_decode((string) file_get_contents($path), true);
+        $all = is_array($json) ? ($json['all'] ?? null) : null;
+        return (is_array($all) && $all) ? $all : null;
+    }
+
+    /**
+     * Literal values of one property across the given items (e.g. bibo:content,
+     * dcterms:abstract), as a list of strings. Integer-joined IN list + a bound
+     * term, so injection-safe. Used as the word-cloud fallback corpus when the
+     * lemmatised input file is absent.
+     *
+     * @param list<int> $ids
+     * @return list<string>
+     */
+    private function loadTextValues(array $ids, string $term): array
+    {
+        if (!$ids) {
+            return [];
+        }
+        $idList = implode(',', array_map('intval', $ids));
+        $rows = $this->connection->executeQuery(
+            'SELECT v.value FROM value v'
+            . ' JOIN property p ON v.property_id = p.id'
+            . ' JOIN vocabulary vo ON p.vocabulary_id = vo.id'
+            . " WHERE v.resource_id IN ($idList)"
+            . "   AND CONCAT(vo.prefix, ':', p.local_name) = ?"
+            . "   AND v.value IS NOT NULL AND v.value <> ''",
+            [$term]
+        )->fetchFirstColumn();
+        return array_map('strval', $rows);
     }
 
     /**

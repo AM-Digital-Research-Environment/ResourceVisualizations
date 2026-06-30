@@ -132,7 +132,8 @@ A bibliographic analytics view over the cluster **Publications** item set (artic
 - a **publication-type** breakdown (`dcterms:type`: Article vs. Book vs. Chapter …) and publications per year;
 - **top venues** (`dcterms:isPartOf`) and **top authors** (`bibo:authorList`, unifying literal names with linked Person records);
 - a **collaboration network** — authors and editors who appear together on a publication, with each edge coloured by the relationship (**co-authorship**, **author–editor**, or **co-editorship**) and people matched to a Person record drawn solid (click-through) versus external names muted;
-- a **keyword** word cloud and **keyword co-occurrence** chord over `dcterms:subject`, plus Languages as a pie.
+- a **keyword** word cloud and **keyword co-occurrence** chord over `dcterms:subject`, plus Languages as a pie;
+- an **abstract word cloud** — the most frequent words across the publication abstracts (`dcterms:abstract`), lemmatised (see [Word clouds](#word-clouds-lemmatised) below).
 
 Authors/editors matched to Person records and subjects matched to Authority/LCSH records are clickable through to their pages. (The **By Resource Template** chart still appears on person and organisation dashboards, and a person's authored publications surface on their own dashboard.)
 
@@ -152,10 +153,19 @@ YouTube videos carry no `dcterms:type` of their own, so they don't appear in the
 Analytics for the cluster's curated **podcast episodes** — the manually-catalogued **Podcasts** item set (39095; template 21, `fabio:AudioDocument`). Added as a **site-page block** (Admin > Sites > [site] > Pages), it loads `asset/data/item-dashboards/podcasts.json` and shows:
 
 - **summary stat cards** — episodes, series, distinct **speakers** (`marcrel:spk`), total **hours of audio** (with the average length), and the languages — the same reusable component as the Collection Overview;
-- **transcript word cloud** — the headline chart, built in the precompute from the episodes' AI-generated transcripts (`bibo:content`): tokenised, with audio cues (`[music]`), `Speaker N:` labels, numbers and a broad English + French stop-word / filler list removed (`Aggregators::buildTranscriptWordCloud`, tunable);
+- **transcript word cloud** — the headline chart, from the episodes' AI-generated transcripts (`bibo:content`), with audio cues (`[music]`), `Speaker N:` labels and numbers stripped. **Lemmatised** when the [Word clouds](#word-clouds-lemmatised) Action has run; the in-PHP tokeniser (`Aggregators::buildTranscriptWordCloud`, a tunable EN+FR stop-word/filler list) is the fallback;
 - **speakers & hosts** (`marcrel:spk` / `hst` / `sde`), the **episode-length** distribution (`dcterms:extent`, ISO-8601, bucketed into bands by `Aggregators::buildDurationHistogram`), **episodes by year** (`dcterms:date`), and **episodes by series** (`dcterms:isPartOf`, clickable through to each series).
 
 Podcasts carry no `dcterms:type` of their own, so (like YouTube videos) they don't appear in the resource-type pie *here*; instead they fold into the **Collection Overview** under a single synthetic **Podcast** type (see above). Speakers and series are clickable through to their Omeka pages.
+
+### Word clouds (lemmatised)
+
+The text word clouds (Podcasts transcripts, Publications abstracts) are **lemmatised** so word forms collapse to their base (knowledge/knowledges, study/studies). Proper lemmatisation needs spaCy, which PHP can't do, so it runs as a small **CI step** rather than in-Omeka:
+
+- `tools/wordclouds/build_wordclouds.py` reads each corpus's text from the **public REST API** (no VPN/auth), lemmatises it with spaCy (`en_core_web_sm` + `fr_core_news_sm`; content-word POS only, plus EN/FR + domain stop-words), and writes per-corpus, per-language frequencies to `asset/data/wordclouds/<corpus>.json`.
+- The **Build word clouds** GitHub Action (`.github/workflows/wordclouds.yml`, **manual** `workflow_dispatch`) runs the script and commits the regenerated inputs.
+- These are committed **static inputs** — like `geo/countries.geojson`, *not* the git-ignored generated dashboards. The precompute reads them via `Runner::wordCloudInput()` and folds the combined (`all`) frequencies into the dashboard; when a file is absent it **falls back** to the in-PHP tokeniser, so the clouds always render — just unlemmatised until the Action has run.
+- **Reusable:** add a corpus to `CORPORA` in the script (item-set id + text property) and read it on the PHP side. The per-language `en` / `fr` buckets are already emitted, ready for a future language toggle ([#5](https://github.com/AM-Digital-Research-Environment/ResourceVisualizations/issues/5)).
 
 ### What's New
 

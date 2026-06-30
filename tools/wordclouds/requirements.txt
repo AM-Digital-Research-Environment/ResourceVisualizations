@@ -1,0 +1,5 @@
+# Word-cloud builder (CI only — see .github/workflows/wordclouds.yml).
+# The spaCy language models are installed separately in the workflow with
+#   python -m spacy download en_core_web_sm
+#   python -m spacy download fr_core_news_sm
+spacy>=3.7,<4
