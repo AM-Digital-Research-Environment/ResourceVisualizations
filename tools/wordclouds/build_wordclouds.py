@@ -62,8 +62,10 @@ CORPORA = [
     {"id": "publications", "item_set": 29918, "field": "dcterms:abstract"},
 ]
 
-# Content words only — keep nouns, proper nouns, adjectives, verbs.
-KEEP_POS = {"NOUN", "PROPN", "ADJ", "VERB"}
+# Content words only — nouns, proper nouns, adjectives. Verbs are deliberately
+# excluded: in spoken transcripts they are dominated by conversational fillers
+# (know, think, come, mean, want, look, try) that lemmatisation only amplifies.
+KEEP_POS = {"NOUN", "PROPN", "ADJ"}
 
 # Domain / meta noise on top of spaCy's built-in stop words (lower-case lemmas).
 EXTRA_STOP = {
