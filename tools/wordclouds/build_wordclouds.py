@@ -119,15 +119,27 @@ def clean(text: str) -> str:
     return SPEAKER_RE.sub(" ", text)
 
 
+def fetch_json(url: str, attempts: int = 4):
+    """GET + parse JSON, retrying a few times — the public API occasionally times out."""
+    for attempt in range(1, attempts + 1):
+        try:
+            req = Request(url, headers={"User-Agent": "dre-wordclouds/1.0"})
+            with urlopen(req, timeout=90) as resp:
+                return json.load(resp)
+        except Exception as exc:  # transient network error — back off and retry
+            if attempt == attempts:
+                raise
+            print(f"   fetch failed ({exc}); retry {attempt}/{attempts - 1} …")
+            time.sleep(3 * attempt)
+
+
 def fetch_items(item_set: int) -> list[dict]:
     """All items of an item set from the public REST API (paginated)."""
     items: list[dict] = []
     page = 1
     while True:
         q = urlencode({"item_set_id": item_set, "per_page": 100, "page": page})
-        req = Request(f"{API_BASE}/api/items?{q}", headers={"User-Agent": "dre-wordclouds/1.0"})
-        with urlopen(req, timeout=60) as resp:
-            batch = json.load(resp)
+        batch = fetch_json(f"{API_BASE}/api/items?{q}")
         if not batch:
             break
         items.extend(batch)
