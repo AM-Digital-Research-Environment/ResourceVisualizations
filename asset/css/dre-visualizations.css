@@ -632,8 +632,11 @@ details.rv-collapsible[open] > .rv-collapsible__head .rv-collapsible__chevron {
 }
 
 /* Copy-embed-code buttons. The icon-only form rides the .rv-toolbar-btn skin in
-   the chart toolbars; the labelled form is the single-widget block's button. */
-.rv-embed-btn--labeled {
+   the chart toolbars; the labelled form is the single-widget block's button.
+   Double-class selector so `width: auto` outranks the `button.rv-toolbar-btn`
+   reset below (an element+class selector that would otherwise pin it to 2rem and
+   clip the "Embed" label). */
+.rv-embed-btn.rv-embed-btn--labeled {
     width: auto;
     gap: var(--rv-space-1);
     padding: 0 var(--rv-space-2);
@@ -1362,6 +1365,59 @@ button.rv-toolbar-btn:focus-visible,
 
 .explorer-content {
     min-height: 120px;
+}
+
+/* Collapsible project abstract (dcterms:abstract), between the selector and the
+   dashboard. Empty until a project with an abstract is selected — :not(:empty)
+   keeps it from adding a gap when there is nothing to show. */
+.explorer-abstract:not(:empty) {
+    margin-bottom: var(--rv-space-6);
+}
+
+.explorer-abstract-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--rv-space-1);
+    padding: var(--rv-space-1) var(--rv-space-3);
+    border: 1px solid var(--rv-border);
+    border-radius: var(--rv-radius-sm);
+    background: var(--rv-bg);
+    color: var(--rv-text-color);
+    font-size: var(--rv-text-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--rv-transition-fast), color var(--rv-transition-fast), border-color var(--rv-transition-fast);
+}
+
+.explorer-abstract-toggle:hover {
+    background: var(--rv-bg-raised);
+    color: var(--rv-accent);
+    border-color: var(--rv-accent);
+}
+
+.explorer-abstract-toggle:focus-visible {
+    outline: none;
+    box-shadow: var(--rv-focus-ring);
+}
+
+.explorer-abstract-body[hidden] {
+    display: none;
+}
+
+.explorer-abstract-body {
+    margin-top: var(--rv-space-3);
+    max-width: 70ch;
+    font-size: var(--rv-text-sm);
+    line-height: 1.65;
+    color: var(--rv-text-color);
+}
+
+.explorer-abstract-body p {
+    margin: 0 0 var(--rv-space-3);
+}
+
+.explorer-abstract-body p:last-child {
+    margin-bottom: 0;
 }
 
 /* What's New */

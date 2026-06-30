@@ -895,7 +895,7 @@ final class Runner
      * Counts come from the per-entity index passes that already ran in run()
      * (projects / people / organisations / subjects&tags / languages / resource
      * types — each counting entities that have ≥1 linked item), so the cards
-     * equal what a reader gets by browsing each category. Cluster Publications is
+     * equal what a reader gets by browsing each category. The Publications card is
      * counted here from the fabio:-classed corpus. Cards with a zero count are
      * dropped to keep the grid tidy in non-amira installs.
      *
@@ -904,7 +904,7 @@ final class Runner
     private function buildOverviewStats(int $researchItemCount, int $countries): array
     {
         // People, Organisations, Languages, Subjects & Tags, Resource Types,
-        // Research projects and Cluster Publications are the sizes of their
+        // Research projects and Publications are the sizes of their
         // authority item sets — the full curated count, not just entities linked
         // to a research item. Locations stays as the "present in the collection"
         // count gathered by its index pass.
@@ -922,7 +922,7 @@ final class Runner
             ['key' => 'languages', 'label' => 'Languages', 'value' => $setCount(self::ITEM_SET_LANGUAGE)],
             ['key' => 'subjectsTags', 'label' => 'Subjects & Tags', 'value' => $setCount(self::ITEM_SET_SUBJECT)],
             ['key' => 'resourceTypes', 'label' => 'Resource Types', 'value' => $setCount(self::ITEM_SET_RESOURCE_TYPE)],
-            ['key' => 'publications', 'label' => 'Cluster Publications', 'value' => $setCount(self::ITEM_SET_PUBLICATIONS)],
+            ['key' => 'publications', 'label' => 'Publications', 'value' => $setCount(self::ITEM_SET_PUBLICATIONS)],
             ['key' => 'podcasts', 'label' => 'Podcasts', 'value' => $setCount(self::ITEM_SET_PODCASTS)],
             ['key' => 'youtube', 'label' => 'YouTube videos', 'value' => $setCount(self::ITEM_SET_YOUTUBE)],
         ]);
