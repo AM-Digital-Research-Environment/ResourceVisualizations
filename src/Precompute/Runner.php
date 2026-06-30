@@ -1383,6 +1383,15 @@ final class Runner
             $dashboard['transcriptWordcloud'] = $v;
         }
 
+        // Co-appearance network — people (speakers / hosts / moderators) linked
+        // when they feature on the same episode, clustered into communities.
+        // Reuses the shared person-collaboration builder; minCooccurrence=1
+        // because podcast line-ups are small, so a single shared episode is a
+        // meaningful tie (a recurring host becomes a hub to its guests).
+        if ($v = Aggregators::buildPersonCollaborationNetwork($ids, $this->items, $this->links, 1)) {
+            $dashboard['speakerNetwork'] = $v;
+        }
+
         // Summary stat cards: episodes, distinct series, distinct speakers
         // (marcrel:spk), total listening time (avg length in the subtitle) and
         // the languages spoken (their names in the subtitle).
@@ -1425,6 +1434,7 @@ final class Runner
             'duration' => 'Episode Length',
             'timeline' => 'Episodes by Year',
             'series' => 'Episodes by Series',
+            'speakerNetwork' => 'Who Appears Together',
         ];
         $dashboard['descriptions'] = [
             'transcriptWordcloud' => 'Most frequent words across the episodes\' AI-generated transcripts (audio cues, speaker labels, and common English/French stop-words and filler removed).',
@@ -1432,6 +1442,7 @@ final class Runner
             'duration' => 'How long the episodes run, grouped into length bands.',
             'timeline' => 'Number of podcast episodes published per year.',
             'series' => 'Episodes grouped by the podcast series they belong to.',
+            'speakerNetwork' => 'People who feature on the same episode are linked here, clustered into groups — a recurring host or guest becomes a hub.',
         ];
 
         $dashboard['resourceType'] = 'podcasts';

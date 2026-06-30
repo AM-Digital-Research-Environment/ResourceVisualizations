@@ -221,10 +221,10 @@
         // speakers, the episode-length distribution, the publication timeline and
         // the series breakdown. The word cloud spans full width; the rest pair up.
         podcasts: {
-            order: ['transcriptWordcloud', 'contributors', 'duration',
-                    'timeline', 'series'],
-            wide:  ['transcriptWordcloud'],
-            tall:  ['transcriptWordcloud']
+            order: ['transcriptWordcloud', 'speakerNetwork', 'contributors',
+                    'duration', 'timeline', 'series'],
+            wide:  ['transcriptWordcloud', 'speakerNetwork'],
+            tall:  ['transcriptWordcloud', 'speakerNetwork']
         }
     };
 
