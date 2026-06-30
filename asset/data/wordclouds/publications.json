@@ -1,0 +1,17 @@
+{
+  "corpus": "publications",
+  "generated_utc": "2026-06-30T16:14:01Z",
+  "source": "https://data.africamultiple.uni-bayreuth.de",
+  "models": {
+    "en": "en_core_web_sm",
+    "fr": "fr_core_news_sm"
+  },
+  "items": {
+    "total": 247,
+    "en": 0,
+    "fr": 0
+  },
+  "all": [],
+  "en": [],
+  "fr": []
+}
