@@ -1,9 +1,10 @@
 # Word-cloud builder (CI only — see .github/workflows/wordclouds.yml).
-# The spaCy language models are installed separately in the workflow with
-#   python -m spacy download en_core_web_sm
-#   python -m spacy download fr_core_news_sm
+# The spaCy language models (en / fr / de / pt) are installed separately in the
+# workflow with `python -m spacy download <model>`.
 spacy>=3.7,<4
 # spaCy's CLI (used by `spacy download`) imports click directly, but newer typer
 # releases no longer pull it in transitively — install it explicitly.
 click>=8
+# Language detection for items with no declared dcterms:language.
+langdetect>=1.0.9
 
