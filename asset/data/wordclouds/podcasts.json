@@ -1,2420 +1,1627 @@
 {
   "corpus": "podcasts",
-  "generated_utc": "2026-06-30T16:48:16Z",
+  "generated_utc": "2026-06-30T16:59:24Z",
   "source": "https://data.africamultiple.uni-bayreuth.de",
   "models": {
     "en": "en_core_web_sm",
-    "fr": "fr_core_news_sm"
+    "fr": "fr_core_news_sm",
+    "de": "de_core_news_sm",
+    "pt": "pt_core_news_sm"
   },
+  "languages": [
+    "en",
+    "fr"
+  ],
   "items": {
     "total": 43,
+    "skipped": 0,
     "en": 40,
     "fr": 3
   },
-  "all": [
-    {
-      "name": "people",
-      "value": 591
-    },
-    {
-      "name": "way",
-      "value": 460
-    },
-    {
-      "name": "question",
-      "value": 447
-    },
-    {
-      "name": "africa",
-      "value": 434
-    },
-    {
-      "name": "african",
-      "value": 411
-    },
-    {
-      "name": "time",
-      "value": 343
-    },
-    {
-      "name": "research",
-      "value": 320
-    },
-    {
-      "name": "right",
-      "value": 314
-    },
-    {
-      "name": "different",
-      "value": 292
-    },
-    {
-      "name": "university",
-      "value": 243
-    },
-    {
-      "name": "language",
-      "value": 236
-    },
-    {
-      "name": "project",
-      "value": 231
-    },
-    {
-      "name": "work",
-      "value": 221
-    },
-    {
-      "name": "important",
-      "value": 212
-    },
-    {
-      "name": "idea",
-      "value": 210
-    },
-    {
-      "name": "example",
-      "value": 204
-    },
-    {
-      "name": "movement",
-      "value": 199
-    },
-    {
-      "name": "knowledge",
-      "value": 196
-    },
-    {
-      "name": "mobility",
-      "value": 191
-    },
-    {
-      "name": "point",
-      "value": 189
-    },
-    {
-      "name": "country",
-      "value": 179
-    },
-    {
-      "name": "study",
-      "value": 175
-    },
-    {
-      "name": "interesting",
-      "value": 174
-    },
-    {
-      "name": "education",
-      "value": 171
-    },
-    {
-      "name": "camp",
-      "value": 168
-    },
-    {
-      "name": "scholar",
-      "value": 164
-    },
-    {
-      "name": "place",
-      "value": 162
-    },
-    {
-      "name": "woman",
-      "value": 161
-    },
-    {
-      "name": "course",
-      "value": 161
-    },
-    {
-      "name": "world",
-      "value": 158
-    },
-    {
-      "name": "space",
-      "value": 154
-    },
-    {
-      "name": "man",
-      "value": 149
-    },
-    {
-      "name": "south",
-      "value": 148
-    },
-    {
-      "name": "social",
-      "value": 147
-    },
-    {
-      "name": "state",
-      "value": 146
-    },
-    {
-      "name": "new",
-      "value": 144
-    },
-    {
-      "name": "migration",
-      "value": 144
-    },
-    {
-      "name": "term",
-      "value": 143
-    },
-    {
-      "name": "year",
-      "value": 140
-    },
-    {
-      "name": "issue",
-      "value": 139
-    },
-    {
-      "name": "political",
-      "value": 138
-    },
-    {
-      "name": "bayreuth",
-      "value": 137
-    },
-    {
-      "name": "context",
-      "value": 137
-    },
-    {
-      "name": "government",
-      "value": 137
-    },
-    {
-      "name": "colonial",
-      "value": 136
-    },
-    {
-      "name": "digital",
-      "value": 134
-    },
-    {
-      "name": "practice",
-      "value": 124
-    },
-    {
-      "name": "good",
-      "value": 124
-    },
-    {
-      "name": "que",
-      "value": 123
-    },
-    {
-      "name": "life",
-      "value": 122
-    },
-    {
-      "name": "community",
-      "value": 122
-    },
-    {
-      "name": "history",
-      "value": 122
-    },
-    {
-      "name": "islamic",
-      "value": 120
-    },
-    {
-      "name": "system",
-      "value": 120
-    },
-    {
-      "name": "situation",
-      "value": 119
-    },
-    {
-      "name": "moment",
-      "value": 115
-    },
-    {
-      "name": "multiple",
-      "value": 114
-    },
-    {
-      "name": "liberation",
-      "value": 114
-    },
-    {
-      "name": "sense",
-      "value": 113
-    },
-    {
-      "name": "nigeria",
-      "value": 112
-    },
-    {
-      "name": "able",
-      "value": 111
-    },
-    {
-      "name": "global",
-      "value": 111
-    },
-    {
-      "name": "human",
-      "value": 110
-    },
-    {
-      "name": "experience",
-      "value": 107
-    },
-    {
-      "name": "certain",
-      "value": 106
-    },
-    {
-      "name": "case",
-      "value": 106
-    },
-    {
-      "name": "théâtre",
-      "value": 106
-    },
-    {
-      "name": "policy",
-      "value": 104
-    },
-    {
-      "name": "little",
-      "value": 102
-    },
-    {
-      "name": "category",
-      "value": 101
-    },
-    {
-      "name": "particular",
-      "value": 100
-    },
-    {
-      "name": "relation",
-      "value": 99
-    },
-    {
-      "name": "migrant",
-      "value": 97
-    },
-    {
-      "name": "law",
-      "value": 96
-    },
-    {
-      "name": "border",
-      "value": 96
-    },
-    {
-      "name": "film",
-      "value": 94
-    },
-    {
-      "name": "form",
-      "value": 94
-    },
-    {
-      "name": "religious",
-      "value": 93
-    },
-    {
-      "name": "fact",
-      "value": 92
-    },
-    {
-      "name": "book",
-      "value": 92
-    },
-    {
-      "name": "group",
-      "value": 91
-    },
-    {
-      "name": "proverb",
-      "value": 91
-    },
-    {
-      "name": "international",
-      "value": 91
-    },
-    {
-      "name": "instrument",
-      "value": 91
-    },
-    {
-      "name": "culture",
-      "value": 90
-    },
-    {
-      "name": "great",
-      "value": 89
-    },
-    {
-      "name": "area",
-      "value": 89
-    },
-    {
-      "name": "medium",
-      "value": 89
-    },
-    {
-      "name": "big",
-      "value": 86
-    },
-    {
-      "name": "english",
-      "value": 85
-    },
-    {
-      "name": "interested",
-      "value": 84
-    },
-    {
-      "name": "word",
-      "value": 83
-    },
-    {
-      "name": "society",
-      "value": 82
-    },
-    {
-      "name": "process",
-      "value": 81
-    },
-    {
-      "name": "student",
-      "value": 80
-    },
-    {
-      "name": "interest",
-      "value": 80
-    },
-    {
-      "name": "art",
-      "value": 79
-    },
-    {
-      "name": "academic",
-      "value": 79
-    },
-    {
-      "name": "person",
-      "value": 79
-    },
-    {
-      "name": "hand",
-      "value": 79
-    },
-    {
-      "name": "instance",
-      "value": 79
-    },
-    {
-      "name": "indian",
-      "value": 78
-    },
-    {
-      "name": "power",
-      "value": 77
-    },
-    {
-      "name": "topic",
-      "value": 76
-    },
-    {
-      "name": "traditional",
-      "value": 76
-    },
-    {
-      "name": "problem",
-      "value": 76
-    },
-    {
-      "name": "bon",
-      "value": 74
-    },
-    {
-      "name": "image",
-      "value": 74
-    },
-    {
-      "name": "west",
-      "value": 74
-    },
-    {
-      "name": "child",
-      "value": 72
-    },
-    {
-      "name": "aspect",
-      "value": 72
-    },
-    {
-      "name": "value",
-      "value": 71
-    },
-    {
-      "name": "ocean",
-      "value": 71
-    },
-    {
-      "name": "level",
-      "value": 70
-    },
-    {
-      "name": "yoruba",
-      "value": 70
-    },
-    {
-      "name": "professor",
-      "value": 70
-    },
-    {
-      "name": "india",
-      "value": 70
-    },
-    {
-      "name": "concept",
-      "value": 69
-    },
-    {
-      "name": "perspective",
-      "value": 69
-    },
-    {
-      "name": "politic",
-      "value": 68
-    },
-    {
-      "name": "production",
-      "value": 68
-    },
-    {
-      "name": "approach",
-      "value": 67
-    },
-    {
-      "name": "institution",
-      "value": 67
-    },
-    {
-      "name": "local",
-      "value": 67
-    },
-    {
-      "name": "money",
-      "value": 66
-    },
-    {
-      "name": "gender",
-      "value": 66
-    },
-    {
-      "name": "region",
-      "value": 66
-    },
-    {
-      "name": "crisis",
-      "value": 66
-    },
-    {
-      "name": "school",
-      "value": 65
-    },
-    {
-      "name": "day",
-      "value": 65
-    },
-    {
-      "name": "relationship",
-      "value": 64
-    },
-    {
-      "name": "cultural",
-      "value": 64
-    },
-    {
-      "name": "future",
-      "value": 63
-    },
-    {
-      "name": "economy",
-      "value": 62
-    },
-    {
-      "name": "paper",
-      "value": 61
-    },
-    {
-      "name": "kenya",
-      "value": 61
-    },
-    {
-      "name": "story",
-      "value": 60
-    },
-    {
-      "name": "datum",
-      "value": 60
-    },
-    {
-      "name": "field",
-      "value": 60
-    },
-    {
-      "name": "concern",
-      "value": 59
-    },
-    {
-      "name": "difficult",
-      "value": 59
-    },
-    {
-      "name": "public",
-      "value": 59
-    },
-    {
-      "name": "literature",
-      "value": 58
-    },
-    {
-      "name": "young",
-      "value": 57
-    },
-    {
-      "name": "old",
-      "value": 57
-    },
-    {
-      "name": "tool",
-      "value": 57
-    },
-    {
-      "name": "cameroon",
-      "value": 57
-    },
-    {
-      "name": "fellow",
-      "value": 55
-    },
-    {
-      "name": "role",
-      "value": 55
-    },
-    {
-      "name": "long",
-      "value": 55
-    },
-    {
-      "name": "security",
-      "value": 55
-    },
-    {
-      "name": "ifa",
-      "value": 55
-    },
-    {
-      "name": "chose",
-      "value": 54
-    },
-    {
-      "name": "material",
-      "value": 54
-    },
-    {
-      "name": "development",
-      "value": 54
-    },
-    {
-      "name": "body",
-      "value": 53
-    },
-    {
-      "name": "order",
-      "value": 53
-    },
-    {
-      "name": "archive",
-      "value": 53
-    },
-    {
-      "name": "mais",
-      "value": 53
-    },
-    {
-      "name": "travail",
-      "value": 52
-    },
-    {
-      "name": "religion",
-      "value": 52
-    },
-    {
-      "name": "indigenous",
-      "value": 52
-    },
-    {
-      "name": "lagos",
-      "value": 52
-    },
-    {
-      "name": "national",
-      "value": 52
-    },
-    {
-      "name": "identity",
-      "value": 51
-    },
-    {
-      "name": "economic",
-      "value": 51
-    },
-    {
-      "name": "large",
-      "value": 50
-    },
-    {
-      "name": "learning",
-      "value": 50
-    },
-    {
-      "name": "second",
-      "value": 50
-    },
-    {
-      "name": "pas",
-      "value": 50
-    },
-    {
-      "name": "conversations",
-      "value": 49
-    },
-    {
-      "name": "official",
-      "value": 49
-    },
-    {
-      "name": "des",
-      "value": 49
-    },
-    {
-      "name": "temps",
-      "value": 48
-    },
-    {
-      "name": "opportunity",
-      "value": 48
-    },
-    {
-      "name": "discipline",
-      "value": 48
-    },
-    {
-      "name": "connection",
-      "value": 48
-    },
-    {
-      "name": "islam",
-      "value": 48
-    },
-    {
-      "name": "population",
-      "value": 48
-    },
-    {
-      "name": "european",
-      "value": 48
-    },
-    {
-      "name": "continent",
-      "value": 47
-    },
-    {
-      "name": "intellectual",
-      "value": 47
-    },
-    {
-      "name": "danger",
-      "value": 47
-    },
-    {
-      "name": "month",
-      "value": 46
-    },
-    {
-      "name": "interview",
-      "value": 46
-    },
-    {
-      "name": "historical",
-      "value": 46
-    },
-    {
-      "name": "performance",
-      "value": 45
-    },
-    {
-      "name": "discussion",
-      "value": 45
-    },
-    {
-      "name": "engagement",
-      "value": 44
-    },
-    {
-      "name": "ghana",
-      "value": 44
-    },
-    {
-      "name": "theory",
-      "value": 44
-    },
-    {
-      "name": "general",
-      "value": 44
-    },
-    {
-      "name": "non",
-      "value": 43
-    },
-    {
-      "name": "happy",
-      "value": 43
-    },
-    {
-      "name": "oil",
-      "value": 43
-    },
-    {
-      "name": "southern",
-      "value": 43
-    },
-    {
-      "name": "zanzibar",
-      "value": 43
-    },
-    {
-      "name": "ethical",
-      "value": 43
-    },
-    {
-      "name": "legal",
-      "value": 43
-    },
-    {
-      "name": "uganda",
-      "value": 43
-    }
-  ],
-  "en": [
-    {
-      "name": "people",
-      "value": 591
-    },
-    {
-      "name": "way",
-      "value": 460
-    },
-    {
-      "name": "question",
-      "value": 433
-    },
-    {
-      "name": "africa",
-      "value": 426
-    },
-    {
-      "name": "african",
-      "value": 411
-    },
-    {
-      "name": "time",
-      "value": 343
-    },
-    {
-      "name": "research",
-      "value": 320
-    },
-    {
-      "name": "right",
-      "value": 314
-    },
-    {
-      "name": "different",
-      "value": 292
-    },
-    {
-      "name": "university",
-      "value": 243
-    },
-    {
-      "name": "language",
-      "value": 236
-    },
-    {
-      "name": "project",
-      "value": 231
-    },
-    {
-      "name": "work",
-      "value": 221
-    },
-    {
-      "name": "idea",
-      "value": 210
-    },
-    {
-      "name": "example",
-      "value": 204
-    },
-    {
-      "name": "movement",
-      "value": 199
-    },
-    {
-      "name": "important",
-      "value": 196
-    },
-    {
-      "name": "knowledge",
-      "value": 196
-    },
-    {
-      "name": "mobility",
-      "value": 191
-    },
-    {
-      "name": "point",
-      "value": 188
-    },
-    {
-      "name": "country",
-      "value": 179
-    },
-    {
-      "name": "study",
-      "value": 175
-    },
-    {
-      "name": "interesting",
-      "value": 174
-    },
-    {
-      "name": "education",
-      "value": 171
-    },
-    {
-      "name": "camp",
-      "value": 168
-    },
-    {
-      "name": "scholar",
-      "value": 164
-    },
-    {
-      "name": "woman",
-      "value": 161
-    },
-    {
-      "name": "course",
-      "value": 161
-    },
-    {
-      "name": "place",
-      "value": 161
-    },
-    {
-      "name": "world",
-      "value": 157
-    },
-    {
-      "name": "space",
-      "value": 154
-    },
-    {
-      "name": "man",
-      "value": 149
-    },
-    {
-      "name": "south",
-      "value": 148
-    },
-    {
-      "name": "state",
-      "value": 146
-    },
-    {
-      "name": "social",
-      "value": 144
-    },
-    {
-      "name": "new",
-      "value": 144
-    },
-    {
-      "name": "migration",
-      "value": 144
-    },
-    {
-      "name": "term",
-      "value": 143
-    },
-    {
-      "name": "year",
-      "value": 140
-    },
-    {
-      "name": "issue",
-      "value": 139
-    },
-    {
-      "name": "political",
-      "value": 138
-    },
-    {
-      "name": "context",
-      "value": 137
-    },
-    {
-      "name": "government",
-      "value": 137
-    },
-    {
-      "name": "digital",
-      "value": 134
-    },
-    {
-      "name": "colonial",
-      "value": 133
-    },
-    {
-      "name": "practice",
-      "value": 124
-    },
-    {
-      "name": "good",
-      "value": 124
-    },
-    {
-      "name": "bayreuth",
-      "value": 123
-    },
-    {
-      "name": "que",
-      "value": 123
-    },
-    {
-      "name": "life",
-      "value": 122
-    },
-    {
-      "name": "community",
-      "value": 122
-    },
-    {
-      "name": "history",
-      "value": 122
-    },
-    {
-      "name": "islamic",
-      "value": 120
-    },
-    {
-      "name": "system",
-      "value": 120
-    },
-    {
-      "name": "situation",
-      "value": 119
-    },
-    {
-      "name": "liberation",
-      "value": 114
-    },
-    {
-      "name": "sense",
-      "value": 113
-    },
-    {
-      "name": "able",
-      "value": 111
-    },
-    {
-      "name": "nigeria",
-      "value": 111
-    },
-    {
-      "name": "global",
-      "value": 111
-    },
-    {
-      "name": "human",
-      "value": 110
-    },
-    {
-      "name": "multiple",
-      "value": 109
-    },
-    {
-      "name": "experience",
-      "value": 107
-    },
-    {
-      "name": "certain",
-      "value": 106
-    },
-    {
-      "name": "case",
-      "value": 106
-    },
-    {
-      "name": "policy",
-      "value": 104
-    },
-    {
-      "name": "little",
-      "value": 102
-    },
-    {
-      "name": "category",
-      "value": 101
-    },
-    {
-      "name": "particular",
-      "value": 100
-    },
-    {
-      "name": "moment",
-      "value": 99
-    },
-    {
-      "name": "migrant",
-      "value": 97
-    },
-    {
-      "name": "relation",
-      "value": 96
-    },
-    {
-      "name": "law",
-      "value": 96
-    },
-    {
-      "name": "border",
-      "value": 96
-    },
-    {
-      "name": "form",
-      "value": 94
-    },
-    {
-      "name": "religious",
-      "value": 93
-    },
-    {
-      "name": "fact",
-      "value": 92
-    },
-    {
-      "name": "book",
-      "value": 92
-    },
-    {
-      "name": "group",
-      "value": 91
-    },
-    {
-      "name": "proverb",
-      "value": 91
-    },
-    {
-      "name": "instrument",
-      "value": 90
-    },
-    {
-      "name": "great",
-      "value": 89
-    },
-    {
-      "name": "culture",
-      "value": 89
-    },
-    {
-      "name": "area",
-      "value": 89
-    },
-    {
-      "name": "medium",
-      "value": 89
-    },
-    {
-      "name": "film",
-      "value": 86
-    },
-    {
-      "name": "big",
-      "value": 86
-    },
-    {
-      "name": "international",
-      "value": 86
-    },
-    {
-      "name": "english",
-      "value": 85
-    },
-    {
-      "name": "interested",
-      "value": 84
-    },
-    {
-      "name": "word",
-      "value": 83
-    },
-    {
-      "name": "society",
-      "value": 82
-    },
-    {
-      "name": "process",
-      "value": 81
-    },
-    {
-      "name": "student",
-      "value": 80
-    },
-    {
-      "name": "interest",
-      "value": 80
-    },
-    {
-      "name": "academic",
-      "value": 79
-    },
-    {
-      "name": "person",
-      "value": 79
-    },
-    {
-      "name": "hand",
-      "value": 79
-    },
-    {
-      "name": "instance",
-      "value": 79
-    },
-    {
-      "name": "indian",
-      "value": 78
-    },
-    {
-      "name": "power",
-      "value": 77
-    },
-    {
-      "name": "topic",
-      "value": 76
-    },
-    {
-      "name": "traditional",
-      "value": 76
-    },
-    {
-      "name": "problem",
-      "value": 76
-    },
-    {
-      "name": "west",
-      "value": 74
-    },
-    {
-      "name": "child",
-      "value": 72
-    },
-    {
-      "name": "value",
-      "value": 71
-    },
-    {
-      "name": "ocean",
-      "value": 71
-    },
-    {
-      "name": "level",
-      "value": 70
-    },
-    {
-      "name": "yoruba",
-      "value": 70
-    },
-    {
-      "name": "professor",
-      "value": 70
-    },
-    {
-      "name": "india",
-      "value": 70
-    },
-    {
-      "name": "art",
-      "value": 69
-    },
-    {
-      "name": "aspect",
-      "value": 69
-    },
-    {
-      "name": "concept",
-      "value": 68
-    },
-    {
-      "name": "image",
-      "value": 68
-    },
-    {
-      "name": "politic",
-      "value": 68
-    },
-    {
-      "name": "production",
-      "value": 68
-    },
-    {
-      "name": "approach",
-      "value": 67
-    },
-    {
-      "name": "institution",
-      "value": 67
-    },
-    {
-      "name": "perspective",
-      "value": 67
-    },
-    {
-      "name": "money",
-      "value": 66
-    },
-    {
-      "name": "gender",
-      "value": 66
-    },
-    {
-      "name": "local",
-      "value": 66
-    },
-    {
-      "name": "region",
-      "value": 66
-    },
-    {
-      "name": "crisis",
-      "value": 66
-    },
-    {
-      "name": "school",
-      "value": 65
-    },
-    {
-      "name": "day",
-      "value": 65
-    },
-    {
-      "name": "relationship",
-      "value": 64
-    },
-    {
-      "name": "cultural",
-      "value": 64
-    },
-    {
-      "name": "future",
-      "value": 63
-    },
-    {
-      "name": "economy",
-      "value": 62
-    },
-    {
-      "name": "paper",
-      "value": 61
-    },
-    {
-      "name": "kenya",
-      "value": 61
-    },
-    {
-      "name": "story",
-      "value": 60
-    },
-    {
-      "name": "datum",
-      "value": 60
-    },
-    {
-      "name": "field",
-      "value": 60
-    },
-    {
-      "name": "concern",
-      "value": 59
-    },
-    {
-      "name": "difficult",
-      "value": 59
-    },
-    {
-      "name": "literature",
-      "value": 58
-    },
-    {
-      "name": "young",
-      "value": 57
-    },
-    {
-      "name": "old",
-      "value": 57
-    },
-    {
-      "name": "tool",
-      "value": 57
-    },
-    {
-      "name": "cameroon",
-      "value": 57
-    },
-    {
-      "name": "fellow",
-      "value": 55
-    },
-    {
-      "name": "role",
-      "value": 55
-    },
-    {
-      "name": "long",
-      "value": 55
-    },
-    {
-      "name": "security",
-      "value": 55
-    },
-    {
-      "name": "public",
-      "value": 55
-    },
-    {
-      "name": "ifa",
-      "value": 55
-    },
-    {
-      "name": "material",
-      "value": 54
-    },
-    {
-      "name": "development",
-      "value": 54
-    },
-    {
-      "name": "body",
-      "value": 53
-    },
-    {
-      "name": "order",
-      "value": 53
-    },
-    {
-      "name": "archive",
-      "value": 53
-    },
-    {
-      "name": "mais",
-      "value": 53
-    },
-    {
-      "name": "indigenous",
-      "value": 52
-    },
-    {
-      "name": "lagos",
-      "value": 52
-    },
-    {
-      "name": "identity",
-      "value": 51
-    },
-    {
-      "name": "economic",
-      "value": 51
-    },
-    {
-      "name": "national",
-      "value": 51
-    },
-    {
-      "name": "learning",
-      "value": 50
-    },
-    {
-      "name": "second",
-      "value": 50
-    },
-    {
-      "name": "pas",
-      "value": 50
-    },
-    {
-      "name": "conversations",
-      "value": 49
-    },
-    {
-      "name": "large",
-      "value": 49
-    },
-    {
-      "name": "official",
-      "value": 49
-    },
-    {
-      "name": "des",
-      "value": 49
-    },
-    {
-      "name": "opportunity",
-      "value": 48
-    },
-    {
-      "name": "discipline",
-      "value": 48
-    },
-    {
-      "name": "connection",
-      "value": 48
-    },
-    {
-      "name": "islam",
-      "value": 48
-    },
-    {
-      "name": "european",
-      "value": 48
-    },
-    {
-      "name": "intellectual",
-      "value": 47
-    },
-    {
-      "name": "danger",
-      "value": 47
-    },
-    {
-      "name": "religion",
-      "value": 47
-    },
-    {
-      "name": "month",
-      "value": 46
-    },
-    {
-      "name": "interview",
-      "value": 46
-    },
-    {
-      "name": "historical",
-      "value": 46
-    },
-    {
-      "name": "ghana",
-      "value": 44
-    },
-    {
-      "name": "discussion",
-      "value": 44
-    },
-    {
-      "name": "theory",
-      "value": 44
-    },
-    {
-      "name": "general",
-      "value": 44
-    },
-    {
-      "name": "engagement",
-      "value": 43
-    },
-    {
-      "name": "continent",
-      "value": 43
-    },
-    {
-      "name": "non",
-      "value": 43
-    },
-    {
-      "name": "happy",
-      "value": 43
-    },
-    {
-      "name": "oil",
-      "value": 43
-    },
-    {
-      "name": "southern",
-      "value": 43
-    },
-    {
-      "name": "zanzibar",
-      "value": 43
-    },
-    {
-      "name": "ethical",
-      "value": 43
-    },
-    {
-      "name": "legal",
-      "value": 43
-    },
-    {
-      "name": "uganda",
-      "value": 43
-    },
-    {
-      "name": "past",
-      "value": 42
-    },
-    {
-      "name": "focus",
-      "value": 42
-    },
-    {
-      "name": "food",
-      "value": 42
-    },
-    {
-      "name": "discourse",
-      "value": 42
-    },
-    {
-      "name": "coloniality",
-      "value": 42
-    },
-    {
-      "name": "phd",
-      "value": 42
-    },
-    {
-      "name": "population",
-      "value": 42
-    }
-  ],
-  "fr": [
-    {
-      "name": "théâtre",
-      "value": 106
-    },
-    {
-      "name": "bon",
-      "value": 73
-    },
-    {
-      "name": "chose",
-      "value": 45
-    },
-    {
-      "name": "travail",
-      "value": 42
-    },
-    {
-      "name": "temps",
-      "value": 39
-    },
-    {
-      "name": "photo",
-      "value": 29
-    },
-    {
-      "name": "pardon",
-      "value": 27
-    },
-    {
-      "name": "exemple",
-      "value": 22
-    },
-    {
-      "name": "vrai",
-      "value": 22
-    },
-    {
-      "name": "langue",
-      "value": 22
-    },
-    {
-      "name": "africain",
-      "value": 21
-    },
-    {
-      "name": "burkina",
-      "value": 21
-    },
-    {
-      "name": "île",
-      "value": 20
-    },
-    {
-      "name": "mot",
-      "value": 20
-    },
-    {
-      "name": "grand",
-      "value": 19
-    },
-    {
-      "name": "français",
-      "value": 19
-    },
-    {
-      "name": "cinéma",
-      "value": 18
-    },
-    {
-      "name": "théorie",
-      "value": 18
-    },
-    {
-      "name": "performance",
-      "value": 16
-    },
-    {
-      "name": "moment",
-      "value": 16
-    },
-    {
-      "name": "important",
-      "value": 16
-    },
-    {
-      "name": "oui",
-      "value": 15
-    },
-    {
-      "name": "rapport",
-      "value": 15
-    },
-    {
-      "name": "femme",
-      "value": 15
-    },
-    {
-      "name": "portrait",
-      "value": 15
-    },
-    {
-      "name": "festival",
-      "value": 15
-    },
-    {
-      "name": "train",
-      "value": 15
-    },
-    {
-      "name": "étudiant",
-      "value": 15
-    },
-    {
-      "name": "bayreuth",
-      "value": 14
-    },
-    {
-      "name": "monde",
-      "value": 14
-    },
-    {
-      "name": "maurice",
-      "value": 14
-    },
-    {
-      "name": "question",
-      "value": 14
-    },
-    {
-      "name": "texte",
-      "value": 14
-    },
-    {
-      "name": "faso",
-      "value": 14
-    },
-    {
-      "name": "indien",
-      "value": 13
-    },
-    {
-      "name": "atelier",
-      "value": 13
-    },
-    {
-      "name": "travers",
-      "value": 13
-    },
-    {
-      "name": "livre",
-      "value": 13
-    },
-    {
-      "name": "écrir",
-      "value": 13
-    },
-    {
-      "name": "populaire",
-      "value": 13
-    },
-    {
-      "name": "océan",
-      "value": 12
-    },
-    {
-      "name": "afrique",
-      "value": 12
-    },
-    {
-      "name": "histoire",
-      "value": 12
-    },
-    {
-      "name": "départ",
-      "value": 12
-    },
-    {
-      "name": "pays",
-      "value": 12
-    },
-    {
-      "name": "bonheur",
-      "value": 12
-    },
-    {
-      "name": "poésie",
-      "value": 12
-    },
-    {
-      "name": "université",
-      "value": 12
-    },
-    {
-      "name": "enfant",
-      "value": 12
-    },
-    {
-      "name": "petit",
-      "value": 11
-    },
-    {
-      "name": "rituel",
-      "value": 11
-    },
-    {
-      "name": "dison",
-      "value": 11
-    },
-    {
-      "name": "écriture",
-      "value": 11
-    },
-    {
-      "name": "mal",
-      "value": 11
-    },
-    {
-      "name": "pièce",
-      "value": 11
-    },
-    {
-      "name": "recherche",
-      "value": 11
-    },
-    {
-      "name": "esthétique",
-      "value": 11
-    },
-    {
-      "name": "allemand",
-      "value": 11
-    },
-    {
-      "name": "photographie",
-      "value": 10
-    },
-    {
-      "name": "fois",
-      "value": 10
-    },
-    {
-      "name": "acte",
-      "value": 10
-    },
-    {
-      "name": "société",
-      "value": 10
-    },
-    {
-      "name": "art",
-      "value": 10
-    },
-    {
-      "name": "poème",
-      "value": 10
-    },
-    {
-      "name": "hmm",
-      "value": 10
-    },
-    {
-      "name": "étude",
-      "value": 10
-    },
-    {
-      "name": "théâtral",
-      "value": 10
-    },
-    {
-      "name": "euh",
-      "value": 10
-    },
-    {
-      "name": "contexte",
-      "value": 9
-    },
-    {
-      "name": "réunion",
-      "value": 9
-    },
-    {
-      "name": "objet",
-      "value": 9
-    },
-    {
-      "name": "démarche",
-      "value": 9
-    },
-    {
-      "name": "artiste",
-      "value": 9
-    },
-    {
-      "name": "vie",
-      "value": 9
-    },
-    {
-      "name": "quête",
-      "value": 9
-    },
-    {
-      "name": "fond",
-      "value": 9
-    },
-    {
-      "name": "créole",
-      "value": 9
-    },
-    {
-      "name": "impression",
-      "value": 9
-    },
-    {
-      "name": "anglais",
-      "value": 9
-    },
-    {
-      "name": "niveau",
-      "value": 9
-    },
-    {
-      "name": "prix",
-      "value": 9
-    },
-    {
-      "name": "africa",
-      "value": 8
-    },
-    {
-      "name": "côté",
-      "value": 8
-    },
-    {
-      "name": "céramique",
-      "value": 8
-    },
-    {
-      "name": "humain",
-      "value": 8
-    },
-    {
-      "name": "problème",
-      "value": 8
-    },
-    {
-      "name": "rencontre",
-      "value": 8
-    },
-    {
-      "name": "œuvre",
-      "value": 8
-    },
-    {
-      "name": "lien",
-      "value": 8
-    },
-    {
-      "name": "mauricien",
-      "value": 8
-    },
-    {
-      "name": "école",
-      "value": 8
-    },
-    {
-      "name": "thèse",
-      "value": 8
-    },
-    {
-      "name": "scène",
-      "value": 8
-    },
-    {
-      "name": "film",
-      "value": 8
-    },
-    {
-      "name": "esclavage",
-      "value": 7
-    },
-    {
-      "name": "partie",
-      "value": 7
-    },
-    {
-      "name": "politique",
-      "value": 7
-    },
-    {
-      "name": "symbolique",
-      "value": 7
-    },
-    {
-      "name": "regard",
-      "value": 7
-    },
-    {
-      "name": "pratique",
-      "value": 7
-    },
-    {
-      "name": "auteur",
-      "value": 7
-    },
-    {
-      "name": "bibliothèque",
-      "value": 7
-    },
-    {
-      "name": "différence",
-      "value": 7
-    },
-    {
-      "name": "sûr",
-      "value": 7
-    },
-    {
-      "name": "intervention",
-      "value": 7
-    },
-    {
-      "name": "sankara",
-      "value": 7
-    },
-    {
-      "name": "artistique",
-      "value": 6
-    },
-    {
-      "name": "territoire",
-      "value": 6
-    },
-    {
-      "name": "culturel",
-      "value": 6
-    },
-    {
-      "name": "image",
-      "value": 6
-    },
-    {
-      "name": "sens",
-      "value": 6
-    },
-    {
-      "name": "absolu",
-      "value": 6
-    },
-    {
-      "name": "hein",
-      "value": 6
-    },
-    {
-      "name": "sentiment",
-      "value": 6
-    },
-    {
-      "name": "raison",
-      "value": 6
-    },
-    {
-      "name": "population",
-      "value": 6
-    },
-    {
-      "name": "association",
-      "value": 6
-    },
-    {
-      "name": "enseignant",
-      "value": 6
-    },
-    {
-      "name": "développement",
-      "value": 6
-    },
-    {
-      "name": "multiple",
-      "value": 5
-    },
-    {
-      "name": "madagascar",
-      "value": 5
-    },
-    {
-      "name": "installation",
-      "value": 5
-    },
-    {
-      "name": "conséquence",
-      "value": 5
-    },
-    {
-      "name": "thématique",
-      "value": 5
-    },
-    {
-      "name": "gorée",
-      "value": 5
-    },
-    {
-      "name": "âme",
-      "value": 5
-    },
-    {
-      "name": "workshop",
-      "value": 5
-    },
-    {
-      "name": "ben",
-      "value": 5
-    },
-    {
-      "name": "chemin",
-      "value": 5
-    },
-    {
-      "name": "jour",
-      "value": 5
-    },
-    {
-      "name": "religion",
-      "value": 5
-    },
-    {
-      "name": "sculpture",
-      "value": 5
-    },
-    {
-      "name": "année",
-      "value": 5
-    },
-    {
-      "name": "conférence",
-      "value": 5
-    },
-    {
-      "name": "part",
-      "value": 5
-    },
-    {
-      "name": "beyrouth",
-      "value": 5
-    },
-    {
-      "name": "francophone",
-      "value": 5
-    },
-    {
-      "name": "littéraire",
-      "value": 5
-    },
-    {
-      "name": "difficile",
-      "value": 5
-    },
-    {
-      "name": "cadre",
-      "value": 5
-    },
-    {
-      "name": "homme",
-      "value": 5
-    },
-    {
-      "name": "international",
-      "value": 5
-    },
-    {
-      "name": "monsieur",
-      "value": 5
-    },
-    {
-      "name": "ouagadougou",
-      "value": 5
-    },
-    {
-      "name": "paris",
-      "value": 5
-    },
-    {
-      "name": "option",
-      "value": 5
-    },
-    {
-      "name": "parcours",
-      "value": 5
-    },
-    {
-      "name": "ouaga",
-      "value": 5
-    },
-    {
-      "name": "représentation",
-      "value": 5
-    },
-    {
-      "name": "ouvrage",
-      "value": 5
-    },
-    {
-      "name": "augusto",
-      "value": 5
-    },
-    {
-      "name": "mois",
-      "value": 4
-    },
-    {
-      "name": "ville",
-      "value": 4
-    },
-    {
-      "name": "intéressant",
-      "value": 4
-    },
-    {
-      "name": "passé",
-      "value": 4
-    },
-    {
-      "name": "continent",
-      "value": 4
-    },
-    {
-      "name": "cœur",
-      "value": 4
-    },
-    {
-      "name": "européen",
-      "value": 4
-    },
-    {
-      "name": "coup",
-      "value": 4
-    },
-    {
-      "name": "ancêtre",
-      "value": 4
-    },
-    {
-      "name": "manque",
-      "value": 4
-    },
-    {
-      "name": "condition",
-      "value": 4
-    },
-    {
-      "name": "bout",
-      "value": 4
-    },
-    {
-      "name": "profond",
-      "value": 4
-    },
-    {
-      "name": "lieu",
-      "value": 4
-    },
-    {
-      "name": "expérience",
-      "value": 4
-    },
-    {
-      "name": "passion",
-      "value": 4
-    },
-    {
-      "name": "street",
-      "value": 4
-    },
-    {
-      "name": "public",
-      "value": 4
-    },
-    {
-      "name": "souffle",
-      "value": 4
-    },
-    {
-      "name": "maternel",
-      "value": 4
-    },
-    {
-      "name": "lire",
-      "value": 4
-    },
-    {
-      "name": "émotion",
-      "value": 4
-    },
-    {
-      "name": "amour",
-      "value": 4
-    },
-    {
-      "name": "barlen",
-      "value": 4
-    },
-    {
-      "name": "masque",
-      "value": 4
-    },
-    {
-      "name": "général",
-      "value": 4
-    },
-    {
-      "name": "terme",
-      "value": 4
-    },
-    {
-      "name": "semaine",
-      "value": 4
-    },
-    {
-      "name": "sein",
-      "value": 4
-    },
-    {
-      "name": "nom",
-      "value": 4
-    },
-    {
-      "name": "allemagne",
-      "value": 4
-    },
-    {
-      "name": "kompaoré",
-      "value": 4
-    },
-    {
-      "name": "quartier",
-      "value": 4
-    },
-    {
-      "name": "guingané",
-      "value": 4
-    },
-    {
-      "name": "prosper",
-      "value": 4
-    },
-    {
-      "name": "thomas",
-      "value": 4
-    },
-    {
-      "name": "prend",
-      "value": 4
-    },
-    {
-      "name": "article",
-      "value": 4
-    },
-    {
-      "name": "édition",
-      "value": 4
-    },
-    {
-      "name": "écoute",
-      "value": 4
-    },
-    {
-      "name": "sensibilisation",
-      "value": 4
-    },
-    {
-      "name": "fille",
-      "value": 4
-    },
-    {
-      "name": "boal",
-      "value": 4
-    },
-    {
-      "name": "excellence",
-      "value": 3
-    },
-    {
-      "name": "content",
-      "value": 3
-    },
-    {
-      "name": "présent",
-      "value": 3
-    },
-    {
-      "name": "colonial",
-      "value": 3
-    },
-    {
-      "name": "historique",
-      "value": 3
-    },
-    {
-      "name": "relation",
-      "value": 3
-    }
-  ]
+  "byLang": {
+    "en": [
+      {
+        "name": "people",
+        "value": 591
+      },
+      {
+        "name": "way",
+        "value": 460
+      },
+      {
+        "name": "question",
+        "value": 433
+      },
+      {
+        "name": "africa",
+        "value": 426
+      },
+      {
+        "name": "african",
+        "value": 411
+      },
+      {
+        "name": "time",
+        "value": 343
+      },
+      {
+        "name": "research",
+        "value": 320
+      },
+      {
+        "name": "right",
+        "value": 314
+      },
+      {
+        "name": "different",
+        "value": 292
+      },
+      {
+        "name": "university",
+        "value": 243
+      },
+      {
+        "name": "language",
+        "value": 236
+      },
+      {
+        "name": "project",
+        "value": 231
+      },
+      {
+        "name": "work",
+        "value": 221
+      },
+      {
+        "name": "idea",
+        "value": 210
+      },
+      {
+        "name": "example",
+        "value": 204
+      },
+      {
+        "name": "movement",
+        "value": 199
+      },
+      {
+        "name": "important",
+        "value": 196
+      },
+      {
+        "name": "knowledge",
+        "value": 196
+      },
+      {
+        "name": "mobility",
+        "value": 191
+      },
+      {
+        "name": "point",
+        "value": 188
+      },
+      {
+        "name": "country",
+        "value": 179
+      },
+      {
+        "name": "study",
+        "value": 175
+      },
+      {
+        "name": "interesting",
+        "value": 174
+      },
+      {
+        "name": "education",
+        "value": 171
+      },
+      {
+        "name": "camp",
+        "value": 168
+      },
+      {
+        "name": "scholar",
+        "value": 164
+      },
+      {
+        "name": "woman",
+        "value": 161
+      },
+      {
+        "name": "course",
+        "value": 161
+      },
+      {
+        "name": "place",
+        "value": 161
+      },
+      {
+        "name": "world",
+        "value": 157
+      },
+      {
+        "name": "space",
+        "value": 154
+      },
+      {
+        "name": "man",
+        "value": 149
+      },
+      {
+        "name": "south",
+        "value": 148
+      },
+      {
+        "name": "state",
+        "value": 146
+      },
+      {
+        "name": "social",
+        "value": 144
+      },
+      {
+        "name": "new",
+        "value": 144
+      },
+      {
+        "name": "migration",
+        "value": 144
+      },
+      {
+        "name": "term",
+        "value": 143
+      },
+      {
+        "name": "year",
+        "value": 140
+      },
+      {
+        "name": "issue",
+        "value": 139
+      },
+      {
+        "name": "political",
+        "value": 138
+      },
+      {
+        "name": "context",
+        "value": 137
+      },
+      {
+        "name": "government",
+        "value": 137
+      },
+      {
+        "name": "digital",
+        "value": 134
+      },
+      {
+        "name": "colonial",
+        "value": 133
+      },
+      {
+        "name": "practice",
+        "value": 124
+      },
+      {
+        "name": "good",
+        "value": 124
+      },
+      {
+        "name": "bayreuth",
+        "value": 123
+      },
+      {
+        "name": "que",
+        "value": 123
+      },
+      {
+        "name": "life",
+        "value": 122
+      },
+      {
+        "name": "community",
+        "value": 122
+      },
+      {
+        "name": "history",
+        "value": 122
+      },
+      {
+        "name": "islamic",
+        "value": 120
+      },
+      {
+        "name": "system",
+        "value": 120
+      },
+      {
+        "name": "situation",
+        "value": 119
+      },
+      {
+        "name": "liberation",
+        "value": 114
+      },
+      {
+        "name": "sense",
+        "value": 113
+      },
+      {
+        "name": "able",
+        "value": 111
+      },
+      {
+        "name": "nigeria",
+        "value": 111
+      },
+      {
+        "name": "global",
+        "value": 111
+      },
+      {
+        "name": "human",
+        "value": 110
+      },
+      {
+        "name": "multiple",
+        "value": 109
+      },
+      {
+        "name": "experience",
+        "value": 107
+      },
+      {
+        "name": "certain",
+        "value": 106
+      },
+      {
+        "name": "case",
+        "value": 106
+      },
+      {
+        "name": "policy",
+        "value": 104
+      },
+      {
+        "name": "little",
+        "value": 102
+      },
+      {
+        "name": "category",
+        "value": 101
+      },
+      {
+        "name": "particular",
+        "value": 100
+      },
+      {
+        "name": "moment",
+        "value": 99
+      },
+      {
+        "name": "migrant",
+        "value": 97
+      },
+      {
+        "name": "relation",
+        "value": 96
+      },
+      {
+        "name": "law",
+        "value": 96
+      },
+      {
+        "name": "border",
+        "value": 96
+      },
+      {
+        "name": "form",
+        "value": 94
+      },
+      {
+        "name": "religious",
+        "value": 93
+      },
+      {
+        "name": "fact",
+        "value": 92
+      },
+      {
+        "name": "book",
+        "value": 92
+      },
+      {
+        "name": "group",
+        "value": 91
+      },
+      {
+        "name": "proverb",
+        "value": 91
+      },
+      {
+        "name": "instrument",
+        "value": 90
+      },
+      {
+        "name": "great",
+        "value": 89
+      },
+      {
+        "name": "culture",
+        "value": 89
+      },
+      {
+        "name": "area",
+        "value": 89
+      },
+      {
+        "name": "medium",
+        "value": 89
+      },
+      {
+        "name": "film",
+        "value": 86
+      },
+      {
+        "name": "big",
+        "value": 86
+      },
+      {
+        "name": "international",
+        "value": 86
+      },
+      {
+        "name": "english",
+        "value": 85
+      },
+      {
+        "name": "interested",
+        "value": 84
+      },
+      {
+        "name": "word",
+        "value": 83
+      },
+      {
+        "name": "society",
+        "value": 82
+      },
+      {
+        "name": "process",
+        "value": 81
+      },
+      {
+        "name": "student",
+        "value": 80
+      },
+      {
+        "name": "interest",
+        "value": 80
+      },
+      {
+        "name": "academic",
+        "value": 79
+      },
+      {
+        "name": "person",
+        "value": 79
+      },
+      {
+        "name": "hand",
+        "value": 79
+      },
+      {
+        "name": "instance",
+        "value": 79
+      },
+      {
+        "name": "indian",
+        "value": 78
+      },
+      {
+        "name": "power",
+        "value": 77
+      },
+      {
+        "name": "topic",
+        "value": 76
+      },
+      {
+        "name": "traditional",
+        "value": 76
+      },
+      {
+        "name": "problem",
+        "value": 76
+      },
+      {
+        "name": "west",
+        "value": 74
+      },
+      {
+        "name": "child",
+        "value": 72
+      },
+      {
+        "name": "value",
+        "value": 71
+      },
+      {
+        "name": "ocean",
+        "value": 71
+      },
+      {
+        "name": "level",
+        "value": 70
+      },
+      {
+        "name": "yoruba",
+        "value": 70
+      },
+      {
+        "name": "professor",
+        "value": 70
+      },
+      {
+        "name": "india",
+        "value": 70
+      },
+      {
+        "name": "art",
+        "value": 69
+      },
+      {
+        "name": "aspect",
+        "value": 69
+      },
+      {
+        "name": "concept",
+        "value": 68
+      },
+      {
+        "name": "image",
+        "value": 68
+      },
+      {
+        "name": "politic",
+        "value": 68
+      },
+      {
+        "name": "production",
+        "value": 68
+      },
+      {
+        "name": "approach",
+        "value": 67
+      },
+      {
+        "name": "institution",
+        "value": 67
+      },
+      {
+        "name": "perspective",
+        "value": 67
+      },
+      {
+        "name": "money",
+        "value": 66
+      },
+      {
+        "name": "gender",
+        "value": 66
+      },
+      {
+        "name": "local",
+        "value": 66
+      },
+      {
+        "name": "region",
+        "value": 66
+      },
+      {
+        "name": "crisis",
+        "value": 66
+      },
+      {
+        "name": "school",
+        "value": 65
+      },
+      {
+        "name": "day",
+        "value": 65
+      },
+      {
+        "name": "relationship",
+        "value": 64
+      },
+      {
+        "name": "cultural",
+        "value": 64
+      },
+      {
+        "name": "future",
+        "value": 63
+      },
+      {
+        "name": "economy",
+        "value": 62
+      },
+      {
+        "name": "paper",
+        "value": 61
+      },
+      {
+        "name": "kenya",
+        "value": 61
+      },
+      {
+        "name": "story",
+        "value": 60
+      },
+      {
+        "name": "datum",
+        "value": 60
+      },
+      {
+        "name": "field",
+        "value": 60
+      },
+      {
+        "name": "concern",
+        "value": 59
+      },
+      {
+        "name": "difficult",
+        "value": 59
+      },
+      {
+        "name": "literature",
+        "value": 58
+      },
+      {
+        "name": "young",
+        "value": 57
+      },
+      {
+        "name": "old",
+        "value": 57
+      },
+      {
+        "name": "tool",
+        "value": 57
+      },
+      {
+        "name": "cameroon",
+        "value": 57
+      },
+      {
+        "name": "fellow",
+        "value": 55
+      },
+      {
+        "name": "role",
+        "value": 55
+      },
+      {
+        "name": "long",
+        "value": 55
+      },
+      {
+        "name": "security",
+        "value": 55
+      },
+      {
+        "name": "public",
+        "value": 55
+      },
+      {
+        "name": "ifa",
+        "value": 55
+      },
+      {
+        "name": "material",
+        "value": 54
+      },
+      {
+        "name": "development",
+        "value": 54
+      },
+      {
+        "name": "body",
+        "value": 53
+      },
+      {
+        "name": "order",
+        "value": 53
+      },
+      {
+        "name": "archive",
+        "value": 53
+      },
+      {
+        "name": "mais",
+        "value": 53
+      },
+      {
+        "name": "indigenous",
+        "value": 52
+      },
+      {
+        "name": "lagos",
+        "value": 52
+      },
+      {
+        "name": "identity",
+        "value": 51
+      },
+      {
+        "name": "economic",
+        "value": 51
+      },
+      {
+        "name": "national",
+        "value": 51
+      },
+      {
+        "name": "learning",
+        "value": 50
+      },
+      {
+        "name": "second",
+        "value": 50
+      },
+      {
+        "name": "pas",
+        "value": 50
+      },
+      {
+        "name": "conversations",
+        "value": 49
+      },
+      {
+        "name": "large",
+        "value": 49
+      },
+      {
+        "name": "official",
+        "value": 49
+      },
+      {
+        "name": "des",
+        "value": 49
+      },
+      {
+        "name": "opportunity",
+        "value": 48
+      },
+      {
+        "name": "discipline",
+        "value": 48
+      },
+      {
+        "name": "connection",
+        "value": 48
+      },
+      {
+        "name": "islam",
+        "value": 48
+      },
+      {
+        "name": "european",
+        "value": 48
+      },
+      {
+        "name": "intellectual",
+        "value": 47
+      },
+      {
+        "name": "danger",
+        "value": 47
+      },
+      {
+        "name": "religion",
+        "value": 47
+      },
+      {
+        "name": "month",
+        "value": 46
+      },
+      {
+        "name": "interview",
+        "value": 46
+      },
+      {
+        "name": "historical",
+        "value": 46
+      },
+      {
+        "name": "ghana",
+        "value": 44
+      },
+      {
+        "name": "discussion",
+        "value": 44
+      },
+      {
+        "name": "theory",
+        "value": 44
+      },
+      {
+        "name": "general",
+        "value": 44
+      },
+      {
+        "name": "engagement",
+        "value": 43
+      },
+      {
+        "name": "continent",
+        "value": 43
+      },
+      {
+        "name": "non",
+        "value": 43
+      },
+      {
+        "name": "happy",
+        "value": 43
+      },
+      {
+        "name": "oil",
+        "value": 43
+      },
+      {
+        "name": "southern",
+        "value": 43
+      },
+      {
+        "name": "zanzibar",
+        "value": 43
+      },
+      {
+        "name": "ethical",
+        "value": 43
+      },
+      {
+        "name": "legal",
+        "value": 43
+      },
+      {
+        "name": "uganda",
+        "value": 43
+      },
+      {
+        "name": "past",
+        "value": 42
+      },
+      {
+        "name": "focus",
+        "value": 42
+      },
+      {
+        "name": "food",
+        "value": 42
+      },
+      {
+        "name": "discourse",
+        "value": 42
+      },
+      {
+        "name": "coloniality",
+        "value": 42
+      },
+      {
+        "name": "phd",
+        "value": 42
+      },
+      {
+        "name": "population",
+        "value": 42
+      }
+    ],
+    "fr": [
+      {
+        "name": "théâtre",
+        "value": 106
+      },
+      {
+        "name": "bon",
+        "value": 73
+      },
+      {
+        "name": "chose",
+        "value": 45
+      },
+      {
+        "name": "travail",
+        "value": 42
+      },
+      {
+        "name": "temps",
+        "value": 39
+      },
+      {
+        "name": "photo",
+        "value": 29
+      },
+      {
+        "name": "pardon",
+        "value": 27
+      },
+      {
+        "name": "exemple",
+        "value": 22
+      },
+      {
+        "name": "vrai",
+        "value": 22
+      },
+      {
+        "name": "langue",
+        "value": 22
+      },
+      {
+        "name": "africain",
+        "value": 21
+      },
+      {
+        "name": "burkina",
+        "value": 21
+      },
+      {
+        "name": "île",
+        "value": 20
+      },
+      {
+        "name": "mot",
+        "value": 20
+      },
+      {
+        "name": "grand",
+        "value": 19
+      },
+      {
+        "name": "français",
+        "value": 19
+      },
+      {
+        "name": "cinéma",
+        "value": 18
+      },
+      {
+        "name": "théorie",
+        "value": 18
+      },
+      {
+        "name": "performance",
+        "value": 16
+      },
+      {
+        "name": "moment",
+        "value": 16
+      },
+      {
+        "name": "important",
+        "value": 16
+      },
+      {
+        "name": "oui",
+        "value": 15
+      },
+      {
+        "name": "rapport",
+        "value": 15
+      },
+      {
+        "name": "femme",
+        "value": 15
+      },
+      {
+        "name": "portrait",
+        "value": 15
+      },
+      {
+        "name": "festival",
+        "value": 15
+      },
+      {
+        "name": "train",
+        "value": 15
+      },
+      {
+        "name": "étudiant",
+        "value": 15
+      },
+      {
+        "name": "bayreuth",
+        "value": 14
+      },
+      {
+        "name": "monde",
+        "value": 14
+      },
+      {
+        "name": "maurice",
+        "value": 14
+      },
+      {
+        "name": "question",
+        "value": 14
+      },
+      {
+        "name": "texte",
+        "value": 14
+      },
+      {
+        "name": "faso",
+        "value": 14
+      },
+      {
+        "name": "indien",
+        "value": 13
+      },
+      {
+        "name": "atelier",
+        "value": 13
+      },
+      {
+        "name": "travers",
+        "value": 13
+      },
+      {
+        "name": "livre",
+        "value": 13
+      },
+      {
+        "name": "écrir",
+        "value": 13
+      },
+      {
+        "name": "populaire",
+        "value": 13
+      },
+      {
+        "name": "océan",
+        "value": 12
+      },
+      {
+        "name": "afrique",
+        "value": 12
+      },
+      {
+        "name": "histoire",
+        "value": 12
+      },
+      {
+        "name": "départ",
+        "value": 12
+      },
+      {
+        "name": "pays",
+        "value": 12
+      },
+      {
+        "name": "bonheur",
+        "value": 12
+      },
+      {
+        "name": "poésie",
+        "value": 12
+      },
+      {
+        "name": "université",
+        "value": 12
+      },
+      {
+        "name": "enfant",
+        "value": 12
+      },
+      {
+        "name": "petit",
+        "value": 11
+      },
+      {
+        "name": "rituel",
+        "value": 11
+      },
+      {
+        "name": "dison",
+        "value": 11
+      },
+      {
+        "name": "écriture",
+        "value": 11
+      },
+      {
+        "name": "mal",
+        "value": 11
+      },
+      {
+        "name": "pièce",
+        "value": 11
+      },
+      {
+        "name": "recherche",
+        "value": 11
+      },
+      {
+        "name": "esthétique",
+        "value": 11
+      },
+      {
+        "name": "allemand",
+        "value": 11
+      },
+      {
+        "name": "photographie",
+        "value": 10
+      },
+      {
+        "name": "fois",
+        "value": 10
+      },
+      {
+        "name": "acte",
+        "value": 10
+      },
+      {
+        "name": "société",
+        "value": 10
+      },
+      {
+        "name": "art",
+        "value": 10
+      },
+      {
+        "name": "poème",
+        "value": 10
+      },
+      {
+        "name": "hmm",
+        "value": 10
+      },
+      {
+        "name": "étude",
+        "value": 10
+      },
+      {
+        "name": "théâtral",
+        "value": 10
+      },
+      {
+        "name": "euh",
+        "value": 10
+      },
+      {
+        "name": "contexte",
+        "value": 9
+      },
+      {
+        "name": "réunion",
+        "value": 9
+      },
+      {
+        "name": "objet",
+        "value": 9
+      },
+      {
+        "name": "démarche",
+        "value": 9
+      },
+      {
+        "name": "artiste",
+        "value": 9
+      },
+      {
+        "name": "vie",
+        "value": 9
+      },
+      {
+        "name": "quête",
+        "value": 9
+      },
+      {
+        "name": "fond",
+        "value": 9
+      },
+      {
+        "name": "créole",
+        "value": 9
+      },
+      {
+        "name": "impression",
+        "value": 9
+      },
+      {
+        "name": "anglais",
+        "value": 9
+      },
+      {
+        "name": "niveau",
+        "value": 9
+      },
+      {
+        "name": "prix",
+        "value": 9
+      },
+      {
+        "name": "africa",
+        "value": 8
+      },
+      {
+        "name": "côté",
+        "value": 8
+      },
+      {
+        "name": "céramique",
+        "value": 8
+      },
+      {
+        "name": "humain",
+        "value": 8
+      },
+      {
+        "name": "problème",
+        "value": 8
+      },
+      {
+        "name": "rencontre",
+        "value": 8
+      },
+      {
+        "name": "œuvre",
+        "value": 8
+      },
+      {
+        "name": "lien",
+        "value": 8
+      },
+      {
+        "name": "mauricien",
+        "value": 8
+      },
+      {
+        "name": "école",
+        "value": 8
+      },
+      {
+        "name": "thèse",
+        "value": 8
+      },
+      {
+        "name": "scène",
+        "value": 8
+      },
+      {
+        "name": "film",
+        "value": 8
+      },
+      {
+        "name": "esclavage",
+        "value": 7
+      },
+      {
+        "name": "partie",
+        "value": 7
+      },
+      {
+        "name": "politique",
+        "value": 7
+      },
+      {
+        "name": "symbolique",
+        "value": 7
+      },
+      {
+        "name": "regard",
+        "value": 7
+      },
+      {
+        "name": "pratique",
+        "value": 7
+      },
+      {
+        "name": "auteur",
+        "value": 7
+      },
+      {
+        "name": "bibliothèque",
+        "value": 7
+      },
+      {
+        "name": "différence",
+        "value": 7
+      },
+      {
+        "name": "sûr",
+        "value": 7
+      },
+      {
+        "name": "intervention",
+        "value": 7
+      },
+      {
+        "name": "sankara",
+        "value": 7
+      },
+      {
+        "name": "artistique",
+        "value": 6
+      },
+      {
+        "name": "territoire",
+        "value": 6
+      },
+      {
+        "name": "culturel",
+        "value": 6
+      },
+      {
+        "name": "image",
+        "value": 6
+      },
+      {
+        "name": "sens",
+        "value": 6
+      },
+      {
+        "name": "absolu",
+        "value": 6
+      },
+      {
+        "name": "hein",
+        "value": 6
+      },
+      {
+        "name": "sentiment",
+        "value": 6
+      },
+      {
+        "name": "raison",
+        "value": 6
+      },
+      {
+        "name": "population",
+        "value": 6
+      },
+      {
+        "name": "association",
+        "value": 6
+      },
+      {
+        "name": "enseignant",
+        "value": 6
+      },
+      {
+        "name": "développement",
+        "value": 6
+      },
+      {
+        "name": "multiple",
+        "value": 5
+      },
+      {
+        "name": "madagascar",
+        "value": 5
+      },
+      {
+        "name": "installation",
+        "value": 5
+      },
+      {
+        "name": "conséquence",
+        "value": 5
+      },
+      {
+        "name": "thématique",
+        "value": 5
+      },
+      {
+        "name": "gorée",
+        "value": 5
+      },
+      {
+        "name": "âme",
+        "value": 5
+      },
+      {
+        "name": "workshop",
+        "value": 5
+      },
+      {
+        "name": "ben",
+        "value": 5
+      },
+      {
+        "name": "chemin",
+        "value": 5
+      },
+      {
+        "name": "jour",
+        "value": 5
+      },
+      {
+        "name": "religion",
+        "value": 5
+      },
+      {
+        "name": "sculpture",
+        "value": 5
+      },
+      {
+        "name": "année",
+        "value": 5
+      },
+      {
+        "name": "conférence",
+        "value": 5
+      },
+      {
+        "name": "part",
+        "value": 5
+      },
+      {
+        "name": "beyrouth",
+        "value": 5
+      },
+      {
+        "name": "francophone",
+        "value": 5
+      },
+      {
+        "name": "littéraire",
+        "value": 5
+      },
+      {
+        "name": "difficile",
+        "value": 5
+      },
+      {
+        "name": "cadre",
+        "value": 5
+      },
+      {
+        "name": "homme",
+        "value": 5
+      },
+      {
+        "name": "international",
+        "value": 5
+      },
+      {
+        "name": "monsieur",
+        "value": 5
+      },
+      {
+        "name": "ouagadougou",
+        "value": 5
+      },
+      {
+        "name": "paris",
+        "value": 5
+      },
+      {
+        "name": "option",
+        "value": 5
+      },
+      {
+        "name": "parcours",
+        "value": 5
+      },
+      {
+        "name": "ouaga",
+        "value": 5
+      },
+      {
+        "name": "représentation",
+        "value": 5
+      },
+      {
+        "name": "ouvrage",
+        "value": 5
+      },
+      {
+        "name": "augusto",
+        "value": 5
+      },
+      {
+        "name": "mois",
+        "value": 4
+      },
+      {
+        "name": "ville",
+        "value": 4
+      },
+      {
+        "name": "intéressant",
+        "value": 4
+      },
+      {
+        "name": "passé",
+        "value": 4
+      },
+      {
+        "name": "continent",
+        "value": 4
+      },
+      {
+        "name": "cœur",
+        "value": 4
+      },
+      {
+        "name": "européen",
+        "value": 4
+      },
+      {
+        "name": "coup",
+        "value": 4
+      },
+      {
+        "name": "ancêtre",
+        "value": 4
+      },
+      {
+        "name": "manque",
+        "value": 4
+      },
+      {
+        "name": "condition",
+        "value": 4
+      },
+      {
+        "name": "bout",
+        "value": 4
+      },
+      {
+        "name": "profond",
+        "value": 4
+      },
+      {
+        "name": "lieu",
+        "value": 4
+      },
+      {
+        "name": "expérience",
+        "value": 4
+      },
+      {
+        "name": "passion",
+        "value": 4
+      },
+      {
+        "name": "street",
+        "value": 4
+      },
+      {
+        "name": "public",
+        "value": 4
+      },
+      {
+        "name": "souffle",
+        "value": 4
+      },
+      {
+        "name": "maternel",
+        "value": 4
+      },
+      {
+        "name": "lire",
+        "value": 4
+      },
+      {
+        "name": "émotion",
+        "value": 4
+      },
+      {
+        "name": "amour",
+        "value": 4
+      },
+      {
+        "name": "barlen",
+        "value": 4
+      },
+      {
+        "name": "masque",
+        "value": 4
+      },
+      {
+        "name": "général",
+        "value": 4
+      },
+      {
+        "name": "terme",
+        "value": 4
+      },
+      {
+        "name": "semaine",
+        "value": 4
+      },
+      {
+        "name": "sein",
+        "value": 4
+      },
+      {
+        "name": "nom",
+        "value": 4
+      },
+      {
+        "name": "allemagne",
+        "value": 4
+      },
+      {
+        "name": "kompaoré",
+        "value": 4
+      },
+      {
+        "name": "quartier",
+        "value": 4
+      },
+      {
+        "name": "guingané",
+        "value": 4
+      },
+      {
+        "name": "prosper",
+        "value": 4
+      },
+      {
+        "name": "thomas",
+        "value": 4
+      },
+      {
+        "name": "prend",
+        "value": 4
+      },
+      {
+        "name": "article",
+        "value": 4
+      },
+      {
+        "name": "édition",
+        "value": 4
+      },
+      {
+        "name": "écoute",
+        "value": 4
+      },
+      {
+        "name": "sensibilisation",
+        "value": 4
+      },
+      {
+        "name": "fille",
+        "value": 4
+      },
+      {
+        "name": "boal",
+        "value": 4
+      },
+      {
+        "name": "excellence",
+        "value": 3
+      },
+      {
+        "name": "content",
+        "value": 3
+      },
+      {
+        "name": "présent",
+        "value": 3
+      },
+      {
+        "name": "colonial",
+        "value": 3
+      },
+      {
+        "name": "historique",
+        "value": 3
+      },
+      {
+        "name": "relation",
+        "value": 3
+      }
+    ]
+  }
 }
