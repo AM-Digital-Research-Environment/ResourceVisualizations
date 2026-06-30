@@ -133,7 +133,7 @@ A bibliographic analytics view over the cluster **Publications** item set (artic
 - **top venues** (`dcterms:isPartOf`) and **top authors** (`bibo:authorList`, unifying literal names with linked Person records);
 - a **collaboration network** — authors and editors who appear together on a publication, with each edge coloured by the relationship (**co-authorship**, **author–editor**, or **co-editorship**) and people matched to a Person record drawn solid (click-through) versus external names muted;
 - a **keyword** word cloud and **keyword co-occurrence** chord over `dcterms:subject`, plus Languages as a pie;
-- an **abstract word cloud** — the most frequent words across the publication abstracts (`dcterms:abstract`), lemmatised (see [Word clouds](#word-clouds-lemmatised) below).
+- an **abstract word cloud** — the most frequent words across the publication abstracts (`bibo:abstract`), lemmatised (see [Word clouds](#word-clouds-lemmatised) below).
 
 Authors/editors matched to Person records and subjects matched to Authority/LCSH records are clickable through to their pages. (The **By Resource Template** chart still appears on person and organisation dashboards, and a person's authored publications surface on their own dashboard.)
 

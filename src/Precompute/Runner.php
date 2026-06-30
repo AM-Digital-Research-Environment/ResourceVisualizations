@@ -1230,9 +1230,9 @@ final class Runner
         }
         // Abstract word cloud — lemmatised frequencies from the wordclouds Action
         // (asset/data/wordclouds/publications.json), or an in-PHP fallback over the
-        // raw dcterms:abstract text when that committed input is absent.
+        // raw bibo:abstract text when that committed input is absent.
         $absWc = $this->wordCloudInput('publications')
-            ?? Aggregators::buildTranscriptWordCloud($this->loadTextValues($pubs, 'dcterms:abstract'));
+            ?? Aggregators::buildTranscriptWordCloud($this->loadTextValues($pubs, 'bibo:abstract'));
         if ($absWc) {
             $dashboard['abstractWordcloud'] = $absWc;
         }

@@ -59,7 +59,7 @@ OUT_DIR = Path(__file__).resolve().parents[2] / "asset" / "data" / "wordclouds"
 # Corpora to build: id -> Omeka item set + the property holding the text.
 CORPORA = [
     {"id": "podcasts", "item_set": 39095, "field": "bibo:content"},      # transcripts
-    {"id": "publications", "item_set": 29918, "field": "dcterms:abstract"},
+    {"id": "publications", "item_set": 29918, "field": "bibo:abstract"},
 ]
 
 # Content words only — nouns, proper nouns, adjectives. Verbs are deliberately
