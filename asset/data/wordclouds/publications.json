@@ -1,6 +1,6 @@
 {
   "corpus": "publications",
-  "generated_utc": "2026-06-30T16:59:33Z",
+  "generated_utc": "2026-06-30T17:20:23Z",
   "source": "https://data.africamultiple.uni-bayreuth.de",
   "models": {
     "en": "en_core_web_sm",
@@ -843,10 +843,6 @@
         "value": 21
       },
       {
-        "name": "the",
-        "value": 20
-      },
-      {
         "name": "thema",
         "value": 17
       },
@@ -876,10 +872,6 @@
       },
       {
         "name": "auflage",
-        "value": 12
-      },
-      {
-        "name": "and",
         "value": 12
       },
       {
@@ -1076,10 +1068,6 @@
       },
       {
         "name": "vgl",
-        "value": 5
-      },
-      {
-        "name": "for",
         "value": 5
       },
       {
@@ -1625,6 +1613,18 @@
       {
         "name": "bewusst",
         "value": 2
+      },
+      {
+        "name": "aktuell",
+        "value": 2
+      },
+      {
+        "name": "praktisch",
+        "value": 2
+      },
+      {
+        "name": "forschend",
+        "value": 2
       }
     ],
     "fr": [
@@ -1746,10 +1746,6 @@
       },
       {
         "name": "héritage",
-        "value": 4
-      },
-      {
-        "name": "thi",
         "value": 4
       },
       {
@@ -2065,7 +2061,7 @@
         "value": 2
       },
       {
-        "name": "with",
+        "name": "thi",
         "value": 2
       },
       {
@@ -2090,10 +2086,6 @@
       },
       {
         "name": "discursive",
-        "value": 2
-      },
-      {
-        "name": "that",
         "value": 2
       },
       {
