@@ -3,3 +3,7 @@
 #   python -m spacy download en_core_web_sm
 #   python -m spacy download fr_core_news_sm
 spacy>=3.7,<4
+# spaCy's CLI (used by `spacy download`) imports click directly, but newer typer
+# releases no longer pull it in transitively — install it explicitly.
+click>=8
+
