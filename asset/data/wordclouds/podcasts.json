@@ -1,6 +1,6 @@
 {
   "corpus": "podcasts",
-  "generated_utc": "2026-06-30T16:13:55Z",
+  "generated_utc": "2026-06-30T16:39:10Z",
   "source": "https://data.africamultiple.uni-bayreuth.de",
   "models": {
     "en": "en_core_web_sm",
@@ -13,24 +13,8 @@
   },
   "all": [
     {
-      "name": "know",
-      "value": 1005
-    },
-    {
-      "name": "think",
-      "value": 973
-    },
-    {
       "name": "people",
       "value": 591
-    },
-    {
-      "name": "come",
-      "value": 487
-    },
-    {
-      "name": "mean",
-      "value": 478
     },
     {
       "name": "way",
@@ -38,11 +22,7 @@
     },
     {
       "name": "question",
-      "value": 456
-    },
-    {
-      "name": "work",
-      "value": 438
+      "value": 447
     },
     {
       "name": "africa",
@@ -50,43 +30,27 @@
     },
     {
       "name": "african",
-      "value": 412
-    },
-    {
-      "name": "look",
-      "value": 367
+      "value": 411
     },
     {
       "name": "time",
-      "value": 344
+      "value": 343
     },
     {
       "name": "research",
-      "value": 344
+      "value": 320
     },
     {
       "name": "right",
       "value": 314
     },
     {
-      "name": "want",
-      "value": 297
-    },
-    {
       "name": "different",
       "value": 292
     },
     {
-      "name": "try",
-      "value": 285
-    },
-    {
       "name": "university",
       "value": 243
-    },
-    {
-      "name": "find",
-      "value": 236
     },
     {
       "name": "language",
@@ -94,15 +58,11 @@
     },
     {
       "name": "project",
-      "value": 235
+      "value": 231
     },
     {
-      "name": "study",
-      "value": 233
-    },
-    {
-      "name": "point",
-      "value": 215
+      "name": "work",
+      "value": 221
     },
     {
       "name": "important",
@@ -125,28 +85,24 @@
       "value": 196
     },
     {
-      "name": "ask",
-      "value": 194
-    },
-    {
       "name": "mobility",
       "value": 191
     },
     {
-      "name": "start",
-      "value": 190
+      "name": "point",
+      "value": 189
     },
     {
       "name": "country",
       "value": 179
     },
     {
-      "name": "interesting",
-      "value": 174
+      "name": "study",
+      "value": 175
     },
     {
-      "name": "place",
-      "value": 172
+      "name": "interesting",
+      "value": 174
     },
     {
       "name": "education",
@@ -154,15 +110,15 @@
     },
     {
       "name": "camp",
-      "value": 169
-    },
-    {
-      "name": "bring",
-      "value": 166
+      "value": 168
     },
     {
       "name": "scholar",
       "value": 164
+    },
+    {
+      "name": "place",
+      "value": 162
     },
     {
       "name": "woman",
@@ -177,24 +133,8 @@
       "value": 158
     },
     {
-      "name": "speak",
-      "value": 157
-    },
-    {
-      "name": "state",
-      "value": 156
-    },
-    {
       "name": "space",
       "value": 154
-    },
-    {
-      "name": "play",
-      "value": 154
-    },
-    {
-      "name": "term",
-      "value": 149
     },
     {
       "name": "man",
@@ -205,12 +145,12 @@
       "value": 148
     },
     {
-      "name": "need",
-      "value": 148
-    },
-    {
       "name": "social",
       "value": 147
+    },
+    {
+      "name": "state",
+      "value": 146
     },
     {
       "name": "new",
@@ -221,11 +161,11 @@
       "value": 144
     },
     {
-      "name": "year",
-      "value": 140
+      "name": "term",
+      "value": 143
     },
     {
-      "name": "context",
+      "name": "year",
       "value": 140
     },
     {
@@ -241,6 +181,10 @@
       "value": 137
     },
     {
+      "name": "context",
+      "value": 137
+    },
+    {
       "name": "government",
       "value": 137
     },
@@ -249,32 +193,12 @@
       "value": 136
     },
     {
-      "name": "experience",
-      "value": 135
-    },
-    {
       "name": "digital",
-      "value": 135
+      "value": 134
     },
     {
       "name": "practice",
-      "value": 133
-    },
-    {
-      "name": "use",
-      "value": 133
-    },
-    {
-      "name": "happen",
-      "value": 131
-    },
-    {
-      "name": "change",
-      "value": 129
-    },
-    {
-      "name": "tell",
-      "value": 128
+      "value": 124
     },
     {
       "name": "good",
@@ -313,20 +237,16 @@
       "value": 115
     },
     {
-      "name": "focus",
-      "value": 115
-    },
-    {
       "name": "multiple",
-      "value": 114
-    },
-    {
-      "name": "sense",
       "value": 114
     },
     {
       "name": "liberation",
       "value": 114
+    },
+    {
+      "name": "sense",
+      "value": 113
     },
     {
       "name": "nigeria",
@@ -341,20 +261,12 @@
       "value": 111
     },
     {
-      "name": "understand",
-      "value": 110
-    },
-    {
       "name": "human",
       "value": 110
     },
     {
-      "name": "write",
+      "name": "experience",
       "value": 107
-    },
-    {
-      "name": "feel",
-      "value": 106
     },
     {
       "name": "certain",
@@ -369,23 +281,11 @@
       "value": 106
     },
     {
-      "name": "form",
-      "value": 105
-    },
-    {
       "name": "policy",
       "value": 104
     },
     {
-      "name": "let",
-      "value": 103
-    },
-    {
       "name": "little",
-      "value": 102
-    },
-    {
-      "name": "present",
       "value": 102
     },
     {
@@ -401,19 +301,7 @@
       "value": 99
     },
     {
-      "name": "like",
-      "value": 99
-    },
-    {
-      "name": "film",
-      "value": 98
-    },
-    {
       "name": "migrant",
-      "value": 97
-    },
-    {
-      "name": "border",
       "value": 97
     },
     {
@@ -421,8 +309,16 @@
       "value": 96
     },
     {
-      "name": "book",
-      "value": 93
+      "name": "border",
+      "value": 96
+    },
+    {
+      "name": "film",
+      "value": 94
+    },
+    {
+      "name": "form",
+      "value": 94
     },
     {
       "name": "religious",
@@ -430,6 +326,10 @@
     },
     {
       "name": "fact",
+      "value": 92
+    },
+    {
+      "name": "book",
       "value": 92
     },
     {
@@ -461,24 +361,12 @@
       "value": 89
     },
     {
-      "name": "hand",
-      "value": 89
-    },
-    {
       "name": "medium",
-      "value": 89
-    },
-    {
-      "name": "interest",
       "value": 89
     },
     {
       "name": "big",
       "value": 86
-    },
-    {
-      "name": "process",
-      "value": 85
     },
     {
       "name": "english",
@@ -493,31 +381,23 @@
       "value": 83
     },
     {
-      "name": "mention",
-      "value": 83
-    },
-    {
       "name": "society",
       "value": 82
     },
     {
-      "name": "approach",
-      "value": 82
+      "name": "process",
+      "value": 81
     },
     {
       "name": "student",
       "value": 80
     },
     {
-      "name": "concern",
+      "name": "interest",
       "value": 80
     },
     {
       "name": "art",
-      "value": 79
-    },
-    {
-      "name": "create",
       "value": 79
     },
     {
@@ -529,32 +409,20 @@
       "value": 79
     },
     {
-      "name": "instance",
+      "name": "hand",
       "value": 79
     },
     {
-      "name": "love",
-      "value": 78
-    },
-    {
-      "name": "power",
-      "value": 78
+      "name": "instance",
+      "value": 79
     },
     {
       "name": "indian",
       "value": 78
     },
     {
-      "name": "read",
+      "name": "power",
       "value": 77
-    },
-    {
-      "name": "learn",
-      "value": 77
-    },
-    {
-      "name": "image",
-      "value": 76
     },
     {
       "name": "topic",
@@ -570,19 +438,15 @@
     },
     {
       "name": "bon",
-      "value": 75
+      "value": 74
+    },
+    {
+      "name": "image",
+      "value": 74
     },
     {
       "name": "west",
       "value": 74
-    },
-    {
-      "name": "interview",
-      "value": 73
-    },
-    {
-      "name": "value",
-      "value": 73
     },
     {
       "name": "child",
@@ -593,16 +457,12 @@
       "value": 72
     },
     {
-      "name": "end",
-      "value": 72
+      "name": "value",
+      "value": 71
     },
     {
       "name": "ocean",
       "value": 71
-    },
-    {
-      "name": "concept",
-      "value": 70
     },
     {
       "name": "level",
@@ -621,20 +481,12 @@
       "value": 70
     },
     {
-      "name": "meet",
+      "name": "concept",
       "value": 69
     },
     {
       "name": "perspective",
       "value": 69
-    },
-    {
-      "name": "follow",
-      "value": 69
-    },
-    {
-      "name": "school",
-      "value": 68
     },
     {
       "name": "politic",
@@ -645,11 +497,11 @@
       "value": 68
     },
     {
-      "name": "institution",
+      "name": "approach",
       "value": 67
     },
     {
-      "name": "gender",
+      "name": "institution",
       "value": 67
     },
     {
@@ -657,19 +509,11 @@
       "value": 67
     },
     {
-      "name": "engage",
-      "value": 66
-    },
-    {
       "name": "money",
       "value": 66
     },
     {
-      "name": "help",
-      "value": 66
-    },
-    {
-      "name": "produce",
+      "name": "gender",
       "value": 66
     },
     {
@@ -681,7 +525,7 @@
       "value": 66
     },
     {
-      "name": "live",
+      "name": "school",
       "value": 65
     },
     {
@@ -697,23 +541,15 @@
       "value": 64
     },
     {
-      "name": "share",
-      "value": 64
-    },
-    {
       "name": "future",
       "value": 63
-    },
-    {
-      "name": "paper",
-      "value": 62
     },
     {
       "name": "economy",
       "value": 62
     },
     {
-      "name": "base",
+      "name": "paper",
       "value": 61
     },
     {
@@ -725,10 +561,6 @@
       "value": 60
     },
     {
-      "name": "relate",
-      "value": 60
-    },
-    {
       "name": "datum",
       "value": 60
     },
@@ -737,7 +569,7 @@
       "value": 60
     },
     {
-      "name": "travel",
+      "name": "concern",
       "value": 59
     },
     {
@@ -749,20 +581,8 @@
       "value": 59
     },
     {
-      "name": "hear",
-      "value": 58
-    },
-    {
       "name": "literature",
       "value": 58
-    },
-    {
-      "name": "host",
-      "value": 57
-    },
-    {
-      "name": "struggle",
-      "value": 57
     },
     {
       "name": "young",
@@ -781,22 +601,6 @@
       "value": 57
     },
     {
-      "name": "access",
-      "value": 57
-    },
-    {
-      "name": "ifa",
-      "value": 56
-    },
-    {
-      "name": "chose",
-      "value": 55
-    },
-    {
-      "name": "faire",
-      "value": 55
-    },
-    {
       "name": "fellow",
       "value": 55
     },
@@ -805,34 +609,214 @@
       "value": 55
     },
     {
-      "name": "lead",
+      "name": "long",
       "value": 55
     },
     {
-      "name": "open",
+      "name": "security",
       "value": 55
+    },
+    {
+      "name": "ifa",
+      "value": 55
+    },
+    {
+      "name": "chose",
+      "value": 54
+    },
+    {
+      "name": "material",
+      "value": 54
+    },
+    {
+      "name": "development",
+      "value": 54
+    },
+    {
+      "name": "body",
+      "value": 53
+    },
+    {
+      "name": "order",
+      "value": 53
+    },
+    {
+      "name": "archive",
+      "value": 53
+    },
+    {
+      "name": "mais",
+      "value": 53
+    },
+    {
+      "name": "travail",
+      "value": 52
+    },
+    {
+      "name": "religion",
+      "value": 52
+    },
+    {
+      "name": "indigenous",
+      "value": 52
+    },
+    {
+      "name": "lagos",
+      "value": 52
+    },
+    {
+      "name": "national",
+      "value": 52
+    },
+    {
+      "name": "identity",
+      "value": 51
+    },
+    {
+      "name": "economic",
+      "value": 51
+    },
+    {
+      "name": "large",
+      "value": 50
+    },
+    {
+      "name": "learning",
+      "value": 50
+    },
+    {
+      "name": "second",
+      "value": 50
+    },
+    {
+      "name": "pas",
+      "value": 50
+    },
+    {
+      "name": "conversations",
+      "value": 49
+    },
+    {
+      "name": "official",
+      "value": 49
+    },
+    {
+      "name": "des",
+      "value": 49
+    },
+    {
+      "name": "temps",
+      "value": 48
+    },
+    {
+      "name": "opportunity",
+      "value": 48
+    },
+    {
+      "name": "discipline",
+      "value": 48
+    },
+    {
+      "name": "connection",
+      "value": 48
+    },
+    {
+      "name": "islam",
+      "value": 48
+    },
+    {
+      "name": "population",
+      "value": 48
+    },
+    {
+      "name": "european",
+      "value": 48
+    },
+    {
+      "name": "continent",
+      "value": 47
+    },
+    {
+      "name": "intellectual",
+      "value": 47
+    },
+    {
+      "name": "danger",
+      "value": 47
+    },
+    {
+      "name": "month",
+      "value": 46
+    },
+    {
+      "name": "interview",
+      "value": 46
+    },
+    {
+      "name": "historical",
+      "value": 46
+    },
+    {
+      "name": "performance",
+      "value": 45
+    },
+    {
+      "name": "discussion",
+      "value": 45
+    },
+    {
+      "name": "engagement",
+      "value": 44
+    },
+    {
+      "name": "ghana",
+      "value": 44
+    },
+    {
+      "name": "theory",
+      "value": 44
+    },
+    {
+      "name": "general",
+      "value": 44
+    },
+    {
+      "name": "non",
+      "value": 43
+    },
+    {
+      "name": "happy",
+      "value": 43
+    },
+    {
+      "name": "oil",
+      "value": 43
+    },
+    {
+      "name": "southern",
+      "value": 43
+    },
+    {
+      "name": "zanzibar",
+      "value": 43
+    },
+    {
+      "name": "ethical",
+      "value": 43
+    },
+    {
+      "name": "legal",
+      "value": 43
+    },
+    {
+      "name": "uganda",
+      "value": 43
     }
   ],
   "en": [
     {
-      "name": "know",
-      "value": 1005
-    },
-    {
-      "name": "think",
-      "value": 973
-    },
-    {
       "name": "people",
       "value": 591
-    },
-    {
-      "name": "come",
-      "value": 487
-    },
-    {
-      "name": "mean",
-      "value": 478
     },
     {
       "name": "way",
@@ -840,11 +824,7 @@
     },
     {
       "name": "question",
-      "value": 442
-    },
-    {
-      "name": "work",
-      "value": 438
+      "value": 433
     },
     {
       "name": "africa",
@@ -852,43 +832,27 @@
     },
     {
       "name": "african",
-      "value": 412
-    },
-    {
-      "name": "look",
-      "value": 367
+      "value": 411
     },
     {
       "name": "time",
-      "value": 344
+      "value": 343
     },
     {
       "name": "research",
-      "value": 344
+      "value": 320
     },
     {
       "name": "right",
       "value": 314
     },
     {
-      "name": "want",
-      "value": 297
-    },
-    {
       "name": "different",
       "value": 292
     },
     {
-      "name": "try",
-      "value": 285
-    },
-    {
       "name": "university",
       "value": 243
-    },
-    {
-      "name": "find",
-      "value": 236
     },
     {
       "name": "language",
@@ -896,15 +860,11 @@
     },
     {
       "name": "project",
-      "value": 235
+      "value": 231
     },
     {
-      "name": "study",
-      "value": 233
-    },
-    {
-      "name": "point",
-      "value": 214
+      "name": "work",
+      "value": 221
     },
     {
       "name": "idea",
@@ -927,28 +887,24 @@
       "value": 196
     },
     {
-      "name": "ask",
-      "value": 194
-    },
-    {
       "name": "mobility",
       "value": 191
     },
     {
-      "name": "start",
-      "value": 190
+      "name": "point",
+      "value": 188
     },
     {
       "name": "country",
       "value": 179
     },
     {
-      "name": "interesting",
-      "value": 174
+      "name": "study",
+      "value": 175
     },
     {
-      "name": "place",
-      "value": 171
+      "name": "interesting",
+      "value": 174
     },
     {
       "name": "education",
@@ -956,11 +912,7 @@
     },
     {
       "name": "camp",
-      "value": 169
-    },
-    {
-      "name": "bring",
-      "value": 166
+      "value": 168
     },
     {
       "name": "scholar",
@@ -975,28 +927,16 @@
       "value": 161
     },
     {
-      "name": "speak",
-      "value": 157
+      "name": "place",
+      "value": 161
     },
     {
       "name": "world",
       "value": 157
     },
     {
-      "name": "state",
-      "value": 156
-    },
-    {
       "name": "space",
       "value": 154
-    },
-    {
-      "name": "play",
-      "value": 154
-    },
-    {
-      "name": "term",
-      "value": 149
     },
     {
       "name": "man",
@@ -1007,8 +947,8 @@
       "value": 148
     },
     {
-      "name": "need",
-      "value": 148
+      "name": "state",
+      "value": 146
     },
     {
       "name": "social",
@@ -1023,11 +963,11 @@
       "value": 144
     },
     {
-      "name": "year",
-      "value": 140
+      "name": "term",
+      "value": 143
     },
     {
-      "name": "context",
+      "name": "year",
       "value": 140
     },
     {
@@ -1039,40 +979,24 @@
       "value": 138
     },
     {
+      "name": "context",
+      "value": 137
+    },
+    {
       "name": "government",
       "value": 137
     },
     {
-      "name": "experience",
-      "value": 135
-    },
-    {
       "name": "digital",
-      "value": 135
-    },
-    {
-      "name": "practice",
-      "value": 133
+      "value": 134
     },
     {
       "name": "colonial",
       "value": 133
     },
     {
-      "name": "use",
-      "value": 133
-    },
-    {
-      "name": "happen",
-      "value": 131
-    },
-    {
-      "name": "change",
-      "value": 129
-    },
-    {
-      "name": "tell",
-      "value": 128
+      "name": "practice",
+      "value": 124
     },
     {
       "name": "good",
@@ -1111,16 +1035,12 @@
       "value": 119
     },
     {
-      "name": "focus",
-      "value": 115
+      "name": "liberation",
+      "value": 114
     },
     {
       "name": "sense",
-      "value": 114
-    },
-    {
-      "name": "liberation",
-      "value": 114
+      "value": 113
     },
     {
       "name": "able",
@@ -1135,10 +1055,6 @@
       "value": 111
     },
     {
-      "name": "understand",
-      "value": 110
-    },
-    {
       "name": "human",
       "value": 110
     },
@@ -1147,12 +1063,8 @@
       "value": 109
     },
     {
-      "name": "write",
+      "name": "experience",
       "value": 107
-    },
-    {
-      "name": "feel",
-      "value": 106
     },
     {
       "name": "certain",
@@ -1163,23 +1075,11 @@
       "value": 106
     },
     {
-      "name": "form",
-      "value": 105
-    },
-    {
       "name": "policy",
       "value": 104
     },
     {
-      "name": "let",
-      "value": 103
-    },
-    {
       "name": "little",
-      "value": 102
-    },
-    {
-      "name": "present",
       "value": 102
     },
     {
@@ -1191,19 +1091,11 @@
       "value": 100
     },
     {
-      "name": "like",
-      "value": 99
-    },
-    {
       "name": "moment",
       "value": 99
     },
     {
       "name": "migrant",
-      "value": 97
-    },
-    {
-      "name": "border",
       "value": 97
     },
     {
@@ -1215,8 +1107,12 @@
       "value": 96
     },
     {
-      "name": "book",
-      "value": 93
+      "name": "border",
+      "value": 96
+    },
+    {
+      "name": "form",
+      "value": 94
     },
     {
       "name": "religious",
@@ -1227,16 +1123,16 @@
       "value": 92
     },
     {
+      "name": "book",
+      "value": 92
+    },
+    {
       "name": "group",
       "value": 91
     },
     {
       "name": "proverb",
       "value": 91
-    },
-    {
-      "name": "film",
-      "value": 90
     },
     {
       "name": "instrument",
@@ -1255,16 +1151,12 @@
       "value": 89
     },
     {
-      "name": "hand",
-      "value": 89
-    },
-    {
       "name": "medium",
       "value": 89
     },
     {
-      "name": "interest",
-      "value": 89
+      "name": "film",
+      "value": 86
     },
     {
       "name": "big",
@@ -1273,10 +1165,6 @@
     {
       "name": "international",
       "value": 86
-    },
-    {
-      "name": "process",
-      "value": 85
     },
     {
       "name": "english",
@@ -1291,28 +1179,20 @@
       "value": 83
     },
     {
-      "name": "mention",
-      "value": 83
-    },
-    {
       "name": "society",
       "value": 82
     },
     {
-      "name": "approach",
-      "value": 82
+      "name": "process",
+      "value": 81
     },
     {
       "name": "student",
       "value": 80
     },
     {
-      "name": "concern",
+      "name": "interest",
       "value": 80
-    },
-    {
-      "name": "create",
-      "value": 79
     },
     {
       "name": "academic",
@@ -1323,27 +1203,19 @@
       "value": 79
     },
     {
-      "name": "instance",
+      "name": "hand",
       "value": 79
     },
     {
-      "name": "love",
-      "value": 78
-    },
-    {
-      "name": "power",
-      "value": 78
+      "name": "instance",
+      "value": 79
     },
     {
       "name": "indian",
       "value": 78
     },
     {
-      "name": "read",
-      "value": 77
-    },
-    {
-      "name": "learn",
+      "name": "power",
       "value": 77
     },
     {
@@ -1363,19 +1235,11 @@
       "value": 74
     },
     {
-      "name": "interview",
-      "value": 73
-    },
-    {
-      "name": "value",
-      "value": 73
-    },
-    {
       "name": "child",
       "value": 72
     },
     {
-      "name": "end",
+      "name": "value",
       "value": 71
     },
     {
@@ -1384,10 +1248,6 @@
     },
     {
       "name": "level",
-      "value": 70
-    },
-    {
-      "name": "image",
       "value": 70
     },
     {
@@ -1407,23 +1267,15 @@
       "value": 69
     },
     {
-      "name": "meet",
-      "value": 69
-    },
-    {
-      "name": "concept",
-      "value": 69
-    },
-    {
       "name": "aspect",
       "value": 69
     },
     {
-      "name": "follow",
-      "value": 69
+      "name": "concept",
+      "value": 68
     },
     {
-      "name": "school",
+      "name": "image",
       "value": 68
     },
     {
@@ -1435,16 +1287,16 @@
       "value": 68
     },
     {
+      "name": "approach",
+      "value": 67
+    },
+    {
       "name": "institution",
       "value": 67
     },
     {
       "name": "perspective",
       "value": 67
-    },
-    {
-      "name": "engage",
-      "value": 66
     },
     {
       "name": "money",
@@ -1459,14 +1311,6 @@
       "value": 66
     },
     {
-      "name": "help",
-      "value": 66
-    },
-    {
-      "name": "produce",
-      "value": 66
-    },
-    {
       "name": "region",
       "value": 66
     },
@@ -1475,7 +1319,7 @@
       "value": 66
     },
     {
-      "name": "live",
+      "name": "school",
       "value": 65
     },
     {
@@ -1491,35 +1335,23 @@
       "value": 64
     },
     {
-      "name": "share",
-      "value": 64
-    },
-    {
       "name": "future",
       "value": 63
-    },
-    {
-      "name": "paper",
-      "value": 62
     },
     {
       "name": "economy",
       "value": 62
     },
     {
+      "name": "paper",
+      "value": 61
+    },
+    {
       "name": "kenya",
       "value": 61
     },
     {
-      "name": "base",
-      "value": 60
-    },
-    {
       "name": "story",
-      "value": 60
-    },
-    {
-      "name": "relate",
       "value": 60
     },
     {
@@ -1531,7 +1363,7 @@
       "value": 60
     },
     {
-      "name": "travel",
+      "name": "concern",
       "value": 59
     },
     {
@@ -1539,20 +1371,8 @@
       "value": 59
     },
     {
-      "name": "hear",
-      "value": 58
-    },
-    {
       "name": "literature",
       "value": 58
-    },
-    {
-      "name": "host",
-      "value": 57
-    },
-    {
-      "name": "struggle",
-      "value": 57
     },
     {
       "name": "young",
@@ -1571,31 +1391,11 @@
       "value": 57
     },
     {
-      "name": "access",
-      "value": 57
-    },
-    {
-      "name": "ifa",
-      "value": 56
-    },
-    {
       "name": "fellow",
       "value": 55
     },
     {
       "name": "role",
-      "value": 55
-    },
-    {
-      "name": "lead",
-      "value": 55
-    },
-    {
-      "name": "open",
-      "value": 55
-    },
-    {
-      "name": "involve",
       "value": 55
     },
     {
@@ -1611,8 +1411,208 @@
       "value": 55
     },
     {
-      "name": "begin",
+      "name": "ifa",
+      "value": 55
+    },
+    {
+      "name": "material",
       "value": 54
+    },
+    {
+      "name": "development",
+      "value": 54
+    },
+    {
+      "name": "body",
+      "value": 53
+    },
+    {
+      "name": "order",
+      "value": 53
+    },
+    {
+      "name": "archive",
+      "value": 53
+    },
+    {
+      "name": "mais",
+      "value": 53
+    },
+    {
+      "name": "indigenous",
+      "value": 52
+    },
+    {
+      "name": "lagos",
+      "value": 52
+    },
+    {
+      "name": "identity",
+      "value": 51
+    },
+    {
+      "name": "economic",
+      "value": 51
+    },
+    {
+      "name": "national",
+      "value": 51
+    },
+    {
+      "name": "learning",
+      "value": 50
+    },
+    {
+      "name": "second",
+      "value": 50
+    },
+    {
+      "name": "pas",
+      "value": 50
+    },
+    {
+      "name": "conversations",
+      "value": 49
+    },
+    {
+      "name": "large",
+      "value": 49
+    },
+    {
+      "name": "official",
+      "value": 49
+    },
+    {
+      "name": "des",
+      "value": 49
+    },
+    {
+      "name": "opportunity",
+      "value": 48
+    },
+    {
+      "name": "discipline",
+      "value": 48
+    },
+    {
+      "name": "connection",
+      "value": 48
+    },
+    {
+      "name": "islam",
+      "value": 48
+    },
+    {
+      "name": "european",
+      "value": 48
+    },
+    {
+      "name": "intellectual",
+      "value": 47
+    },
+    {
+      "name": "danger",
+      "value": 47
+    },
+    {
+      "name": "religion",
+      "value": 47
+    },
+    {
+      "name": "month",
+      "value": 46
+    },
+    {
+      "name": "interview",
+      "value": 46
+    },
+    {
+      "name": "historical",
+      "value": 46
+    },
+    {
+      "name": "ghana",
+      "value": 44
+    },
+    {
+      "name": "discussion",
+      "value": 44
+    },
+    {
+      "name": "theory",
+      "value": 44
+    },
+    {
+      "name": "general",
+      "value": 44
+    },
+    {
+      "name": "engagement",
+      "value": 43
+    },
+    {
+      "name": "continent",
+      "value": 43
+    },
+    {
+      "name": "non",
+      "value": 43
+    },
+    {
+      "name": "happy",
+      "value": 43
+    },
+    {
+      "name": "oil",
+      "value": 43
+    },
+    {
+      "name": "southern",
+      "value": 43
+    },
+    {
+      "name": "zanzibar",
+      "value": 43
+    },
+    {
+      "name": "ethical",
+      "value": 43
+    },
+    {
+      "name": "legal",
+      "value": 43
+    },
+    {
+      "name": "uganda",
+      "value": 43
+    },
+    {
+      "name": "past",
+      "value": 42
+    },
+    {
+      "name": "focus",
+      "value": 42
+    },
+    {
+      "name": "food",
+      "value": 42
+    },
+    {
+      "name": "discourse",
+      "value": 42
+    },
+    {
+      "name": "coloniality",
+      "value": 42
+    },
+    {
+      "name": "phd",
+      "value": 42
+    },
+    {
+      "name": "population",
+      "value": 42
     }
   ],
   "fr": [
@@ -1622,11 +1622,7 @@
     },
     {
       "name": "bon",
-      "value": 74
-    },
-    {
-      "name": "faire",
-      "value": 47
+      "value": 73
     },
     {
       "name": "chose",
@@ -1637,24 +1633,8 @@
       "value": 42
     },
     {
-      "name": "pouvoir",
-      "value": 41
-    },
-    {
-      "name": "venir",
-      "value": 40
-    },
-    {
       "name": "temps",
       "value": 39
-    },
-    {
-      "name": "travailler",
-      "value": 38
-    },
-    {
-      "name": "savoir",
-      "value": 35
     },
     {
       "name": "photo",
@@ -1663,22 +1643,6 @@
     {
       "name": "pardon",
       "value": 27
-    },
-    {
-      "name": "aimer",
-      "value": 26
-    },
-    {
-      "name": "prendre",
-      "value": 23
-    },
-    {
-      "name": "vouloir",
-      "value": 23
-    },
-    {
-      "name": "voir",
-      "value": 22
     },
     {
       "name": "exemple",
@@ -1697,10 +1661,6 @@
       "value": 21
     },
     {
-      "name": "falloir",
-      "value": 21
-    },
-    {
       "name": "burkina",
       "value": 21
     },
@@ -1713,24 +1673,12 @@
       "value": 20
     },
     {
-      "name": "aller",
-      "value": 20
-    },
-    {
       "name": "grand",
-      "value": 19
-    },
-    {
-      "name": "commencer",
       "value": 19
     },
     {
       "name": "français",
       "value": 19
-    },
-    {
-      "name": "appeler",
-      "value": 18
     },
     {
       "name": "cinéma",
@@ -1739,18 +1687,6 @@
     {
       "name": "théorie",
       "value": 18
-    },
-    {
-      "name": "utiliser",
-      "value": 17
-    },
-    {
-      "name": "oui",
-      "value": 17
-    },
-    {
-      "name": "intéresser",
-      "value": 17
     },
     {
       "name": "performance",
@@ -1763,6 +1699,10 @@
     {
       "name": "important",
       "value": 16
+    },
+    {
+      "name": "oui",
+      "value": 15
     },
     {
       "name": "rapport",
@@ -1805,24 +1745,12 @@
       "value": 14
     },
     {
-      "name": "mettre",
-      "value": 14
-    },
-    {
-      "name": "lire",
-      "value": 14
-    },
-    {
       "name": "texte",
       "value": 14
     },
     {
       "name": "faso",
       "value": 14
-    },
-    {
-      "name": "artiste",
-      "value": 13
     },
     {
       "name": "indien",
@@ -1833,19 +1761,7 @@
       "value": 13
     },
     {
-      "name": "essayer",
-      "value": 13
-    },
-    {
       "name": "travers",
-      "value": 13
-    },
-    {
-      "name": "connaître",
-      "value": 13
-    },
-    {
-      "name": "écrire",
       "value": 13
     },
     {
@@ -1874,10 +1790,6 @@
     },
     {
       "name": "départ",
-      "value": 12
-    },
-    {
-      "name": "croire",
       "value": 12
     },
     {
@@ -1910,10 +1822,6 @@
     },
     {
       "name": "dison",
-      "value": 11
-    },
-    {
-      "name": "publier",
       "value": 11
     },
     {
@@ -1961,14 +1869,6 @@
       "value": 10
     },
     {
-      "name": "rencontrer",
-      "value": 10
-    },
-    {
-      "name": "créer",
-      "value": 10
-    },
-    {
       "name": "poème",
       "value": 10
     },
@@ -1997,14 +1897,6 @@
       "value": 9
     },
     {
-      "name": "revenir",
-      "value": 9
-    },
-    {
-      "name": "arriver",
-      "value": 9
-    },
-    {
       "name": "objet",
       "value": 9
     },
@@ -2013,15 +1905,11 @@
       "value": 9
     },
     {
-      "name": "trouver",
+      "name": "artiste",
       "value": 9
     },
     {
       "name": "vie",
-      "value": 9
-    },
-    {
-      "name": "rencontre",
       "value": 9
     },
     {
@@ -2045,10 +1933,6 @@
       "value": 9
     },
     {
-      "name": "penser",
-      "value": 9
-    },
-    {
       "name": "niveau",
       "value": 9
     },
@@ -2065,10 +1949,6 @@
       "value": 8
     },
     {
-      "name": "demander",
-      "value": 8
-    },
-    {
       "name": "céramique",
       "value": 8
     },
@@ -2077,19 +1957,11 @@
       "value": 8
     },
     {
-      "name": "lier",
-      "value": 8
-    },
-    {
-      "name": "devoir",
-      "value": 8
-    },
-    {
-      "name": "porter",
-      "value": 8
-    },
-    {
       "name": "problème",
+      "value": 8
+    },
+    {
+      "name": "rencontre",
       "value": 8
     },
     {
@@ -2109,10 +1981,6 @@
       "value": 8
     },
     {
-      "name": "écoute",
-      "value": 8
-    },
-    {
       "name": "thèse",
       "value": 8
     },
@@ -2129,10 +1997,6 @@
       "value": 7
     },
     {
-      "name": "appartenir",
-      "value": 7
-    },
-    {
       "name": "partie",
       "value": 7
     },
@@ -2142,14 +2006,6 @@
     },
     {
       "name": "symbolique",
-      "value": 7
-    },
-    {
-      "name": "espérer",
-      "value": 7
-    },
-    {
-      "name": "montrer",
       "value": 7
     },
     {
@@ -2169,10 +2025,6 @@
       "value": 7
     },
     {
-      "name": "raison",
-      "value": 7
-    },
-    {
       "name": "différence",
       "value": 7
     },
@@ -2187,10 +2039,6 @@
     {
       "name": "sankara",
       "value": 7
-    },
-    {
-      "name": "naître",
-      "value": 6
     },
     {
       "name": "artistique",
@@ -2213,23 +2061,7 @@
       "value": 6
     },
     {
-      "name": "rentrer",
-      "value": 6
-    },
-    {
-      "name": "partager",
-      "value": 6
-    },
-    {
       "name": "absolu",
-      "value": 6
-    },
-    {
-      "name": "réaliser",
-      "value": 6
-    },
-    {
-      "name": "arrêter",
       "value": 6
     },
     {
@@ -2241,19 +2073,15 @@
       "value": 6
     },
     {
+      "name": "raison",
+      "value": 6
+    },
+    {
       "name": "population",
       "value": 6
     },
     {
       "name": "association",
-      "value": 6
-    },
-    {
-      "name": "prosper",
-      "value": 6
-    },
-    {
-      "name": "jouer",
       "value": 6
     },
     {
@@ -2269,19 +2097,7 @@
       "value": 5
     },
     {
-      "name": "bienvenu",
-      "value": 5
-    },
-    {
-      "name": "accepter",
-      "value": 5
-    },
-    {
       "name": "madagascar",
-      "value": 5
-    },
-    {
-      "name": "situer",
       "value": 5
     },
     {
@@ -2289,39 +2105,11 @@
       "value": 5
     },
     {
-      "name": "sentir",
-      "value": 5
-    },
-    {
-      "name": "coup",
-      "value": 5
-    },
-    {
       "name": "conséquence",
       "value": 5
     },
     {
-      "name": "réparer",
-      "value": 5
-    },
-    {
-      "name": "forcémer",
-      "value": 5
-    },
-    {
-      "name": "guérir",
-      "value": 5
-    },
-    {
-      "name": "vivre",
-      "value": 5
-    },
-    {
       "name": "thématique",
-      "value": 5
-    },
-    {
-      "name": "porte",
       "value": 5
     },
     {
@@ -2330,10 +2118,6 @@
     },
     {
       "name": "âme",
-      "value": 5
-    },
-    {
-      "name": "amener",
       "value": 5
     },
     {
@@ -2349,31 +2133,11 @@
       "value": 5
     },
     {
-      "name": "permettre",
-      "value": 5
-    },
-    {
-      "name": "acter",
-      "value": 5
-    },
-    {
       "name": "jour",
       "value": 5
     },
     {
-      "name": "comprendre",
-      "value": 5
-    },
-    {
-      "name": "mentionner",
-      "value": 5
-    },
-    {
       "name": "religion",
-      "value": 5
-    },
-    {
-      "name": "profond",
       "value": 5
     },
     {
@@ -2397,15 +2161,7 @@
       "value": 5
     },
     {
-      "name": "raconter",
-      "value": 5
-    },
-    {
       "name": "francophone",
-      "value": 5
-    },
-    {
-      "name": "apprendre",
       "value": 5
     },
     {
@@ -2415,6 +2171,250 @@
     {
       "name": "difficile",
       "value": 5
+    },
+    {
+      "name": "cadre",
+      "value": 5
+    },
+    {
+      "name": "homme",
+      "value": 5
+    },
+    {
+      "name": "international",
+      "value": 5
+    },
+    {
+      "name": "monsieur",
+      "value": 5
+    },
+    {
+      "name": "ouagadougou",
+      "value": 5
+    },
+    {
+      "name": "paris",
+      "value": 5
+    },
+    {
+      "name": "option",
+      "value": 5
+    },
+    {
+      "name": "parcours",
+      "value": 5
+    },
+    {
+      "name": "ouaga",
+      "value": 5
+    },
+    {
+      "name": "représentation",
+      "value": 5
+    },
+    {
+      "name": "ouvrage",
+      "value": 5
+    },
+    {
+      "name": "augusto",
+      "value": 5
+    },
+    {
+      "name": "mois",
+      "value": 4
+    },
+    {
+      "name": "ville",
+      "value": 4
+    },
+    {
+      "name": "intéressant",
+      "value": 4
+    },
+    {
+      "name": "passé",
+      "value": 4
+    },
+    {
+      "name": "continent",
+      "value": 4
+    },
+    {
+      "name": "cœur",
+      "value": 4
+    },
+    {
+      "name": "européen",
+      "value": 4
+    },
+    {
+      "name": "coup",
+      "value": 4
+    },
+    {
+      "name": "ancêtre",
+      "value": 4
+    },
+    {
+      "name": "manque",
+      "value": 4
+    },
+    {
+      "name": "condition",
+      "value": 4
+    },
+    {
+      "name": "bout",
+      "value": 4
+    },
+    {
+      "name": "profond",
+      "value": 4
+    },
+    {
+      "name": "lieu",
+      "value": 4
+    },
+    {
+      "name": "expérience",
+      "value": 4
+    },
+    {
+      "name": "passion",
+      "value": 4
+    },
+    {
+      "name": "street",
+      "value": 4
+    },
+    {
+      "name": "public",
+      "value": 4
+    },
+    {
+      "name": "souffle",
+      "value": 4
+    },
+    {
+      "name": "maternel",
+      "value": 4
+    },
+    {
+      "name": "lire",
+      "value": 4
+    },
+    {
+      "name": "émotion",
+      "value": 4
+    },
+    {
+      "name": "amour",
+      "value": 4
+    },
+    {
+      "name": "barlen",
+      "value": 4
+    },
+    {
+      "name": "masque",
+      "value": 4
+    },
+    {
+      "name": "général",
+      "value": 4
+    },
+    {
+      "name": "terme",
+      "value": 4
+    },
+    {
+      "name": "semaine",
+      "value": 4
+    },
+    {
+      "name": "sein",
+      "value": 4
+    },
+    {
+      "name": "nom",
+      "value": 4
+    },
+    {
+      "name": "allemagne",
+      "value": 4
+    },
+    {
+      "name": "kompaoré",
+      "value": 4
+    },
+    {
+      "name": "quartier",
+      "value": 4
+    },
+    {
+      "name": "guingané",
+      "value": 4
+    },
+    {
+      "name": "prosper",
+      "value": 4
+    },
+    {
+      "name": "thomas",
+      "value": 4
+    },
+    {
+      "name": "prend",
+      "value": 4
+    },
+    {
+      "name": "article",
+      "value": 4
+    },
+    {
+      "name": "édition",
+      "value": 4
+    },
+    {
+      "name": "écoute",
+      "value": 4
+    },
+    {
+      "name": "sensibilisation",
+      "value": 4
+    },
+    {
+      "name": "fille",
+      "value": 4
+    },
+    {
+      "name": "boal",
+      "value": 4
+    },
+    {
+      "name": "excellence",
+      "value": 3
+    },
+    {
+      "name": "content",
+      "value": 3
+    },
+    {
+      "name": "présent",
+      "value": 3
+    },
+    {
+      "name": "colonial",
+      "value": 3
+    },
+    {
+      "name": "historique",
+      "value": 3
+    },
+    {
+      "name": "relation",
+      "value": 3
     }
   ]
 }
