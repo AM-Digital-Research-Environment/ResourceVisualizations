@@ -147,6 +147,16 @@ Analytics for the cluster **YouTube channel** — the synced **YouTube videos** 
 
 YouTube videos carry no `dcterms:type` of their own, so they don't appear in the resource-type pie *here*; instead they fold into the **Collection Overview** under a single synthetic **YouTube video** type (see above). Playlists and speakers are clickable through to their Omeka pages.
 
+### Podcasts
+
+Analytics for the cluster's curated **podcast episodes** — the manually-catalogued **Podcasts** item set (39095; template 21, `fabio:AudioDocument`). Added as a **site-page block** (Admin > Sites > [site] > Pages), it loads `asset/data/item-dashboards/podcasts.json` and shows:
+
+- **summary stat cards** — episodes, series, distinct **speakers** (`marcrel:spk`), total **hours of audio** (with the average length), and the languages — the same reusable component as the Collection Overview;
+- **transcript word cloud** — the headline chart, built in the precompute from the episodes' AI-generated transcripts (`bibo:content`): tokenised, with audio cues (`[music]`), `Speaker N:` labels, numbers and a broad English + French stop-word / filler list removed (`Aggregators::buildTranscriptWordCloud`, tunable);
+- **speakers & hosts** (`marcrel:spk` / `hst` / `sde`), the **episode-length** distribution (`dcterms:extent`, ISO-8601, bucketed into bands by `Aggregators::buildDurationHistogram`), **episodes by year** (`dcterms:date`), and **episodes by series** (`dcterms:isPartOf`, clickable through to each series).
+
+Podcasts carry no `dcterms:type` of their own, so (like YouTube videos) they don't appear in the resource-type pie *here*; instead they fold into the **Collection Overview** under a single synthetic **Podcast** type (see above). Speakers and series are clickable through to their Omeka pages.
+
 ### What's New
 
 A recent-additions feed with a **3 / 6 / 12-month** window selector and a "most active projects" bar. Added as a **site-page block** (Admin > Sites > [site] > Pages), it loads `asset/data/item-dashboards/whats-new.json`. "Now" is the latest item-creation date in the corpus, so it stays meaningful regardless of when the data was imported.
@@ -195,7 +205,7 @@ Each site exposes a **snippet gallery** at `/s/<site-slug>/dre-embed` (also link
 
 You can also grab the code **without leaving the page**: every embeddable visualization on the live site carries a small **copy-embed-code** button — one per chart in the dashboards' toolbars (next to *Save as image*), and one per block on the single-view maps/networks — that copies the matching snippet to the clipboard. It reuses the chart toolbar styling, follows light/dark, and never appears inside an embed itself.
 
-Embeddable blocks: **Collection Overview**, **Collection Dashboard**, **Publications**, **YouTube** (these four also support single-chart embeds), **Discursive Communities**, **Spatial Exploration**, **Network Explorer**, **Compare (any entity)**, **Compare Genres**, **Project Explorer**, **What's New**.
+Embeddable blocks: **Collection Overview**, **Collection Dashboard**, **Publications**, **YouTube**, **Podcasts** (these five also support single-chart embeds), **Discursive Communities**, **Spatial Exploration**, **Network Explorer**, **Compare (any entity)**, **Compare Genres**, **Project Explorer**, **What's New**.
 
 The iframe auto-resizes to its content (the snippet pairs each frame with a tiny `postMessage` listener). Two optional query params:
 
@@ -443,7 +453,7 @@ This module is the Omeka S half of a two-project initiative with the sibling **[
 
 The two are complementary and were brought to **analytical parity** over the shared dataset — tracked in [AM-Digital-Research-Environment/amira#10](https://github.com/AM-Digital-Research-Environment/amira/issues/10):
 
-- **This module** renders a full per-entity dashboard (7–20 charts) inline on each Omeka resource page, plus cross-cutting site-page blocks — Collection Overview, Collection Dashboard, Compare, Project Explorer, What's New, Discursive Communities, Spatial Exploration, Publications, YouTube, and Photo Browsing.
+- **This module** renders a full per-entity dashboard (7–20 charts) inline on each Omeka resource page, plus cross-cutting site-page blocks — Collection Overview, Collection Dashboard, Compare, Project Explorer, What's New, Discursive Communities, Spatial Exploration, Publications, YouTube, Podcasts, and Photo Browsing.
 - **amira** provides the broad cross-archive overviews as a standalone site.
 
 A reader should find roughly the same analytical toolkit on either side. The "how to add a visualization" recipes and architecture guardrails distilled from that initiative live in [ROADMAP.md](ROADMAP.md).

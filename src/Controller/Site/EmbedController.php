@@ -84,6 +84,13 @@ class EmbedController extends AbstractActionController
             'itemId' => 'youtube',
             'layout' => 'youtube',
         ],
+        'podcasts' => [
+            'label' => 'Podcasts', // @translate
+            'template' => 'podcasts',
+            'kind' => 'dashboard',
+            'itemId' => 'podcasts',
+            'layout' => 'podcasts',
+        ],
         'discursive-communities' => [
             'label' => 'Discursive Communities', // @translate
             'template' => 'discursive-communities',

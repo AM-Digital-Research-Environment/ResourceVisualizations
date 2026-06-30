@@ -14,6 +14,7 @@ use DreVisualizations\Precompute\Aggregators\CommunityTrait;
 use DreVisualizations\Precompute\Aggregators\EntityGraphTrait;
 use DreVisualizations\Precompute\Aggregators\PublicationChartsTrait;
 use DreVisualizations\Precompute\Aggregators\OverviewChartsTrait;
+use DreVisualizations\Precompute\Aggregators\MediaChartsTrait;
 
 // The builders are split into focused traits under Aggregators/. They are
 // required explicitly (not just autoloaded) so this class works both under
@@ -30,6 +31,7 @@ require_once __DIR__ . '/Aggregators/CommunityTrait.php';
 require_once __DIR__ . '/Aggregators/EntityGraphTrait.php';
 require_once __DIR__ . '/Aggregators/PublicationChartsTrait.php';
 require_once __DIR__ . '/Aggregators/OverviewChartsTrait.php';
+require_once __DIR__ . '/Aggregators/MediaChartsTrait.php';
 // ForceAtlas2 layout helper that EntityGraphTrait uses to bake node positions.
 require_once __DIR__ . '/ForceLayout.php';
 
@@ -68,6 +70,7 @@ final class Aggregators
     use EntityGraphTrait;
     use PublicationChartsTrait;
     use OverviewChartsTrait;
+    use MediaChartsTrait;
 
     /* ------------------------------------------------------------------ */
     /*  Shared constants (referenced by the trait methods via self::)      */

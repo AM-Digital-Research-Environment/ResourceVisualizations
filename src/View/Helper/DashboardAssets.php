@@ -44,6 +44,7 @@ class DashboardAssets extends AbstractHelper
         'js/dashboard-charts-timeline.js',
         'js/dashboard-charts-pie.js',
         'js/dashboard-charts-bar.js',
+        'js/dashboard-charts-histogram.js',
         'js/dashboard-charts-wordcloud.js',
         'js/dashboard-charts-gantt.js',
         'js/dashboard-charts-heatmap.js',

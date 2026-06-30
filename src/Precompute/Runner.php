@@ -236,6 +236,7 @@ final class Runner
         $this->generateSpatialExploration();
         $this->generatePublications();
         $this->generateYouTube();
+        $this->generatePodcasts();
         $this->generateWhatsNew();
         $this->generatePhotoGalleries();
         $this->generateFeaturedCollections();
@@ -1333,6 +1334,182 @@ final class Runner
         $dashboard['resourceType'] = 'youtube';
         $this->save('youtube', $dashboard);
         $this->log('  youtube dashboard written (' . count($videos) . ' videos)');
+    }
+
+    /**
+     * Podcasts dashboard — the cluster's curated podcast episodes (item set
+     * 39095, template 21, fabio:AudioDocument), rendered by the dedicated
+     * Podcasts site-page block. The headline is a word cloud built from the
+     * episodes' AI-generated transcripts (bibo:content); alongside it the most
+     * frequent speakers, the episode-length distribution, the publication
+     * timeline and the series breakdown. Saved under 'podcasts' (resourceType
+     * 'podcasts' → the podcasts layout in dashboard-layouts.js).
+     */
+    private function generatePodcasts(): void
+    {
+        $ids = $this->podcastIds();
+        $this->log('=== Podcasts (' . count($ids) . ' episodes in set ' . self::ITEM_SET_PODCASTS . ') ===');
+        if (count($ids) < 3) {
+            return;
+        }
+        $dashboard = Aggregators::aggregateItems($ids, $this->items, $this->links, $this->itemYear, $this->geo);
+
+        // Series (dcterms:isPartOf → series authority items) as a ranked bar.
+        if ($v = $this->buildPodcastSeries($ids)) {
+            $dashboard['series'] = $v;
+        }
+
+        // Durations (dcterms:extent, ISO-8601) and transcripts (bibo:content) are
+        // not loaded by DataLoader, so fetch them for just these episodes.
+        [$durations, $transcripts] = $this->loadPodcastExtras($ids);
+        $totalSeconds = array_sum($durations);
+        if ($v = Aggregators::buildDurationHistogram($durations)) {
+            $dashboard['duration'] = $v;
+        }
+        if ($v = Aggregators::buildTranscriptWordCloud($transcripts)) {
+            $dashboard['transcriptWordcloud'] = $v;
+        }
+
+        // Summary stat cards: episodes, distinct series, distinct speakers
+        // (marcrel:spk), total listening time (avg length in the subtitle) and
+        // the languages spoken (their names in the subtitle).
+        $seriesIds = [];
+        $speakerIds = [];
+        foreach ($ids as $iid) {
+            foreach ($this->links[$iid] ?? [] as [$term, , $vrid]) {
+                if ($term === 'dcterms:isPartOf') {
+                    $seriesIds[$vrid] = true;
+                } elseif ($term === 'marcrel:spk') {
+                    $speakerIds[$vrid] = true;
+                }
+            }
+        }
+        $langNames = array_map(static fn ($l) => $l['name'], $dashboard['languages'] ?? []);
+        $cards = [
+            ['key' => 'podcasts', 'label' => 'Episodes', 'value' => count($ids)],
+            ['key' => 'series', 'label' => 'Series', 'value' => count($seriesIds)],
+            ['key' => 'people', 'label' => 'Speakers', 'value' => count($speakerIds)],
+        ];
+        if ($totalSeconds > 0 && $durations) {
+            $cards[] = [
+                'key' => 'duration', 'label' => 'Hours of audio',
+                'value' => (int) round($totalSeconds / 3600),
+                'subtitle' => 'avg ' . (int) round($totalSeconds / count($durations) / 60) . ' min',
+            ];
+        }
+        $cards[] = [
+            'key' => 'languages', 'label' => 'Languages',
+            'value' => count($langNames),
+            'subtitle' => $langNames ? implode(', ', $langNames) : null,
+        ];
+        $dashboard['stats'] = Aggregators::buildStatCards($cards);
+
+        // Podcast-specific chart wording (the shared registry titles charts for
+        // research items). Read by renderDashboard() in dashboard.js.
+        $dashboard['labels'] = [
+            'transcriptWordcloud' => 'Transcript Word Cloud',
+            'contributors' => 'Speakers & Hosts',
+            'duration' => 'Episode Length',
+            'timeline' => 'Episodes by Year',
+            'series' => 'Episodes by Series',
+        ];
+        $dashboard['descriptions'] = [
+            'transcriptWordcloud' => 'Most frequent words across the episodes\' AI-generated transcripts (audio cues, speaker labels, and common English/French stop-words and filler removed).',
+            'contributors' => 'People credited as speakers, hosts or moderators across the episodes.',
+            'duration' => 'How long the episodes run, grouped into length bands.',
+            'timeline' => 'Number of podcast episodes published per year.',
+            'series' => 'Episodes grouped by the podcast series they belong to.',
+        ];
+
+        $dashboard['resourceType'] = 'podcasts';
+        $this->save('podcasts', $dashboard);
+        $this->log('  podcasts dashboard written (' . count($ids) . ' episodes)');
+    }
+
+    /**
+     * Episodes per podcast series (dcterms:isPartOf → a series authority item),
+     * as `[{name,value,itemId}]` sorted by count desc — feeds the series bar with
+     * click-through to each series page.
+     *
+     * @param list<int> $ids
+     * @return list<array{name:string,value:int,itemId:int}>|null
+     */
+    private function buildPodcastSeries(array $ids): ?array
+    {
+        $counts = [];
+        foreach ($ids as $iid) {
+            foreach ($this->links[$iid] ?? [] as [$term, , $vrid]) {
+                if ($term !== 'dcterms:isPartOf') {
+                    continue;
+                }
+                $title = $this->items[$vrid]['title'] ?? '';
+                if ($title === '') {
+                    continue;
+                }
+                $counts[$vrid] ??= ['name' => $title, 'value' => 0, 'itemId' => $vrid];
+                $counts[$vrid]['value']++;
+            }
+        }
+        if (!$counts) {
+            return null;
+        }
+        $rows = array_values($counts);
+        usort($rows, static fn ($a, $b) => $b['value'] <=> $a['value']);
+        return $rows;
+    }
+
+    /**
+     * Load episode durations and transcripts for the given podcast items in one
+     * query (neither is loaded by DataLoader). Returns `[durations, transcripts]`
+     * where durations are seconds parsed from dcterms:extent (ISO-8601) and
+     * transcripts are the raw bibo:content strings. Integer-joined IN list, so
+     * injection-safe (mirrors loadFeaturedLiterals()).
+     *
+     * @param list<int> $ids
+     * @return array{0:list<int>,1:list<string>}
+     */
+    private function loadPodcastExtras(array $ids): array
+    {
+        $durations = [];
+        $transcripts = [];
+        if (!$ids) {
+            return [$durations, $transcripts];
+        }
+        $idList = implode(',', array_map('intval', $ids));
+        $rows = $this->connection->executeQuery(
+            "SELECT v.resource_id, CONCAT(vo.prefix, ':', p.local_name), v.value"
+            . ' FROM value v'
+            . ' JOIN property p ON v.property_id = p.id'
+            . ' JOIN vocabulary vo ON p.vocabulary_id = vo.id'
+            . " WHERE v.resource_id IN ($idList)"
+            . "   AND CONCAT(vo.prefix, ':', p.local_name) IN ('dcterms:extent', 'bibo:content')"
+            . "   AND v.value IS NOT NULL AND v.value <> ''"
+        )->fetchAllNumeric();
+        foreach ($rows as $r) {
+            $term = (string) $r[1];
+            $value = (string) $r[2];
+            if ($term === 'dcterms:extent') {
+                $secs = self::parseIso8601Duration($value);
+                if ($secs > 0) {
+                    $durations[] = $secs;
+                }
+            } elseif ($term === 'bibo:content') {
+                $transcripts[] = $value;
+            }
+        }
+        return [$durations, $transcripts];
+    }
+
+    /**
+     * Parse an ISO-8601 time duration (e.g. "PT38M48S", "PT1H05M00S") to whole
+     * seconds. Returns 0 when the value does not match.
+     */
+    private static function parseIso8601Duration(string $iso): int
+    {
+        if (!preg_match('/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/i', trim($iso), $m)) {
+            return 0;
+        }
+        return ((int) ($m[1] ?? 0)) * 3600 + ((int) ($m[2] ?? 0)) * 60 + ((int) ($m[3] ?? 0));
     }
 
     /**

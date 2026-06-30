@@ -214,6 +214,16 @@
                     'contributors'],
             wide:  ['playlists', 'languageTimeline'],
             tall:  ['playlists']
+        },
+        // Cluster podcast episodes (podcasts.json). The headline is a word cloud
+        // built from the AI-generated transcripts; then the most frequent
+        // speakers, the episode-length distribution, the publication timeline and
+        // the series breakdown. The word cloud spans full width; the rest pair up.
+        podcasts: {
+            order: ['transcriptWordcloud', 'contributors', 'duration',
+                    'timeline', 'series'],
+            wide:  ['transcriptWordcloud'],
+            tall:  ['transcriptWordcloud']
         }
     };
 

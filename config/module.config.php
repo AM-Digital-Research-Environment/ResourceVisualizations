@@ -10,6 +10,7 @@ return [
             'spatialExploration' => Site\BlockLayout\SpatialExploration::class,
             'publications' => Site\BlockLayout\Publications::class,
             'youtube' => Site\BlockLayout\YouTube::class,
+            'podcasts' => Site\BlockLayout\Podcasts::class,
             'projectExplorer' => Site\BlockLayout\ProjectExplorer::class,
             'compareEntity' => Site\BlockLayout\CompareEntity::class,
             'compareGenres' => Site\BlockLayout\CompareGenres::class,
