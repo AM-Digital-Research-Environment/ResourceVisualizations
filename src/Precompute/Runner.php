@@ -1529,11 +1529,12 @@ final class Runner
      * Read a committed, lemmatised word-frequency input for a corpus — produced
      * by the wordclouds GitHub Action (tools/wordclouds/build_wordclouds.py) and
      * served from asset/data/wordclouds/<corpus>.json, a static INPUT like the
-     * countries geojson (not regenerated in-Omeka). Returns the combined ('all')
-     * `[{name,value}]` list, or null when the file is absent/empty so callers fall
-     * back to the in-PHP tokeniser.
+     * countries geojson (not regenerated in-Omeka). Returns the per-language
+     * structure `{languages:[…], byLang:{code:[{name,value}],…}}` the front-end
+     * word-cloud builder renders (with a language toggle), or null when the file
+     * is absent/empty so callers fall back to the in-PHP tokeniser.
      *
-     * @return list<array{name:string,value:int}>|null
+     * @return array{languages:list<string>,byLang:array<string,list<array{name:string,value:int}>>}|null
      */
     private function wordCloudInput(string $corpus): ?array
     {
@@ -1542,8 +1543,12 @@ final class Runner
             return null;
         }
         $json = json_decode((string) file_get_contents($path), true);
-        $all = is_array($json) ? ($json['all'] ?? null) : null;
-        return (is_array($all) && $all) ? $all : null;
+        $byLang = is_array($json) ? ($json['byLang'] ?? null) : null;
+        if (!is_array($byLang) || !$byLang) {
+            return null;
+        }
+        $languages = $json['languages'] ?? array_keys($byLang);
+        return ['languages' => array_values($languages), 'byLang' => $byLang];
     }
 
     /**

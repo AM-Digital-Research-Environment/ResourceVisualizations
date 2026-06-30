@@ -100,7 +100,11 @@ EXTRA_STOP = {
     "today", "talk", "hello", "everybody", "everyone", "thing", "stuff", "sort",
     "kind", "guess", "lot", "bit", "okay", "yeah", "actually", "basically",
     "really", "thank", "thanks",
-    "épisode", "merci", "bonjour", "voilà",
+    # Common English words that leak into the other-language buckets via
+    # mixed-language academic abstracts (already stopped by the EN model).
+    "the", "and", "for", "with", "from", "this", "that", "also", "into", "such", "within",
+    # French fillers / meta the FR model keeps as content.
+    "épisode", "merci", "bonjour", "voilà", "bon", "chose", "vrai", "ouais", "truc", "exemple",
 }
 
 CUE_RE = re.compile(r"\[[^\]]*\]")                          # [music], [applause]

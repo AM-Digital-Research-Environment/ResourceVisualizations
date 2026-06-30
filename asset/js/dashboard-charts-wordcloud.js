@@ -1,7 +1,14 @@
 /**
- * Word cloud chart builder with adjustable word count slider.
+ * Word cloud chart builder with a word-count slider and an optional language
+ * toggle.
  *
- * Falls back to bar chart if echarts-wordcloud extension is unavailable.
+ * Accepts either shape:
+ *   - flat `[{name, value, itemId?}]` — a single cloud (e.g. subjects, or the
+ *     in-PHP transcript fallback);
+ *   - `{languages: ['en','fr',…], byLang: {en:[…], fr:[…]}}` — a per-language
+ *     cloud (the lemmatised word-cloud inputs), rendered with a language toggle.
+ *
+ * Falls back to a bar chart if the echarts-wordcloud extension is unavailable.
  * Registers into window.RV.charts for the dashboard orchestrator.
  */
 (function () {
@@ -13,6 +20,8 @@
     var toEntries = ns.toEntries, addClickHandler = ns.addClickHandler;
 
     ns.charts = ns.charts || {};
+
+    var LANG_NAMES = { en: 'English', fr: 'French', de: 'German', pt: 'Portuguese' };
 
     var _wordCloudOk = null;
     function isWordCloudAvailable() {
@@ -30,19 +39,30 @@
     }
 
     ns.charts.buildWordCloud = function (el, data, siteBase) {
-        var entries = toEntries(data);
+        // Multilingual shape carries byLang; anything else is a flat list.
+        var multi = !!(data && !Array.isArray(data) && data.byLang);
+        var langs = multi
+            ? ((data.languages && data.languages.length) ? data.languages.slice() : Object.keys(data.byLang))
+            : [];
+        var curLang = multi ? langs[0] : null;
+
+        function rawFor() { return multi ? (data.byLang[curLang] || []) : data; }
+        var entries = toEntries(rawFor());
         if (!entries.length) return;
-        if (!isWordCloudAvailable()) return ns.charts.buildBarChart(el, data, siteBase);
+        if (!isWordCloudAvailable()) return ns.charts.buildBarChart(el, rawFor(), siteBase);
 
         var chart = initChart(el);
         chart._noDecal = true;
-        var total = entries.length;
-        var defaultCount = Math.min(total, total > 100 ? 80 : 30);
 
+        function defaultCount() {
+            var t = entries.length;
+            return Math.min(t, t > 100 ? 80 : 30);
+        }
+
+        // Larger fonts fill more of the (wide) panel and read better; the grid
+        // scales with them so words still don't collide after the bump.
         function wordCloudOption(count) {
             var slice = entries.slice(0, count);
-            // Larger fonts fill more of the (wide) panel and read better; the grid
-            // scales with them so words still don't collide after the bump.
             var minFont = count > 100 ? 12 : count > 50 ? 14 : 16;
             var maxFont = count > 100 ? 72 : count > 50 ? 84 : (count > 10 ? 96 : 110);
             var grid = count > 100 ? 6 : count > 50 ? 8 : 10;
@@ -73,41 +93,71 @@
             };
         }
 
-        chart.setOption(wordCloudOption(defaultCount));
+        // echarts-wordcloud lays out asynchronously; clear() before each relayout
+        // so an in-flight pass isn't painted over (the "stacked words" bug).
+        function render(count) {
+            chart.clear();
+            chart.setOption(wordCloudOption(count));
+        }
+
+        render(defaultCount());
+        // entries is reassigned on a language switch; addClickHandler's closure
+        // reads the current value, so it stays correct without re-binding.
         addClickHandler(chart, entries, siteBase);
 
-        if (total > 5) {
-            var panel = el.closest('.chart-panel');
-            if (panel) {
-                var slider = document.createElement('div');
-                slider.className = 'rv-word-slider';
-                slider.innerHTML = '<label><span class="rv-word-slider-caption">Words</span>'
-                    + '<input type="range" min="5" max="' + total + '" value="' + defaultCount + '" step="1">'
-                    + '<span class="rv-word-slider-value">' + defaultCount + '</span></label>';
-                var desc = panel.querySelector('.chart-description');
-                var insertRef = desc ? desc.nextSibling : el;
-                panel.insertBefore(slider, insertRef);
+        var panel = el.closest('.chart-panel');
+        if (!panel) return chart;
+        var desc = panel.querySelector('.chart-description');
+        var anchor = desc ? desc.nextSibling : el;
 
-                var input = slider.querySelector('input');
-                var valueEl = slider.querySelector('.rv-word-slider-value');
-                // echarts-wordcloud lays out asynchronously. Firing setOption on
-                // every drag tick starts overlapping layout passes that paint on
-                // top of one another (the "words stacked on each other" bug). Debounce
-                // so only the settled value relayouts, and chart.clear() first so the
-                // previous pass's canvas is discarded rather than drawn over.
-                var relayoutTimer = null;
-                input.addEventListener('input', function () {
-                    var n = parseInt(this.value, 10);
-                    valueEl.textContent = n;
-                    clearTimeout(relayoutTimer);
-                    relayoutTimer = setTimeout(function () {
-                        // clear() discards the old display list but keeps the
-                        // click/hover handlers bound above, so no re-binding needed.
-                        chart.clear();
-                        chart.setOption(wordCloudOption(n));
-                    }, 180);
+        var sliderInput = null, sliderValue = null, relayoutTimer = null;
+
+        // Language toggle — only when the data carries more than one language.
+        if (multi && langs.length > 1) {
+            var langBar = document.createElement('div');
+            langBar.className = 'rv-word-langs';
+            langs.forEach(function (code) {
+                var b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'rv-word-lang' + (code === curLang ? ' is-active' : '');
+                b.textContent = LANG_NAMES[code] || code.toUpperCase();
+                b.addEventListener('click', function () {
+                    if (code === curLang) return;
+                    curLang = code;
+                    entries = toEntries(rawFor());
+                    langBar.querySelectorAll('.rv-word-lang').forEach(function (x) { x.classList.remove('is-active'); });
+                    b.classList.add('is-active');
+                    if (sliderInput) {
+                        sliderInput.max = String(entries.length);
+                        var n = Math.min(parseInt(sliderInput.value, 10), entries.length);
+                        sliderInput.value = String(n);
+                        sliderValue.textContent = n;
+                    }
+                    render(sliderInput ? parseInt(sliderInput.value, 10) : defaultCount());
                 });
-            }
+                langBar.appendChild(b);
+            });
+            panel.insertBefore(langBar, anchor);
+            anchor = langBar.nextSibling;
+        }
+
+        // Word-count slider.
+        if (entries.length > 5) {
+            var dc = defaultCount();
+            var slider = document.createElement('div');
+            slider.className = 'rv-word-slider';
+            slider.innerHTML = '<label><span class="rv-word-slider-caption">Words</span>'
+                + '<input type="range" min="5" max="' + entries.length + '" value="' + dc + '" step="1">'
+                + '<span class="rv-word-slider-value">' + dc + '</span></label>';
+            panel.insertBefore(slider, anchor);
+            sliderInput = slider.querySelector('input');
+            sliderValue = slider.querySelector('.rv-word-slider-value');
+            sliderInput.addEventListener('input', function () {
+                sliderValue.textContent = this.value;
+                var n = parseInt(this.value, 10);
+                clearTimeout(relayoutTimer);
+                relayoutTimer = setTimeout(function () { render(n); }, 180);
+            });
         }
 
         return chart;

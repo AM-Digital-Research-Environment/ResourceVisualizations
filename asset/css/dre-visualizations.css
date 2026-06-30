@@ -583,6 +583,44 @@ details.rv-collapsible[open] > .rv-collapsible__head .rv-collapsible__chevron {
     font-variant-numeric: tabular-nums;
 }
 
+/* Word-cloud language toggle — segmented buttons above the cloud (shown only
+   when the precomputed input carries more than one language). */
+.rv-word-langs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--rv-space-1);
+    margin: 0 0 var(--rv-space-2);
+}
+
+.rv-word-lang {
+    padding: 2px var(--rv-space-2);
+    border: 1px solid var(--rv-border);
+    border-radius: var(--rv-radius-sm);
+    background: var(--rv-bg);
+    color: var(--rv-text-color);
+    font-size: var(--rv-text-xs);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--rv-transition-fast), color var(--rv-transition-fast), border-color var(--rv-transition-fast);
+}
+
+.rv-word-lang:hover {
+    background: var(--rv-bg-raised);
+    color: var(--rv-accent);
+    border-color: var(--rv-accent);
+}
+
+.rv-word-lang.is-active {
+    background: var(--rv-accent);
+    color: var(--rv-accent-contrast);
+    border-color: var(--rv-accent);
+}
+
+.rv-word-lang:focus-visible {
+    outline: none;
+    box-shadow: var(--rv-focus-ring);
+}
+
 .chart-container {
     width: 100%;
     max-width: 100%;
