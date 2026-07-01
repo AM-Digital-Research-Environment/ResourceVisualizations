@@ -100,8 +100,13 @@ $sourceLabel = $this->translate('Source') . ': ' . ($site ? $site->title() : 'Af
     <style>
         html, body { margin: 0; padding: 0; }
         body.dre-embed-body { background: var(--background, #fff); display: block; -webkit-text-size-adjust: 100%; }
-        /* The block self-paces; keep it edge-to-edge inside the frame. */
-        .dre-embed-body .resource-vis-block { margin: 0; }
+        /* On a site page the block inherits the theme's content-column gutters; the
+           bare frame has none, so give the whole-block embed a small inset instead
+           of jamming its header, controls and canvas against the iframe edges. The
+           single-chart embed stays full-bleed — its .chart-panel carries its own
+           padding (see the .dre-embed-single rules in dre-visualizations.css). */
+        .dre-embed-body .resource-vis-block { margin: 0; padding: var(--space-5, 1.25rem) var(--space-6, 1.5rem); }
+        .dre-embed-body .resource-vis-block.dre-embed-single { padding: 0; }
         .dre-embed-body .dre-embed-wrap { padding-inline: 0; }
         .dre-embed-source { margin: 0; padding: var(--space-2, 0.5rem) var(--space-4, 1rem); text-align: right; font-size: var(--text-xs, 0.8125rem); border-top: 1px solid var(--border-light, #ece9e3); background: var(--surface, #fff); }
         .dre-embed-source a { color: var(--ink-light, #595650); text-decoration: none; }
