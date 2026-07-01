@@ -61,6 +61,19 @@ if ($primary !== '') {
     }
 }
 
+// Both brand values are emitted into an inline <style> below — CSS context, not
+// an HTML attribute. escapeHtmlAttr() must NOT be used there: it turns '#' into
+// the entity '&#x23;', and inside a <style> (an HTML raw-text element) that
+// entity is left undecoded. Its ';' then prematurely ends the custom-property
+// declaration, so `--primary-base: #009260` degrades to `--primary-base: &#x23`
+// (invalid) — poisoning --primary and every accent color-mixed from it, in both
+// the CSS (--rv-accent…) and the JS token reads (THEME.accent, the heatmap /
+// choropleth ramps). Both values are already validated hex; strip to
+// [#0-9a-fA-F] as a CSS-safe guard and emit them raw.
+$cssHex = function ($v) {
+    return preg_replace('/[^#0-9a-fA-F]/', '', (string) $v);
+};
+
 // Embeds render LIGHT by default, for predictability: an iframe can't read its
 // host page's colour scheme, and the viewer's OS preference is a poor proxy for
 // it (a dark-OS viewer on a light host would otherwise get a dark widget on a
@@ -96,8 +109,8 @@ $sourceLabel = $this->translate('Source') . ': ' . ($site ? $site->title() : 'Af
     </style>
     <?php if ($primary !== ''): ?>
     <style>
-        :root { --primary-base: <?= $escapeAttr($primary) ?>;<?php
-            if ($primaryContrast !== ''): ?> --primary-contrast: <?= $escapeAttr($primaryContrast) ?>;<?php endif; ?> }
+        :root { --primary-base: <?= $cssHex($primary) ?>;<?php
+            if ($primaryContrast !== ''): ?> --primary-contrast: <?= $cssHex($primaryContrast) ?>;<?php endif; ?> }
     </style>
     <?php endif; ?>
     <?= $this->headScript() ?>
