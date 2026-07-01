@@ -2803,6 +2803,12 @@ body.photo-lightbox-open {
 .deg-btn:hover { background: var(--rv-bg-raised); color: var(--rv-accent); border-color: var(--rv-accent); }
 .deg-btn:focus-visible { outline: none; box-shadow: var(--rv-focus-ring); }
 .deg-btn.is-on { background: var(--rv-accent); color: var(--rv-accent-contrast); border-color: var(--rv-accent); }
+.deg-btn:disabled { opacity: 0.45; cursor: default; }
+.deg-btn:disabled:hover { background: var(--rv-bg); color: var(--rv-text-color); border-color: var(--rv-border); }
+
+/* Colour-by control: a short label followed by the mode buttons (Type/Cluster/Section) */
+.deg-colormode { display: inline-flex; align-items: center; gap: var(--rv-space-1); }
+.deg-colormode-label { font-size: var(--rv-text-xs); color: var(--rv-text-color); }
 
 /* Colour swatch dot (chips, legend, sidebar) */
 .deg-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }

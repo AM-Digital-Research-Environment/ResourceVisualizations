@@ -16,8 +16,10 @@ use DreVisualizations\Precompute\ForceLayout;
  * (subjects only) and the per-item {@see \DreVisualizations\Precompute\KnowledgeGraphs}.
  * Node positions are baked here with {@see ForceLayout} (a pure-PHP ForceAtlas2)
  * and projected to pseudo lng/lat, so the MapLibre front end (entity-graph.js)
- * renders the network at zero layout cost. Louvain communities are precomputed
- * as an optional colour overlay; the primary colouring is by entity type.
+ * renders the network at zero layout cost. Two optional colour overlays are
+ * precomputed alongside the primary by-entity-type colouring: Louvain
+ * communities, and — when an `$itemSection` map is supplied — the research
+ * section each entity most belongs to (see {@see self::buildEntityGraph()}).
  *
  * Organizations are rarely linked directly from a research item, so they are
  * surfaced through their people: for every Person on an item, that person's
@@ -46,11 +48,17 @@ trait EntityGraphTrait
      *                                   subjects in this set are typed Subject, the rest Tag.
      * @param int        $minCooccurrence Drop edges below this co-occurrence weight.
      * @param int        $maxNodes       Keep at most this many entities (top by hubness).
+     * @param array      $itemSection    [itemId => researchSectionName] for the scanned
+     *                                   works, driving the optional "colour by research
+     *                                   section" overlay. Each entity is tagged with the
+     *                                   section its works most name: a strict majority
+     *                                   wins its index, an even split is a cross-section
+     *                                   bridge (-2), and no sectioned work at all is -1.
      *
-     * @return array{meta:array,types:string[],nodes:array,edges:array}|null
+     * @return array{meta:array,types:string[],sections:string[],nodes:array,edges:array}|null
      *         null when the graph is too small to be worth rendering.
      */
-    public static function buildEntityGraph(array $itemIds, array $links, array $items, array $lcshIds = [], int $minCooccurrence = 2, int $maxNodes = 1200): ?array
+    public static function buildEntityGraph(array $itemIds, array $links, array $items, array $lcshIds = [], int $minCooccurrence = 2, int $maxNodes = 1200, array $itemSection = []): ?array
     {
         $lcsh = array_flip($lcshIds);
 
@@ -58,6 +66,7 @@ trait EntityGraphTrait
         $titleOf = [];    // vrid => display title
         $nodeCount = [];  // vrid => number of items it appears in
         $pairCounts = []; // "a,b" (a<b) => co-occurrence weight
+        $sectTally = [];  // vrid => [sectionName => number of the entity's items in it]
 
         // Record an entity's type/title. Lower type index wins so a resource that
         // could be read two ways keeps its more specific identity. Returns false
@@ -112,8 +121,12 @@ trait EntityGraphTrait
             }
 
             $ids = array_keys($ents);
+            $sec = $itemSection[$iid] ?? '';
             foreach ($ids as $v) {
                 $nodeCount[$v] = ($nodeCount[$v] ?? 0) + 1;
+                if ($sec !== '') {
+                    $sectTally[$v][$sec] = ($sectTally[$v][$sec] ?? 0) + 1;
+                }
             }
             $n = count($ids);
             for ($i = 0; $i < $n; $i++) {
@@ -210,6 +223,41 @@ trait EntityGraphTrait
             $cid++;
         }
 
+        // Research-section overlay. Order the sections that surface among the kept
+        // entities by how often they appear (name tie-break, so colours are stable),
+        // then tag every entity with its dominant section: a strict majority wins its
+        // index, an even split is a cross-section bridge (-2), and an entity whose
+        // works name no section at all is -1. Empty when no $itemSection was given.
+        $sectionWeight = [];
+        foreach ($top as $vrid) {
+            if (!isset($visDeg[$vrid])) {
+                continue;
+            }
+            foreach ($sectTally[$vrid] ?? [] as $name => $c) {
+                $sectionWeight[$name] = ($sectionWeight[$name] ?? 0) + $c;
+            }
+        }
+        $sectionNames = array_keys($sectionWeight);
+        usort($sectionNames, static function ($a, $b) use ($sectionWeight) {
+            return $sectionWeight[$b] !== $sectionWeight[$a]
+                ? $sectionWeight[$b] <=> $sectionWeight[$a]
+                : strcmp($a, $b);
+        });
+        $sectionIdx = array_flip($sectionNames);
+        $sectionOf = static function (int $vrid) use ($sectTally, $sectionIdx): int {
+            $counts = $sectTally[$vrid] ?? [];
+            if (!$counts) {
+                return -1;
+            }
+            $total = array_sum($counts);
+            arsort($counts);
+            $topName = array_key_first($counts);
+            if (count($counts) > 1 && $counts[$topName] * 2 <= $total) {
+                return -2; // no majority: a cross-section bridge
+            }
+            return $sectionIdx[$topName];
+        };
+
         // Emit nodes in rank order; map vrid → array index for the edges, and
         // build the mass vector (1 + weighted degree) ForceAtlas2 needs.
         $nodes = [];
@@ -229,6 +277,7 @@ trait EntityGraphTrait
                 $nodeCount[$vrid] ?? 0,
                 $visDeg[$vrid],
                 $communityOf[$vrid] ?? -1,
+                $sectionOf($vrid),
             ];
             $i++;
         }
@@ -280,16 +329,18 @@ trait EntityGraphTrait
                 'nodeCount' => count($nodes),
                 'edgeCount' => count($edges),
                 'communityCount' => $cid,
+                'sectionCount' => count($sectionNames),
                 'bounds' => [
                     round($minLng, 4), round($minLat, 4),
                     round($maxLng, 4), round($maxLat, 4),
                 ],
                 'columns' => [
-                    'nodes' => ['id', 'label', 'type', 'count', 'degree', 'community', 'lng', 'lat', 'rank'],
+                    'nodes' => ['id', 'label', 'type', 'count', 'degree', 'community', 'section', 'lng', 'lat', 'rank'],
                     'edges' => ['source', 'target', 'weight'],
                 ],
             ],
             'types' => self::ENTITY_TYPES,
+            'sections' => $sectionNames,
             'nodes' => $nodes,
             'edges' => $edges,
         ];

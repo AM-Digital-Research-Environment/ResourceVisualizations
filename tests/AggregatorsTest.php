@@ -514,7 +514,7 @@ $eg = A::buildEntityGraph(range(1000, $rid - 1), $egLinks, $egItems, [10, 11], 2
 check($eg !== null, 'buildEntityGraph returns a graph');
 check($eg['types'] === ['Person', 'Organization', 'Location', 'Subject', 'Tag'], 'buildEntityGraph emits the five entity types');
 $egById = [];
-foreach ($eg['nodes'] as $nd) { $egById[$nd[0]] = $nd; } // row: [id, label, type, count, degree, community, lng, lat, rank]
+foreach ($eg['nodes'] as $nd) { $egById[$nd[0]] = $nd; } // row: [id, label, type, count, degree, community, section, lng, lat, rank]
 check(count($eg['nodes']) === 7, 'buildEntityGraph: 7 entity nodes (incl. affiliated org)');
 check(($egById[200][2] ?? null) === 1, 'buildEntityGraph: organization surfaced via author affiliation');
 check(($egById[10][2] ?? null) === 3 && ($egById[12][2] ?? null) === 4, 'buildEntityGraph: LCSH subject (3) vs free tag (4) split');
@@ -526,25 +526,48 @@ $egCb = $egById[101][5];
 check($egCa !== -1 && $egCb !== -1 && $egCa !== $egCb, 'buildEntityGraph: the two author clusters land in distinct communities');
 check($egById[200][5] === $egCa && $egById[20][5] === $egCa, 'buildEntityGraph: org + location share their author\'s community');
 // Baked ForceAtlas2 positions (pseudo lng/lat) + label rank + bounds envelope.
-check(($eg['meta']['columns']['nodes'] ?? []) === ['id', 'label', 'type', 'count', 'degree', 'community', 'lng', 'lat', 'rank'],
+check(($eg['meta']['columns']['nodes'] ?? []) === ['id', 'label', 'type', 'count', 'degree', 'community', 'section', 'lng', 'lat', 'rank'],
     'buildEntityGraph: node columns advertise baked lng/lat/rank');
-check(count($eg['nodes'][0]) === 9, 'buildEntityGraph: each node row carries 9 fields');
+check(count($eg['nodes'][0]) === 10, 'buildEntityGraph: each node row carries 10 fields');
 $egFinite = true;
 $egLngs = [];
 foreach ($eg['nodes'] as $nd) {
-    if (!is_finite($nd[6]) || !is_finite($nd[7]) || abs($nd[6]) > 140.001 || abs($nd[7]) > 86) { $egFinite = false; }
-    $egLngs[(string) round($nd[6], 3)] = true;
+    if (!is_finite($nd[7]) || !is_finite($nd[8]) || abs($nd[7]) > 140.001 || abs($nd[8]) > 86) { $egFinite = false; }
+    $egLngs[(string) round($nd[7], 3)] = true;
 }
 check($egFinite, 'buildEntityGraph: every node has a finite lng/lat inside the layout plane');
 check(count($egLngs) > 1, 'buildEntityGraph: ForceAtlas2 spreads the nodes (not collapsed to one point)');
 $egBounds = $eg['meta']['bounds'] ?? null;
 check(is_array($egBounds) && count($egBounds) === 4 && $egBounds[0] <= $egBounds[2] && $egBounds[1] <= $egBounds[3],
     'buildEntityGraph: meta.bounds is a valid [w,s,e,n] envelope');
-$egRanks = array_map(static function ($nd) { return $nd[8]; }, $eg['nodes']);
+$egRanks = array_map(static function ($nd) { return $nd[9]; }, $eg['nodes']);
 sort($egRanks);
 check($egRanks === range(0, count($eg['nodes']) - 1), 'buildEntityGraph: label ranks are a 0..n-1 permutation');
-check(($egById[10][8] ?? null) === 0, 'buildEntityGraph: the top hub (Islam) gets label rank 0');
+check(($egById[10][9] ?? null) === 0, 'buildEntityGraph: the top hub (Islam) gets label rank 0');
+// With no $itemSection map, the section overlay is inert: no section labels, every node -1.
+check(($eg['sections'] ?? null) === [], 'buildEntityGraph: sections empty without an itemSection map');
+check(($egById[10][6] ?? null) === -1, 'buildEntityGraph: section defaults to -1 (no sectioned work)');
 check(A::buildEntityGraph(range(1000, $rid - 1), $egLinks, $egItems, [10, 11], 99) === null, 'buildEntityGraph: null when the weight threshold prunes every edge');
+
+// --- buildEntityGraph: research-section overlay (dominant section + bridge) ---
+// Section each work so Jane's items are all Knowledges (a clean majority), while
+// John's five items split Learning/Mobilities/Knowledges 2:2:1 (no majority => bridge).
+$egSectionMap = [];
+foreach ([1000, 1001, 1002, 1003, 1004] as $iid) { $egSectionMap[$iid] = 'Knowledges'; }
+$egSectionMap[1005] = 'Learning';   $egSectionMap[1006] = 'Learning';
+$egSectionMap[1007] = 'Mobilities'; $egSectionMap[1008] = 'Mobilities';
+$egSectionMap[1009] = 'Knowledges';
+$egS = A::buildEntityGraph(range(1000, $rid - 1), $egLinks, $egItems, [10, 11], 2, 1200, $egSectionMap);
+$egSById = [];
+foreach ($egS['nodes'] as $nd) { $egSById[$nd[0]] = $nd; }
+check(($egS['sections'] ?? []) === ['Knowledges', 'Learning', 'Mobilities'],
+    'buildEntityGraph: sections ordered by weight (Knowledges), then name (Learning<Mobilities)');
+check(($egS['meta']['sectionCount'] ?? null) === 3, 'buildEntityGraph: meta.sectionCount counts the sections');
+check(($egS['sections'][$egSById[100][6]] ?? null) === 'Knowledges',
+    'buildEntityGraph: Jane resolves to her majority section (Knowledges)');
+check(($egSById[200][6] ?? null) === $egSById[100][6],
+    'buildEntityGraph: the affiliated org inherits its author\'s section');
+check(($egSById[101][6] ?? null) === -2, 'buildEntityGraph: John, split evenly across sections, is a bridge (-2)');
 
 echo $failures ? "\n$failures FAILURE(S)\n" : "\nALL PHP AGGREGATOR TESTS PASS\n";
 exit($failures ? 1 : 0);

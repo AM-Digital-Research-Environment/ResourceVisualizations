@@ -980,15 +980,36 @@ final class Runner
             $this->podcastIds(),
             $this->youtubeIds()
         )));
+        // Tag each work with its research section (item ← project ← section, via the
+        // childrenOf hierarchy) so the front end can offer a "colour by section"
+        // overlay. External partner collections sit outside that hierarchy, so route
+        // their item sets onto the synthetic "External" section by membership.
+        $itemSection = [];
+        foreach ($this->itemsWhere(fn ($i) => ($i['class_term'] ?? '') === 'frapo:ResearchGroup') as $sid => $sinfo) {
+            $name = $sinfo['title'] ?? '';
+            if ($name === '') {
+                continue;
+            }
+            foreach ($this->childrenOf[$sid] ?? [] as $pid) {
+                foreach ($this->childrenOf[$pid] ?? [] as $iid) {
+                    $itemSection[$iid] = $name;
+                }
+            }
+        }
+        foreach (self::EXTERNAL_COLLECTIONS as $setId => $meta) {
+            foreach ($this->itemSets[$setId] ?? [] as $iid) {
+                $itemSection[$iid] = $meta['section'];
+            }
+        }
         // Strong core, uncapped: keep the "share >=2 items" edge rule but lift the
         // node cap from 1200 so the full connected core shows.
-        $graph = Aggregators::buildEntityGraph($scanItems, $this->links, $this->items, $lcshIds, 2, 4000);
+        $graph = Aggregators::buildEntityGraph($scanItems, $this->links, $this->items, $lcshIds, 2, 4000, $itemSection);
         if ($graph) {
             if (!is_dir($this->communitiesDir)) {
                 mkdir($this->communitiesDir, 0775, true);
             }
             file_put_contents($this->communitiesDir . '/entity-graph.json', json_encode($graph, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-            $this->log('  ' . count($graph['nodes']) . ' entities, ' . count($graph['edges']) . ' links, ' . ($graph['meta']['communityCount'] ?? 0) . ' communities');
+            $this->log('  ' . count($graph['nodes']) . ' entities, ' . count($graph['edges']) . ' links, ' . ($graph['meta']['communityCount'] ?? 0) . ' communities, ' . ($graph['meta']['sectionCount'] ?? 0) . ' sections');
         }
     }
 

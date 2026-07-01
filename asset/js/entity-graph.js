@@ -22,9 +22,13 @@
  *
  * Data (compact row arrays, see EntityGraphTrait::buildEntityGraph):
  *   { types: ['Person','Organization','Location','Subject','Tag'],
- *     nodes: [[id, label, type, count, degree, community, lng, lat, rank], ...],
+ *     sections: ['Knowledges', 'Learning', ...],   // research-section overlay labels
+ *     nodes: [[id, label, type, count, degree, community, section, lng, lat, rank], ...],
  *     edges: [[sourceIndex, targetIndex, weight], ...],
- *     meta:  { weightMin, weightMax, communityCount, bounds:[w,s,e,n], ... } }
+ *     meta:  { weightMin, weightMax, communityCount, sectionCount, bounds:[w,s,e,n], ... } }
+ *
+ * `section` is the index of the entity's dominant research section into `sections`,
+ * or -2 for a cross-section bridge and -1 for an entity in no sectioned work.
  */
 (function () {
     'use strict';
@@ -97,14 +101,20 @@
         var meta = payload.meta || {};
         return {
             types: payload.types || [],
+            sections: payload.sections || [],
             weightMin: meta.weightMin || 2,
             weightMax: meta.weightMax || 2,
             communityCount: meta.communityCount || 0,
             bounds: meta.bounds || null,
             nodes: (payload.nodes || []).map(function (r) {
+                // v2.19+ inserts `section` after `community` (10 fields). Older
+                // precomputed files omit it (9 fields: …community, lng, lat, rank) —
+                // stay compatible until the next regeneration so positions never shift.
+                var s = r.length >= 10;
                 return {
                     id: r[0], label: r[1], type: r[2], count: r[3], degree: r[4],
-                    community: r[5], lng: r[6], lat: r[7], rank: r[8] != null ? r[8] : 0
+                    community: r[5], section: s ? r[6] : -1,
+                    lng: s ? r[7] : r[6], lat: s ? r[8] : r[7], rank: (s ? r[9] : r[8]) || 0
                 };
             }),
             edges: payload.edges || []
@@ -117,6 +127,7 @@
 
     function build(container, data, ctx) {
         var types = data.types;
+        var sections = data.sections || [];
         var siteBase = ctx.siteBase;
 
         container.innerHTML = '';
@@ -176,7 +187,7 @@
                     type: 'Feature',
                     geometry: { type: 'Point', coordinates: [n.lng, n.lat] },
                     properties: {
-                        i: i, type: n.type, comm: n.community,
+                        i: i, type: n.type, comm: n.community, sec: n.section,
                         r: MIN_RADIUS + (MAX_RADIUS - MIN_RADIUS) * Math.sqrt(n.degree / maxDegree),
                         label: n.label, rank: n.rank
                     }
@@ -212,7 +223,7 @@
         var enabledTypes = {};
         types.forEach(function (_t, i) { enabledTypes[i] = true; });
         var weightMin = data.weightMin;
-        var colorMode = 'type';        // 'type' | 'community'
+        var colorMode = 'type';        // 'type' | 'community' | 'section'
         var selectedIndex = null;
         var map = null;
         var fitted = false;
@@ -223,6 +234,11 @@
         /*  Paint expressions                                                  */
         /* ------------------------------------------------------------------ */
 
+        function sectionColor(i) {
+            var pal = colors();
+            return pal[i % pal.length];
+        }
+
         function nodeColorExpr() {
             var expr, pal, i;
             if (colorMode === 'community') {
@@ -232,6 +248,14 @@
                     expr.push(commIds[i], pal[commIds[i] % pal.length]);
                 }
                 expr.push(dimColor());           // default: unclustered (-1)
+                return expr;
+            }
+            if (colorMode === 'section' && sections.length) {
+                expr = ['match', ['get', 'sec']];
+                for (i = 0; i < sections.length; i++) {
+                    expr.push(i, sectionColor(i));
+                }
+                expr.push(dimColor());           // default: bridge (-2) / no section (-1)
                 return expr;
             }
             pal = colors();
@@ -260,6 +284,16 @@
             return out;
         }
         function allTypesOn() { return enabledList().length === types.length; }
+
+        // A facet is "active" whenever the view is narrowed from its default: a type
+        // switched off, the min-link raised, or an entity selected. Drives the
+        // enabled state of the Clear-filters button (colour mode is a lens, not a facet).
+        function filtersActive() {
+            return !allTypesOn() || weightMin > data.weightMin || selectedIndex != null;
+        }
+        function updateClearState() {
+            if (clearBtn) clearBtn.disabled = !filtersActive();
+        }
 
         function nodeFilter() {
             if (allTypesOn()) return null;
@@ -305,6 +339,7 @@
         }
 
         function applyFilters() {
+            updateClearState();
             if (!map || !map.getLayer(L_EDGES)) return;
             map.setFilter(L_EDGES, edgeFilter());
             map.setFilter(L_NODES, nodeFilter());
@@ -518,6 +553,17 @@
                 info.count + ' item' + (info.count === 1 ? '' : 's') + ' · '
                 + info.degree + ' connection' + (info.degree === 1 ? '' : 's')));
 
+            if (sections.length) {
+                var secLabel = info.section >= 0 ? sections[info.section]
+                    : (info.section === -2 ? 'Multiple sections' : null);
+                if (secLabel) {
+                    var secRow = el('div', 'deg-detail-stats');
+                    secRow.appendChild(el('span', 'deg-detail-section-label', 'Section: '));
+                    secRow.appendChild(el('span', null, secLabel));
+                    sidebar.appendChild(secRow);
+                }
+            }
+
             var nbrs = adjacency[index] || [];
             if (nbrs.length) {
                 sidebar.appendChild(el('div', 'deg-detail-subhead',
@@ -618,6 +664,7 @@
         toolbar.appendChild(chips);
 
         // Min-weight select ----------------------------------------------
+        var weightSelect = null;
         var steps = [data.weightMin, 3, 5, 10, 20].filter(function (v, idx) {
             return idx === 0 || (v > data.weightMin && v <= data.weightMax);
         });
@@ -635,25 +682,65 @@
             });
             wWrap.appendChild(sel);
             toolbar.appendChild(wWrap);
+            weightSelect = sel;
         }
+
+        // Clear filters --------------------------------------------------
+        // One click back to the default view: all types on, min-link at "All",
+        // search emptied and any selection dropped. Disabled while nothing is active.
+        var clearBtn = el('button', 'deg-btn deg-clear'); clearBtn.type = 'button';
+        clearBtn.textContent = 'Clear filters';
+        clearBtn.title = 'Reset the type, link-weight and selection filters';
+        clearBtn.disabled = true;
+        clearBtn.addEventListener('click', function () {
+            types.forEach(function (_t, i) { enabledTypes[i] = true; });
+            Array.prototype.forEach.call(chips.querySelectorAll('.deg-chip'), function (chip) {
+                chip.classList.add('deg-chip-on');
+                chip.setAttribute('aria-pressed', 'true');
+            });
+            weightMin = data.weightMin;
+            if (weightSelect) weightSelect.value = String(data.weightMin);
+            search.value = '';
+            results.hidden = true;
+            selectIndex(null); // resets selection + calls applyFilters() → updateClearState()
+        });
+        toolbar.appendChild(clearBtn);
 
         toolbar.appendChild(el('div', 'deg-spacer'));
 
-        // Colour-by toggle (type ⇄ community) ----------------------------
-        if (data.communityCount > 0) {
-            var clusterBtn = el('button', 'deg-btn'); clusterBtn.type = 'button';
-            clusterBtn.title = 'Colour by co-occurrence cluster instead of entity type';
-            clusterBtn.setAttribute('aria-pressed', 'false');
-            clusterBtn.textContent = 'Colour: type';
-            clusterBtn.addEventListener('click', function () {
-                colorMode = colorMode === 'type' ? 'community' : 'type';
-                clusterBtn.textContent = colorMode === 'type' ? 'Colour: type' : 'Colour: cluster';
-                clusterBtn.classList.toggle('is-on', colorMode === 'community');
-                clusterBtn.setAttribute('aria-pressed', String(colorMode === 'community'));
+        // Colour-by control (type / cluster / section) -------------------
+        var colorModes = [{ id: 'type', label: 'Type' }];
+        if (data.communityCount > 0) colorModes.push({ id: 'community', label: 'Cluster' });
+        if (sections.length) colorModes.push({ id: 'section', label: 'Section' });
+        if (colorModes.length > 1) {
+            var modeWrap = el('div', 'deg-colormode');
+            modeWrap.setAttribute('role', 'group');
+            modeWrap.setAttribute('aria-label', 'Colour nodes by');
+            modeWrap.appendChild(el('span', 'deg-colormode-label', 'Colour'));
+            var modeBtns = {};
+            var setMode = function (id) {
+                if (colorMode === id) return;
+                colorMode = id;
+                Object.keys(modeBtns).forEach(function (k) {
+                    var on = k === id;
+                    modeBtns[k].classList.toggle('is-on', on);
+                    modeBtns[k].setAttribute('aria-pressed', String(on));
+                });
                 if (map && map.getLayer(L_NODES)) map.setPaintProperty(L_NODES, 'circle-color', nodeColorExpr());
                 rebuildLegend();
+                if (selectedIndex != null) showDetail(selectedIndex);
+            };
+            colorModes.forEach(function (m) {
+                var b = el('button', 'deg-btn deg-mode-btn'); b.type = 'button';
+                b.textContent = m.label;
+                b.title = 'Colour nodes by ' + m.label.toLowerCase();
+                b.classList.toggle('is-on', colorMode === m.id);
+                b.setAttribute('aria-pressed', String(colorMode === m.id));
+                b.addEventListener('click', function () { setMode(m.id); });
+                modeBtns[m.id] = b;
+                modeWrap.appendChild(b);
             });
-            toolbar.appendChild(clusterBtn);
+            toolbar.appendChild(modeWrap);
         }
 
         // Reset view ------------------------------------------------------
@@ -679,6 +766,28 @@
             if (colorMode === 'community') {
                 legend.appendChild(el('span', 'deg-legend-note',
                     'Node colour = co-occurrence cluster · grey = unclustered'));
+                return;
+            }
+            if (colorMode === 'section') {
+                sections.forEach(function (label, i) {
+                    if (!data.nodes.some(function (n) { return n.section === i; })) return;
+                    var row = el('span', 'deg-legend-item');
+                    var sw = el('span', 'deg-swatch'); sw.style.background = sectionColor(i);
+                    row.appendChild(sw);
+                    row.appendChild(el('span', null, label));
+                    legend.appendChild(row);
+                });
+                var hasBridge = data.nodes.some(function (n) { return n.section === -2; });
+                var hasNone = data.nodes.some(function (n) { return n.section === -1; });
+                if (hasBridge || hasNone) {
+                    var grow = el('span', 'deg-legend-item');
+                    var gsw = el('span', 'deg-swatch'); gsw.style.background = dimColor();
+                    grow.appendChild(gsw);
+                    grow.appendChild(el('span', null,
+                        hasBridge && hasNone ? 'Multiple / no section'
+                            : (hasBridge ? 'Multiple sections' : 'No section')));
+                    legend.appendChild(grow);
+                }
                 return;
             }
             types.forEach(function (label, i) {
