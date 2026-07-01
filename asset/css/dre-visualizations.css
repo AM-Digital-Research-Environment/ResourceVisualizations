@@ -1860,7 +1860,7 @@ button.rv-toolbar-btn:focus-visible,
     min-height: 200px;
 }
 
-/* `hidden` alone loses to the timeline's display:flex — force it off. */
+/* `hidden` alone loses to a view's own display (e.g. masonry's flex) — force it off. */
 .photo-browse-stage .photo-view[hidden] {
     display: none !important;
 }
@@ -2002,42 +2002,106 @@ button.rv-toolbar-btn:focus-visible,
     border: 1px solid var(--rv-border);
 }
 
-/* --- Timeline (horizontal strip grouped by year) --- */
-.photo-timeline {
-    display: flex;
-    gap: 18px;
-    align-items: flex-start;
-    overflow-x: auto;
-    padding-bottom: 12px;
-}
-
-.photo-timeline-group {
-    flex: 0 0 auto;
-}
-
-.photo-timeline-year {
-    font-weight: 700;
-    color: var(--rv-heading-color);
-    margin-bottom: 8px;
-    padding-bottom: 4px;
-    border-bottom: 2px solid var(--rv-accent);
-}
-
-.photo-timeline-items {
+/* --- Timeline (chronological grid that fills the width, grouped by year) ---
+   A responsive auto-fill grid, NOT a thin horizontal strip: a collection with
+   few years (or a single year) fills the row instead of leaving it mostly
+   blank. The year is a tick above the first cell of each year; a single-year
+   collection shows one header (.is-single-year) instead of repeating it. */
+.photo-timeline-grid {
     display: grid;
-    grid-template-columns: repeat(2, 110px);
+    grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
+    gap: 18px 14px;
+    align-items: start;
+}
+
+/* Single-year header: one dated marker above a plain grid (no per-cell ticks). */
+.photo-timeline-solo {
+    display: inline-flex;
+    align-items: center;
     gap: 8px;
+    margin: 0 0 18px;
+    padding-bottom: 6px;
+    font-weight: 700;
+    font-size: var(--rv-text-sm);
+    color: var(--rv-heading-color);
+    border-bottom: 2px solid var(--rv-accent);
+    font-variant-numeric: tabular-nums;
+}
+.photo-timeline-solo::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--rv-accent);
+    flex: none;
 }
 
-.photo-timeline-items .photo-card {
+.photo-timeline-cell {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* Year tick above the first cell of each year. Continuation cells keep an empty
+   head of the same height so the covers stay aligned across the row. */
+.photo-timeline-head {
+    height: 22px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+.photo-timeline-head.is-year::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--rv-accent);
+    flex: none;
+}
+.photo-timeline-y {
+    font-weight: 700;
+    font-size: var(--rv-text-xs);
+    color: var(--rv-heading-color);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Square cover thumbnail (reuses .photo-card-frame from makeFrame). */
+.photo-timeline-thumb {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
     margin: 0;
+    padding: 0;
+    border: 1px solid var(--rv-border);
+    border-radius: var(--rv-radius-sm);
+    overflow: hidden;
+    background: var(--rv-bg-sunken);
+    cursor: pointer;
+    transition: transform var(--rv-transition-base), box-shadow var(--rv-transition-base), border-color var(--rv-transition-base);
+}
+.photo-timeline-thumb:hover,
+.photo-timeline-thumb:focus-visible {
+    transform: translateY(var(--rv-lift-xs));
+    border-color: var(--rv-accent);
+    box-shadow: var(--rv-shadow);
+    outline: none;
+}
+.photo-timeline-thumb .photo-card-frame {
+    height: 100%;
+    border-radius: 0;
+    background: transparent;
 }
 
-/* Compact (timeline) cards are image-only: fix the frame to a square thumb. */
-.photo-card.is-compact .photo-card-frame {
-    width: 110px;
-    height: 110px;
-    aspect-ratio: auto;
+/* Caption under the cover (issue collections: "Vol. N No. M"). */
+.photo-timeline-cap {
+    margin-top: 5px;
+    font-size: var(--rv-text-2xs);
+    line-height: 1.3;
+    color: var(--rv-text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* --- Lightbox --- */

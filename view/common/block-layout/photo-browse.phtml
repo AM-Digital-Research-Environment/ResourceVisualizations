@@ -246,7 +246,7 @@ if (empty($photos)) {
 
 // Which browsers are meaningful for this set, intersected with what the
 // collection allows (a registry entry can disable map / timeline; issue
-// grouping is masonry-only).
+// grouping keeps masonry + timeline but drops the map).
 $allow = $allowedViews ?? ['masonry' => true, 'map' => true, 'timeline' => true];
 $geoCount = 0;
 $datedCount = 0;
@@ -265,7 +265,8 @@ if (!empty($allow['masonry'])) {
 if (!empty($allow['map']) && $geoCount > 0 && !$issueMode) {
     $views[] = 'map';
 }
-if (!empty($allow['timeline']) && $datedCount > 0 && !$issueMode) {
+// Timeline applies to issue collections too (a chronological grid of issues).
+if (!empty($allow['timeline']) && $datedCount > 0) {
     $views[] = 'timeline';
 }
 if (!$views) {

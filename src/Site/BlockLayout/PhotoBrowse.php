@@ -89,7 +89,7 @@ class PhotoBrowse extends AbstractBlockLayout
                 $view->formText($heading))
             . $this->field($view,
                 $view->translate('Default view'),
-                $view->translate('Which browser opens first. Map and Timeline are hidden automatically when they do not apply (no coordinates / dates, or a journal-issue collection).'),
+                $view->translate('Which browser opens first. Timeline needs dated items; Map needs coordinates (and is off for journal-issue collections). Each is hidden automatically when it does not apply.'),
                 $view->formSelect($defaultView));
     }
 
@@ -127,11 +127,18 @@ class PhotoBrowse extends AbstractBlockLayout
         // gallery does not repeat it (it shows the partner credit + counts).
         $heading = (string) $block->dataValue('heading', '');
 
-        // Allowed views: the registry can opt a collection out of map/timeline;
-        // issue grouping is masonry-only (each card is a journal issue).
+        // Allowed views: the registry can opt a collection out of map/timeline.
         $allowedViews = $entry ? $entry['views'] : ['masonry' => true, 'map' => true, 'timeline' => true];
         if ($grouping === 'issue') {
-            $allowedViews = ['masonry' => true, 'map' => false, 'timeline' => false];
+            // Issue collections (ILAM) keep the masonry issue grid as the default
+            // and gain a chronological timeline of issues (each cover placed by
+            // its year, click opens the table of contents). Map stays off — a
+            // journal has a single host location.
+            $allowedViews = [
+                'masonry'  => true,
+                'map'      => false,
+                'timeline' => $allowedViews['timeline'] ?? true,
+            ];
         }
 
         $defaultView = $block->dataValue('default_view', 'masonry');

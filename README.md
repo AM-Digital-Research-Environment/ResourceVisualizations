@@ -186,9 +186,9 @@ Image-first browsing for an image-heavy item set, as a **site-page block** (Admi
 
 - **Grid** — a responsive masonry of lazy-loaded thumbnails;
 - **Map** — a clustered MapLibre map of the geolocated photos, loaded on demand so the default Grid view ships zero map weight. Coordinates are resolved by following each photo's `dcterms:spatial` link to a Location item (`geo:lat` / `geo:long`) — the photos themselves rarely carry coordinates;
-- **Timeline** — a horizontal strip grouped by year.
+- **Timeline** — a chronological grid that fills the row width, with a year tick above the first cover of each year (a single-year collection shows one year header instead of repeating it). For a journal-issue collection (ILAM) the units are **issues** placed by year, each opening its table of contents; otherwise they are the photos, each opening the lightbox.
 
-The gallery is **precomputed** per item set (like every other dataset — see [Pre-computing Data](#pre-computing-data)), and only for sets that have at least one image-bearing item. Until the first "Regenerate", the block falls back to resolving the gallery live through the Omeka API, so it still works the moment it is added. The Map and Timeline tabs appear only when the set actually has coordinates / dates, and the default tab is configurable.
+The gallery is **precomputed** per item set (like every other dataset — see [Pre-computing Data](#pre-computing-data)), and only for sets that have at least one image-bearing item. Until the first "Regenerate", the block falls back to resolving the gallery live through the Omeka API, so it still works the moment it is added. The Timeline tab appears when the set has dated items and the Map tab when it has coordinates (Map is off for journal-issue collections); the default tab is configurable.
 
 ### Item Set Dashboard
 

@@ -113,7 +113,7 @@
                 if (name === 'map') {
                     buildMap(views[name], photos, lightbox, mlCss, mlJs, stage);
                 } else if (name === 'timeline') {
-                    views[name].el = buildTimeline(photos, lightbox);
+                    views[name].el = buildTimeline(photos, lightbox, grouping, toc);
                     views[name].built = true;
                 } else {
                     views[name].el = buildMasonry(photos, lightbox, grouping, toc, stage);
@@ -167,7 +167,7 @@
         if (grouping === 'issue') {
             cards = buildIssueCards(photos, toc);
         } else {
-            cards = photos.map(function (p, i) { return makeCard(p, i, lightbox, false); });
+            cards = photos.map(function (p, i) { return makeCard(p, i, lightbox); });
         }
 
         var currentCols = 0;
@@ -199,38 +199,33 @@
         return view;
     }
 
-    /**
-     * A clickable carded tile. `compact` (timeline) drops the body so the strip
-     * stays a thin row of thumbnails.
-     */
-    function makeCard(p, index, lightbox, compact) {
+    /** A clickable carded tile (cover + title + date/place chips) for masonry. */
+    function makeCard(p, index, lightbox) {
         var card = document.createElement('button');
         card.type = 'button';
-        card.className = 'photo-card' + (compact ? ' is-compact' : '');
+        card.className = 'photo-card';
         card.title = p.title || '';
 
-        card.appendChild(makeFrame(p, !compact));
+        card.appendChild(makeFrame(p, true));
 
-        if (!compact) {
-            var body = document.createElement('div');
-            body.className = 'photo-card-body';
+        var body = document.createElement('div');
+        body.className = 'photo-card-body';
 
-            var title = document.createElement('h3');
-            title.className = 'photo-card-title';
-            title.textContent = p.title || '';
-            body.appendChild(title);
+        var title = document.createElement('h3');
+        title.className = 'photo-card-title';
+        title.textContent = p.title || '';
+        body.appendChild(title);
 
-            var chips = [];
-            if (p.year) chips.push(chip(ICON.calendar, p.year));
-            if (p.place) chips.push(chip(ICON.pin, p.place));
-            if (chips.length) {
-                var meta = document.createElement('div');
-                meta.className = 'photo-card-meta';
-                chips.forEach(function (c) { meta.appendChild(c); });
-                body.appendChild(meta);
-            }
-            card.appendChild(body);
+        var chips = [];
+        if (p.year) chips.push(chip(ICON.calendar, p.year));
+        if (p.place) chips.push(chip(ICON.pin, p.place));
+        if (chips.length) {
+            var meta = document.createElement('div');
+            meta.className = 'photo-card-meta';
+            chips.forEach(function (c) { meta.appendChild(c); });
+            body.appendChild(meta);
         }
+        card.appendChild(body);
 
         card.addEventListener('click', function () { lightbox.open(index); });
         if (ns.revealOnScroll) ns.revealOnScroll(card, { delay: (index % 8) * 25 });
@@ -277,8 +272,13 @@
     /*  Issue grouping (journal collections, e.g. ILAM)                    */
     /* ------------------------------------------------------------------ */
 
-    /** Group photos by volume.issue, in reading order, into card nodes. */
-    function buildIssueCards(photos, toc) {
+    /**
+     * Group photos by volume.issue into labelled issue groups (in first-seen
+     * order). Shared by the masonry issue cards and the timeline so the two never
+     * disagree on an issue's membership, year or label. Each group carries a
+     * `.label` of "Vol. N No. M (year)" (the TOC modal title).
+     */
+    function collectIssues(photos) {
         var groups = {};
         var order = [];
         photos.forEach(function (p) {
@@ -292,16 +292,19 @@
             g.items.push(p);
             if (g.year == null && p.year != null) g.year = p.year;
         });
-
-        order.sort(function (a, b) {
-            return groups[a].volume - groups[b].volume || groups[a].issue - groups[b].issue;
-        });
-
-        return order.map(function (key, i) {
+        return order.map(function (key) {
             var g = groups[key];
             g.label = 'Vol. ' + g.volume + ' No. ' + g.issue + (g.year ? ' (' + g.year + ')' : '');
-            return makeIssueCard(g, i, toc);
+            return g;
         });
+    }
+
+    /** Group photos by volume.issue, in reading order, into card nodes. */
+    function buildIssueCards(photos, toc) {
+        var groups = collectIssues(photos).sort(function (a, b) {
+            return a.volume - b.volume || a.issue - b.issue;
+        });
+        return groups.map(function (g, i) { return makeIssueCard(g, i, toc); });
     }
 
     function makeIssueCard(group, index, toc) {
@@ -443,40 +446,115 @@
     }
 
     /* ------------------------------------------------------------------ */
-    /*  Timeline view (horizontal strip grouped by year)                   */
+    /*  Timeline view (chronological grid that fills the width)            */
     /* ------------------------------------------------------------------ */
 
-    function buildTimeline(photos, lightbox) {
+    /** Sort key that pushes undated units to the end. */
+    function yearKey(y) { return y == null ? Number.POSITIVE_INFINITY : y; }
+
+    /**
+     * A chronological grid that FILLS the container width (responsive auto-fill
+     * columns) rather than a thin horizontal strip — so a collection with few
+     * years no longer leaves most of the row blank. Each unit is a photo, or —
+     * for an issue-grouped collection (ILAM) — one journal issue (its cover +
+     * "Vol. N No. M", click opens the issue's table of contents).
+     *
+     * The year is shown as a tick above the first cell of each year; a collection
+     * confined to a single year shows ONE year header instead (no per-cell ticks),
+     * so nothing is repeated.
+     */
+    function buildTimeline(photos, lightbox, grouping, toc) {
         var view = document.createElement('div');
         view.className = 'photo-view photo-timeline';
 
-        var byYear = {};
-        photos.forEach(function (p, i) {
-            var key = p.year != null ? String(p.year) : '__undated__';
-            (byYear[key] = byYear[key] || []).push(i);
-        });
-        var years = Object.keys(byYear)
-            .filter(function (k) { return k !== '__undated__'; })
-            .sort(function (a, b) { return Number(a) - Number(b); });
-        if (byYear.__undated__) years.push('__undated__');
-
-        years.forEach(function (key) {
-            var group = document.createElement('div');
-            group.className = 'photo-timeline-group';
-
-            var header = document.createElement('div');
-            header.className = 'photo-timeline-year';
-            header.textContent = key === '__undated__' ? 'Undated' : key;
-            group.appendChild(header);
-
-            var items = document.createElement('div');
-            items.className = 'photo-timeline-items';
-            byYear[key].forEach(function (i) {
-                items.appendChild(makeCard(photos[i], i, lightbox, true));
+        // Units to place on the timeline: issues for an issue collection, else the
+        // photos themselves. Each keeps a year, a representative image (`rep`), an
+        // optional caption, and what to open on click.
+        var units;
+        if (grouping === 'issue') {
+            units = collectIssues(photos).map(function (g) {
+                return {
+                    year: g.year,
+                    rep: g.items[0] || {},
+                    caption: 'Vol. ' + g.volume + ' No. ' + g.issue,
+                    title: g.label,
+                    onOpen: function () { if (toc) toc.open(g); }
+                };
             });
-            group.appendChild(items);
-            view.appendChild(group);
+        } else {
+            units = photos.map(function (p, i) {
+                return {
+                    year: p.year,
+                    rep: p,
+                    caption: null,
+                    title: p.title || '',
+                    onOpen: function () { lightbox.open(i); }
+                };
+            });
+        }
+        units.sort(function (a, b) { return yearKey(a.year) - yearKey(b.year); });
+
+        // One distinct year (the common case: a collection all from the same year)
+        // reads better as a single header above a plain grid than as a tick
+        // repeated over every cell.
+        var distinctYears = {};
+        units.forEach(function (u) { if (u.year != null) distinctYears[u.year] = true; });
+        var singleYear = Object.keys(distinctYears).length <= 1;
+
+        if (singleYear) {
+            view.classList.add('is-single-year');
+            var soloYear = null;
+            units.some(function (u) { if (u.year != null) { soloYear = u.year; return true; } });
+            var solo = document.createElement('div');
+            solo.className = 'photo-timeline-solo';
+            solo.textContent = soloYear != null ? String(soloYear) : 'Undated';
+            view.appendChild(solo);
+        }
+
+        var grid = document.createElement('div');
+        grid.className = 'photo-timeline-grid';
+        var prevYear = null;
+        units.forEach(function (u) {
+            var cell = document.createElement('div');
+            cell.className = 'photo-timeline-cell';
+
+            // Year tick above the first cell of each year; continuation cells keep
+            // an empty head of the same height so the covers stay row-aligned.
+            if (!singleYear) {
+                var head = document.createElement('div');
+                head.className = 'photo-timeline-head';
+                if (u.year !== prevYear) {
+                    head.classList.add('is-year');
+                    var y = document.createElement('span');
+                    y.className = 'photo-timeline-y';
+                    y.textContent = u.year != null ? String(u.year) : 'Undated';
+                    head.appendChild(y);
+                }
+                prevYear = u.year;
+                cell.appendChild(head);
+            }
+
+            var thumb = document.createElement('button');
+            thumb.type = 'button';
+            thumb.className = 'photo-timeline-thumb';
+            thumb.title = u.title;
+            thumb.appendChild(makeFrame(u.rep, false));
+            thumb.addEventListener('click', u.onOpen);
+            cell.appendChild(thumb);
+
+            if (u.caption) {
+                var cap = document.createElement('div');
+                cap.className = 'photo-timeline-cap';
+                cap.textContent = u.caption;
+                cell.appendChild(cap);
+            }
+
+            // No reveal-on-scroll here: a dense grid of small thumbnails reads
+            // better appearing at once (the covers still fade in as they load)
+            // than as a staggered wave that looks scattered while scrolling.
+            grid.appendChild(cell);
         });
+        view.appendChild(grid);
         return view;
     }
 
