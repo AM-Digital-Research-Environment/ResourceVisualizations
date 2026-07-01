@@ -165,10 +165,23 @@
             minStrength: 0,
             maxNodes: data.nodes.length,
         };
+        // Snapshot of the unfiltered defaults, so "Reset" can restore them and the
+        // reset button can grey out while the graph is still at its full extent.
+        var defaults = {
+            maxCommonality: state.maxCommonality,
+            minStrength: state.minStrength,
+            maxNodes: state.maxNodes,
+        };
         var callbacks = [];
 
+        function filtersActive() {
+            return state.maxCommonality !== defaults.maxCommonality
+                || state.minStrength !== defaults.minStrength
+                || state.maxNodes !== defaults.maxNodes;
+        }
         function fireChange() {
             for (var i = 0; i < callbacks.length; i++) callbacks[i](state);
+            if (resetBtn) resetBtn.disabled = !filtersActive();
         }
 
         // ── Max commonality slider ──
@@ -205,6 +218,27 @@
             panel.appendChild(s3.el);
             s3.onInput(function (v) { state.maxNodes = v; fireChange(); });
         }
+
+        // ── Reset ──
+        // One click back to the unfiltered graph. Disabled until a slider moves.
+        var actions = document.createElement('div');
+        actions.className = 'rv-kg-filters-actions';
+        var resetBtn = document.createElement('button');
+        resetBtn.type = 'button';
+        resetBtn.className = 'rv-kg-filters-reset';
+        resetBtn.textContent = 'Reset filters';
+        resetBtn.disabled = true;
+        resetBtn.addEventListener('click', function () {
+            state.maxCommonality = defaults.maxCommonality;
+            state.minStrength = defaults.minStrength;
+            state.maxNodes = defaults.maxNodes;
+            s1.reset();
+            if (s2) s2.reset();
+            if (s3) s3.reset();
+            fireChange();
+        });
+        actions.appendChild(resetBtn);
+        panel.appendChild(actions);
 
         return {
             el: wrap,
@@ -260,7 +294,14 @@
             for (var i = 0; i < cbs.length; i++) cbs[i](v);
         });
 
-        return { el: row, onInput: function (cb) { cbs.push(cb); } };
+        // Restore the slider to its initial value + label, without firing callbacks
+        // (the caller batches a single re-render after resetting every slider).
+        function reset() {
+            input.value = value;
+            val.textContent = value + suffix;
+        }
+
+        return { el: row, onInput: function (cb) { cbs.push(cb); }, reset: reset };
     }
 
     /* ------------------------------------------------------------------ */
