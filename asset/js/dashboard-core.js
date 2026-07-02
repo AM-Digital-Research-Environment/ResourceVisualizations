@@ -134,43 +134,59 @@
     /* ------------------------------------------------------------------ */
 
     /**
-     * Inject the heavy chart/map libraries (ECharts + the word-cloud plugin, and
-     * MapLibre with its CSS) on demand, returning a cached Promise that resolves
-     * once they are ready. The orchestrator calls this just before it renders a
-     * dashboard that has scrolled into view, so a page that never reaches its
-     * (below-the-fold) dashboard pays nothing for ~650 KiB of JS or the chart
-     * render work.
+     * Inject the heavy chart/map libraries on demand, returning a Promise that
+     * resolves once the requested libraries are ready. Calls cache per library,
+     * so a map-only block can load MapLibre without preventing a later dashboard
+     * from loading ECharts.
      *
      * URLs come from window.RV_LIBS (emitted by the DashboardAssets helper on the
-     * lazy surfaces). When the libraries were instead loaded eagerly — the
-     * dedicated dashboard pages, or item pages via Module.php — `echarts` is
-     * already defined and this resolves immediately, so behaviour is unchanged.
+     * lazy surfaces). When a library was loaded eagerly, its global is already
+     * defined and that part resolves immediately.
      */
-    ns.ensureLibs = function () {
-        if (ns._libsPromise) return ns._libsPromise;
-        if (typeof echarts !== 'undefined') {
-            ns._libsPromise = Promise.resolve();
-            return ns._libsPromise;
-        }
+    ns.ensureLibs = function (required) {
+        required = required || { echarts: true, wordcloud: true, maplibre: true };
+        if (required.wordcloud) required.echarts = true;
+
+        ns._libPromises = ns._libPromises || {};
         var cfg = window.RV_LIBS || {};
         var head = document.head || document.getElementsByTagName('head')[0];
 
-        function loadScript(src) {
-            return new Promise(function (resolve, reject) {
-                if (!src) { resolve(); return; }
+        function loadScript(key, src, isReady) {
+            if (isReady && isReady()) return Promise.resolve();
+            if (ns._libPromises[key]) return ns._libPromises[key];
+            ns._libPromises[key] = new Promise(function (resolve, reject) {
+                if (!src) {
+                    resolve();
+                    return;
+                }
                 var existing = head.querySelector('script[src="' + src + '"]');
                 if (existing) {
-                    if (existing.dataset.rvLoaded) { resolve(); return; }
-                    existing.addEventListener('load', function () { resolve(); });
+                    if (existing.dataset.rvLoaded || (isReady && isReady())
+                        || (document.readyState !== 'loading' && !existing.dataset.rvLoading)) {
+                        existing.dataset.rvLoaded = '1';
+                        resolve();
+                        return;
+                    }
+                    existing.addEventListener('load', function () {
+                        existing.dataset.rvLoaded = '1';
+                        delete existing.dataset.rvLoading;
+                        resolve();
+                    });
                     existing.addEventListener('error', reject);
                     return;
                 }
                 var s = document.createElement('script');
                 s.src = src;
-                s.onload = function () { s.dataset.rvLoaded = '1'; resolve(); };
+                s.dataset.rvLoading = '1';
+                s.onload = function () {
+                    s.dataset.rvLoaded = '1';
+                    delete s.dataset.rvLoading;
+                    resolve();
+                };
                 s.onerror = reject;
                 head.appendChild(s);
             });
+            return ns._libPromises[key];
         }
 
         function loadStyle(href) {
@@ -181,12 +197,26 @@
             head.appendChild(l);
         }
 
-        loadStyle(cfg.maplibreCss);
-        // ECharts first (the word-cloud plugin extends it); MapLibre in parallel.
-        ns._libsPromise = loadScript(cfg.echarts).then(function () {
-            return Promise.all([loadScript(cfg.wordcloud), loadScript(cfg.maplibre)]);
-        });
-        return ns._libsPromise;
+        var work = [];
+        var echartsReady = function () { return typeof window.echarts !== 'undefined'; };
+        var maplibreReady = function () { return typeof window.maplibregl !== 'undefined'; };
+
+        if (required.maplibre) {
+            loadStyle(cfg.maplibreCss);
+            work.push(loadScript('maplibre', cfg.maplibre, maplibreReady));
+        }
+        if (required.echarts) {
+            var echartsPromise = loadScript('echarts', cfg.echarts, echartsReady);
+            work.push(echartsPromise);
+            if (required.wordcloud) {
+                work.push(echartsPromise.then(function () {
+                    return loadScript('wordcloud', cfg.wordcloud, function () { return !!ns._wordcloudLoaded; })
+                        .then(function () { ns._wordcloudLoaded = true; });
+                }));
+            }
+        }
+
+        return Promise.all(work);
     };
 
     /* ------------------------------------------------------------------ */
@@ -562,6 +592,21 @@
         return Object.keys(data).map(function (k) { return { name: k, value: data[k] }; });
     };
 
+    /** Escape plain text before inserting it through innerHTML. */
+    ns.escapeHtml = function (value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+            return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+        });
+    };
+
+    /** Create a DOM element with optional class and text content. */
+    ns.el = function (tag, className, text) {
+        var node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined && text !== null) node.textContent = text;
+        return node;
+    };
+
     /** Add click-to-navigate and pointer cursor on chart elements. */
     ns.addClickHandler = function (chart, entries, siteBase) {
         if (!siteBase) return;
@@ -770,7 +815,7 @@
         btn.type = 'button';
         btn.className = 'rv-toolbar-btn rv-embed-btn' + (labelTxt ? ' rv-embed-btn--labeled' : '');
         if (labelTxt) btn.dataset.embedLabel = labelTxt;
-        var baseHtml = EMBED_ICON + (labelTxt ? '<span>' + labelTxt + '</span>' : '');
+        var baseHtml = EMBED_ICON + (labelTxt ? '<span>' + ns.escapeHtml(labelTxt) + '</span>' : '');
         btn.innerHTML = baseHtml;
         btn.title = 'Copy embed code';
         btn.setAttribute('aria-label', 'Copy embed code');

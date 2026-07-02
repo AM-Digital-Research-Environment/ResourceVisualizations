@@ -120,10 +120,8 @@ class DashboardAssets extends AbstractHelper
         // chart-builder chain. Hand the front end the MapLibre URL and load it on
         // demand through ns.ensureLibs (dashboard-core.js) — the SAME lazy loader
         // the dashboards use — so a page carrying BOTH a dashboard and this graph
-        // loads MapLibre exactly once. (An eager <script> here would otherwise hang
-        // the dashboard's ensureLibs, which waits on a load event that already
-        // fired.) Object.assign-merge into RV_LIBS so neither block's entry shadows
-        // the other's, regardless of block order on the page.
+        // loads MapLibre exactly once. Object.assign-merge into RV_LIBS so neither
+        // block's entry shadows the other's, regardless of block order on the page.
         if (!empty($options['graph'])) {
             $headLink->appendStylesheet($asset('css/dre-visualizations.css'));
             $headScript->appendScript('window.RV_LIBS=Object.assign(' . json_encode([

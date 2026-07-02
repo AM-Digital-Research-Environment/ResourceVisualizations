@@ -849,7 +849,7 @@
         // Load MapLibre on demand through the shared loader (dashboard-core.js) —
         // the same path the dashboards use — so a page with both a dashboard and
         // this graph loads MapLibre exactly once. Fetch the data in parallel.
-        var libs = (typeof ns.ensureLibs === 'function') ? ns.ensureLibs() : Promise.resolve();
+        var libs = (typeof ns.ensureLibs === 'function') ? ns.ensureLibs({ maplibre: true }) : Promise.resolve();
         Promise.all([
             fetch(url, { cache: 'no-cache' }).then(function (r) {
                 if (!r.ok) throw new Error('not found');

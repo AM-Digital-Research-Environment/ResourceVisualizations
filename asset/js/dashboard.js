@@ -20,6 +20,11 @@
 
     var ns = window.RV;
     if (!ns) return;
+    var escapeHtml = ns.escapeHtml || function (value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+            return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+        });
+    };
 
     /* ------------------------------------------------------------------ */
     /*  Render dashboard                                                   */
@@ -67,7 +72,7 @@
         // pins its own via `data-title` — the curated "Collection Overview"
         // names itself "Collection overview" so its heading matches the block.
         var headTitle = (container && container.dataset && container.dataset.title) || 'Visualisations';
-        var headInner = '<h2>' + headTitle + '</h2>';
+        var headInner = '<h2>' + escapeHtml(headTitle) + '</h2>';
 
         var chartsHtml = '<div class="dashboard-charts' + (chartOnly ? ' dashboard-charts--single' : '') + '">';
         chartKeys.forEach(function (key) {
@@ -91,8 +96,8 @@
                 ? descOverrides[key]
                 : ((ns.CHART_DESCRIPTIONS && ns.CHART_DESCRIPTIONS[key]) || '');
             chartsHtml += '<div class="chart-panel' + wide + '">'
-                + '<h3>' + label + '</h3>'
-                + (desc ? '<p class="chart-description">' + desc + '</p>' : '')
+                + '<h3>' + escapeHtml(label) + '</h3>'
+                + (desc ? '<p class="chart-description">' + escapeHtml(desc) + '</p>' : '')
                 + '<div class="chart-container' + tall + '" data-chart="' + key + '"></div>'
                 + '</div>';
         });
