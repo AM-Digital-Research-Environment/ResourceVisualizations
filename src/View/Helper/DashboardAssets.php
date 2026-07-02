@@ -9,14 +9,14 @@ use Laminas\View\Helper\AbstractHelper;
  * Single source of truth for the chart-builder <script> chain, so registering
  * a new chart touches exactly one place (see {@see self::CHART_SCRIPTS}) instead
  * of every dashboard template. Used by every dashboard surface:
- *   - item / item-set resource-page blocks (CDN + core already injected by
- *     Module.php, so they call it without `cdn`);
+ *   - item / item-set resource-page blocks (library URLs + core already
+ *     injected by Module.php, so they call it without `cdn`);
  *   - site-page block layouts — Collection Overview, Compare, and the
- *     cross-cutting blocks — which pass `['cdn' => true]` because Module.php
- *     does not run on page controllers.
+ *     cross-cutting blocks — which pass `['cdn' => true]` for the legacy option
+ *     name because Module.php does not run on page controllers.
  *
  * Laminas's headScript()/headLink() de-duplicate by src, so it is safe for
- * several blocks on one page to each request the CDN prelude.
+ * several blocks on one page to each request the library prelude.
  */
 class DashboardAssets extends AbstractHelper
 {
@@ -86,8 +86,9 @@ class DashboardAssets extends AbstractHelper
 
     /**
      * @param array $options {
-     *     @var bool   $cdn        Inject the CSS + CDN libraries + dashboard-core.js
-     *                             prelude. Use on site-page blocks. Default false.
+     *     @var bool   $cdn        Inject the CSS + vendored library URLs/eager
+     *                             scripts + dashboard-core.js prelude. Legacy
+     *                             option name; use on site-page blocks. Default false.
      *     @var string $controller Controller chain to append after the builders:
      *                             'dashboard' (default), 'compare', or '' / null
      *                             for none (e.g. a block with its own controller).

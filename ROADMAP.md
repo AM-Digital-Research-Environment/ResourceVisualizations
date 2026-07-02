@@ -188,7 +188,7 @@ The module styles itself entirely from the [DRE theme](https://github.com/AM-Dig
 
 ### Other invariants
 
-- **No bundling.** ECharts 6, echarts-wordcloud 2, and MapLibre GL 5 stay CDN-loaded (via `DashboardAssets`).
+- **No build step.** ECharts 6, echarts-wordcloud 2, and MapLibre GL 5 stay self-hosted from committed `asset/vendor/` bundles (via `DashboardAssets`).
 - **Reuse `window.RV`** (`THEME`, `COLORS`, `initChart`, `truncateLabel`, `toEntries`, `addClickHandler`, `attachToolbar`, `trackMap`, `getBasemapStyle`, `cssColor`). No new globals.
 - **Overlays over panels.** When a new signal belongs on an existing chart, write it as an extra key the existing builder reads from its 4th `data` argument (the `geoFlows`-on-`locations` pattern) rather than a new panel.
 - **Empty = hidden.** Aggregators return `null` and the orchestrator silently drops empty panels — so adding a key to a layout is safe even if only some entities populate it.

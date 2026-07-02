@@ -277,7 +277,7 @@ Then click **"Regenerate now"** to rebuild the precomputed data.
 
 ```
 DreVisualizations/
-├── Module.php                          # Asset injection (ECharts, MapLibre CDN)
+├── Module.php                          # Asset injection (self-hosted ECharts / MapLibre)
 ├── config/
 │   ├── module.ini                      # Module metadata
 │   └── module.config.php               # Resource page block registration
@@ -358,6 +358,7 @@ DreVisualizations/
 │   │   └── OverviewChartsTrait.php     # radar, stat cards, sections/section×university, cluster map
 │   ├── KnowledgeGraphs.php             # Per-item knowledge-graph builder (IDF-ranked)
 │   ├── ForceLayout.php                 # Pure-PHP ForceAtlas2 — bakes entity-network positions
+│   ├── JsonArtifactWriter.php          # Consistent, temp-file-backed JSON artifact writes
 │   └── Runner.php                      # Entities, overviews, publications, knowledge graphs
 ├── ROADMAP.md                          # Full visualization roadmap
 └── README.md
@@ -374,6 +375,23 @@ run by the background job `src/Job/PrecomputeDashboards.php` via the admin
 `src/Controller/Admin/MaintenanceController.php`. The `Aggregators` are dependency-free
 and unit-testable; the job reuses Omeka's `Omeka\Connection`, so no MySQL variables or
 Python are needed at runtime.
+
+## Local checks
+
+The module ships plain PHP, CSS and JavaScript with no bundler. Before committing
+front-end or styling changes, run:
+
+```bash
+npm run check
+```
+
+That runs the DRE design-token contract lint and a syntax sweep over every shipped
+`asset/js/*.js` file. Aggregator regressions are covered by the dependency-free PHP
+harness in `tests/AggregatorsTest.php`:
+
+```bash
+docker run --rm -v "$PWD:/m" php:8.4-cli php /m/tests/AggregatorsTest.php
+```
 
 ## Theming — follows the DRE theme
 
@@ -451,7 +469,7 @@ carried by `THEME.accent` (= `--primary`).
 
 ## Dependencies
 
-Loaded via CDN (no bundling required):
+Self-hosted from committed vendored bundles under `asset/vendor/`:
 
 - [ECharts 6](https://echarts.apache.org/)
 - [echarts-wordcloud 2](https://github.com/ecomfe/echarts-wordcloud)
@@ -470,4 +488,4 @@ A reader should find roughly the same analytical toolkit on either side. The "ho
 
 ## License
 
-MIT
+GPL-3.0-or-later
