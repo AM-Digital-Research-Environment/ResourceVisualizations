@@ -33,6 +33,17 @@
     'use strict';
 
     var ns = window.RV || (window.RV = {});
+    var el = ns.el || function (tag, cls, text) {
+        var node = document.createElement(tag);
+        if (cls) node.className = cls;
+        if (text != null) node.textContent = text;
+        return node;
+    };
+    var escapeHtml = ns.escapeHtml || function (value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+            return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+        });
+    };
 
     var SRC = 'rv-spatial-places';
     var L_ORIGIN = 'rv-spatial-origin';
@@ -42,27 +53,10 @@
     var LIST_CAP = 60;
     var TOP_PLACES = 10;
 
-    /* ------------------------------------------------------------------ */
-    /*  Tiny DOM + text helpers                                            */
-    /* ------------------------------------------------------------------ */
-
-    function el(tag, cls, text) {
-        var node = document.createElement(tag);
-        if (cls) node.className = cls;
-        if (text != null) node.textContent = text;
-        return node;
-    }
-
     /** Lower-case + strip diacritics, so "Côte" matches a "cote" query. */
     function fold(s) {
         s = (s == null ? '' : String(s)).toLowerCase();
         return s.normalize ? s.normalize('NFD').replace(/[̀-ͯ]/g, '') : s;
-    }
-
-    function escapeHtml(s) {
-        return String(s).replace(/[&<>"]/g, function (c) {
-            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-        });
     }
 
     function fmtNum(n) {

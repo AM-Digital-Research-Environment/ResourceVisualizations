@@ -34,6 +34,17 @@
     'use strict';
 
     var ns = window.RV || (window.RV = {});
+    var el = ns.el || function (tag, cls, text) {
+        var node = document.createElement(tag);
+        if (cls) node.className = cls;
+        if (text != null) node.textContent = text;
+        return node;
+    };
+    var escapeHtml = ns.escapeHtml || function (value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+            return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+        });
+    };
 
     // Glyph endpoint for the symbol (label) layer — the same CartoCDN fonts the
     // DRE basemaps use (ns.getBasemapStyle points at cartocdn), so labels render
@@ -50,17 +61,6 @@
 
     var MIN_RADIUS = 3;
     var MAX_RADIUS = 18;
-
-    /* ------------------------------------------------------------------ */
-    /*  Tiny DOM + text helpers                                            */
-    /* ------------------------------------------------------------------ */
-
-    function el(tag, cls, text) {
-        var node = document.createElement(tag);
-        if (cls) node.className = cls;
-        if (text != null) node.textContent = text;
-        return node;
-    }
 
     /** Lower-case + strip diacritics, so "Laïcité" matches a "laicite" query. */
     function fold(s) {
@@ -431,11 +431,6 @@
             bits.push(node.degree + ' link' + (node.degree === 1 ? '' : 's'));
             return '<div class="rv-popup-content"><strong>' + escapeHtml(node.label) + '</strong>'
                 + '<span class="deg-popup-meta">' + bits.join(' · ') + '</span></div>';
-        }
-        function escapeHtml(s) {
-            return String(s).replace(/[&<>"]/g, function (c) {
-                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-            });
         }
         function showHover(e) {
             var f = e.features && e.features[0];
