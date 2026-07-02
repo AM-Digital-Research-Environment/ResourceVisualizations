@@ -155,6 +155,8 @@ final class Runner
 
     private int $fileCount = 0;
 
+    private JsonArtifactWriter $artifacts;
+
     /** @var callable|null A log sink: fn(string $message): void */
     private $logFn;
 
@@ -169,6 +171,7 @@ final class Runner
         ?callable $logFn = null,
     ) {
         $this->logFn = $logFn;
+        $this->artifacts = new JsonArtifactWriter();
     }
 
     private function log(string $msg): void
@@ -180,8 +183,7 @@ final class Runner
 
     private function save(int|string $id, array $dashboard): void
     {
-        $path = $this->outputDir . '/' . $id . '.json';
-        file_put_contents($path, json_encode($dashboard, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $this->writeJson($this->outputDir . '/' . $id . '.json', $dashboard);
         $this->fileCount++;
     }
 
@@ -189,16 +191,19 @@ final class Runner
     private function saveIndex(string $file, array $index): void
     {
         usort($index, static fn ($a, $b) => strcmp((string) $a['name'], (string) $b['name']));
-        file_put_contents($this->outputDir . '/' . $file, json_encode($index, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $this->writeJson($this->outputDir . '/' . $file, $index);
         $this->log('  ' . $file . ': ' . count($index) . ' entries');
+    }
+
+    private function writeJson(string $path, array $payload): void
+    {
+        $this->artifacts->write($path, $payload);
     }
 
     /** Entry point. Returns a small stats array for the job log. */
     public function run(): array
     {
-        if (!is_dir($this->outputDir)) {
-            mkdir($this->outputDir, 0775, true);
-        }
+        $this->artifacts->ensureDirectory($this->outputDir);
 
         $data = (new DataLoader($this->connection))->load(fn (string $m) => $this->log($m));
         $this->items = $data['items'];
@@ -341,7 +346,7 @@ final class Runner
         }
 
         if ($allBeeswarm) {
-            file_put_contents($this->outputDir . '/beeswarm-all-sections.json', json_encode($allBeeswarm, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            $this->writeJson($this->outputDir . '/beeswarm-all-sections.json', $allBeeswarm);
         }
     }
 
@@ -389,7 +394,7 @@ final class Runner
         }
 
         usort($projectIndex, static fn ($a, $b) => strcmp((string) $a['name'], (string) $b['name']));
-        file_put_contents($this->outputDir . '/projects-index.json', json_encode($projectIndex, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $this->writeJson($this->outputDir . '/projects-index.json', $projectIndex);
         $this->statCounts['projects'] = count($projectIndex);
     }
 
@@ -944,10 +949,7 @@ final class Runner
         $researchItems = array_keys($this->itemsWhere(fn ($info) => ($info['template_id'] ?? null) === self::TEMPLATE_RESEARCH_ITEMS));
         $communities = Aggregators::buildDiscursiveCommunities($researchItems, $this->links, $this->items, $lcshIds ?: null);
         if ($communities) {
-            if (!is_dir($this->communitiesDir)) {
-                mkdir($this->communitiesDir, 0775, true);
-            }
-            file_put_contents($this->communitiesDir . '/discursive.json', json_encode($communities, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            $this->writeJson($this->communitiesDir . '/discursive.json', $communities);
             $this->log('  ' . count($communities['nodes']) . ' subjects, ' . count($communities['communities']) . ' communities');
         }
     }
@@ -1005,10 +1007,7 @@ final class Runner
         // node cap from 1200 so the full connected core shows.
         $graph = Aggregators::buildEntityGraph($scanItems, $this->links, $this->items, $lcshIds, 2, 4000, $itemSection);
         if ($graph) {
-            if (!is_dir($this->communitiesDir)) {
-                mkdir($this->communitiesDir, 0775, true);
-            }
-            file_put_contents($this->communitiesDir . '/entity-graph.json', json_encode($graph, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            $this->writeJson($this->communitiesDir . '/entity-graph.json', $graph);
             $this->log('  ' . count($graph['nodes']) . ' entities, ' . count($graph['edges']) . ' links, ' . ($graph['meta']['communityCount'] ?? 0) . ' communities, ' . ($graph['meta']['sectionCount'] ?? 0) . ' sections');
         }
     }
@@ -1041,7 +1040,7 @@ final class Runner
         }
 
         $path = dirname($this->outputDir) . '/network-explorer.json';
-        file_put_contents($path, json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $this->writeJson($path, $payload);
         $this->fileCount++;
 
         $summary = [];
@@ -1171,10 +1170,7 @@ final class Runner
             // Force a JSON object even when empty (an empty PHP array encodes as []).
             'entityPlaces' => $entityPlaces ?: new \stdClass(),
         ];
-        file_put_contents(
-            $this->outputDir . '/spatial-exploration.json',
-            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-        );
+        $this->writeJson($this->outputDir . '/spatial-exploration.json', $payload);
         $this->fileCount++;
         $pickerSummary = [];
         foreach ($pickers as $type => $rows) {
@@ -1659,7 +1655,7 @@ final class Runner
         }
         $whatsNew = Aggregators::buildWhatsNew($this->items, $projectChildren);
         if ($whatsNew) {
-            file_put_contents($this->outputDir . '/whats-new.json', json_encode($whatsNew, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            $this->writeJson($this->outputDir . '/whats-new.json', $whatsNew);
             $this->log('  whats-new.json: reference ' . $whatsNew['reference'] . ', ' . count($whatsNew['windows']) . ' windows');
         }
     }
@@ -1680,9 +1676,7 @@ final class Runner
     private function generatePhotoGalleries(): void
     {
         $this->log('=== Photo Galleries ===');
-        if (!is_dir($this->galleriesDir)) {
-            mkdir($this->galleriesDir, 0775, true);
-        }
+        $this->artifacts->ensureDirectory($this->galleriesDir);
 
         // Registry sets get extra per-photo fields: the identifier (so the
         // PhotoBrowse view can split a shared set into sub-collections) and, for
@@ -1767,11 +1761,10 @@ final class Runner
                 continue; // item set with no image-bearing public items — skip
             }
 
-            file_put_contents(
-                $this->galleriesDir . '/' . $setId . '.json',
-                json_encode(['total' => $total, 'photos' => $photos],
-                    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-            );
+            $this->writeJson($this->galleriesDir . '/' . $setId . '.json', [
+                'total' => $total,
+                'photos' => $photos,
+            ]);
             $this->fileCount++;
             $setCount++;
         }
@@ -1831,9 +1824,7 @@ final class Runner
     private function generateFeaturedCollections(): void
     {
         $this->log('=== Featured Collections ===');
-        if (!is_dir($this->featuredDir)) {
-            mkdir($this->featuredDir, 0775, true);
-        }
+        $this->artifacts->ensureDirectory($this->featuredDir);
 
         $index = [];
         foreach (Registry::all() as $entry) {
@@ -1883,10 +1874,7 @@ final class Runner
             ];
         }
 
-        file_put_contents(
-            $this->featuredDir . '/index.json',
-            json_encode($index, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-        );
+        $this->writeJson($this->featuredDir . '/index.json', $index);
         $this->fileCount++;
         $this->log('  ' . count($index) . ' featured collections indexed');
     }
@@ -1939,9 +1927,7 @@ final class Runner
     private function generateKnowledgeGraphs(): void
     {
         $this->log('=== Knowledge Graphs ===');
-        if (!is_dir($this->knowledgeGraphsDir)) {
-            mkdir($this->knowledgeGraphsDir, 0775, true);
-        }
+        $this->artifacts->ensureDirectory($this->knowledgeGraphsDir);
         [$idf, $freqPct] = KnowledgeGraphs::computeResourceStats($this->links, count($this->items));
         $reverse = KnowledgeGraphs::buildShareableReverse($this->reverseLinks);
         $this->log('  ' . count($idf) . ' resources scored');
@@ -1960,7 +1946,7 @@ final class Runner
                 $graph['itemMap'] = $itemMap;
                 $mapCount++;
             }
-            file_put_contents($this->knowledgeGraphsDir . '/' . $iid . '.json', json_encode($graph, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            $this->writeJson($this->knowledgeGraphsDir . '/' . $iid . '.json', $graph);
             $generated++;
             if ($generated % 500 === 0) {
                 $this->log('  ' . $generated . ' graphs…');
