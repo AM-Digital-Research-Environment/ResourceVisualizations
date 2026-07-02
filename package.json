@@ -6,7 +6,8 @@
   "scripts": {
     "lint:tokens": "node scripts/check-design-tokens.mjs",
     "check:js": "node scripts/check-js-syntax.mjs",
-    "check": "npm run lint:tokens && npm run check:js"
+    "check:registry": "node scripts/check-registry-contracts.mjs",
+    "check": "npm run lint:tokens && npm run check:js && npm run check:registry"
   },
   "author": "Frédérick Madore",
   "license": "GPL-3.0-or-later",

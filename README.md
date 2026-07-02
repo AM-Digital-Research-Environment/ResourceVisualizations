@@ -385,9 +385,10 @@ front-end or styling changes, run:
 npm run check
 ```
 
-That runs the DRE design-token contract lint and a syntax sweep over every shipped
-`asset/js/*.js` file. Aggregator regressions are covered by the dependency-free PHP
-harness in `tests/AggregatorsTest.php`:
+That runs the DRE design-token contract lint, a syntax sweep over every shipped
+`asset/js/*.js` file, and a registry/layout/embed contract check for the
+hand-maintained visualization wiring. Aggregator regressions are covered by the
+dependency-free PHP harness in `tests/AggregatorsTest.php`:
 
 ```bash
 docker run --rm -v "$PWD:/m" php:8.4-cli php /m/tests/AggregatorsTest.php
